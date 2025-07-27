@@ -87,12 +87,16 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
             currency,
             orderData: enhancedOrderData,
             gate
+          },
+          headers: {
+            'Content-Type': 'application/json'
           }
         }
       );
 
       if (functionError) {
-        throw new Error(functionError.message || 'Payment initialization failed');
+        console.error('Supabase function error:', functionError);
+        throw new Error(`Edge Function Error: ${functionError.message || 'Payment initialization failed'}`);
       }
 
       if (!data.success) {
