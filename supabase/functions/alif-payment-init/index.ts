@@ -52,6 +52,20 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     );
 
+    // Parse request body first
+    const requestBody = await req.json();
+
+    // Handle test requests for accessibility check
+    if (requestBody.test === true) {
+      return new Response(
+        JSON.stringify({ success: true, message: 'Function is accessible' }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        }
+      );
+    }
+
     // Get Alif Bank credentials from environment
     const alifMerchantId = Deno.env.get('ALIF_MERCHANT_ID');
     const alifSecretKey = Deno.env.get('ALIF_SECRET_KEY');
@@ -63,18 +77,8 @@ Deno.serve(async (req) => {
       throw new Error('Alif Bank credentials not configured');
     }
 
-    const { amount, currency = 'TJS', gate = 'korti_milli', orderData }: PaymentRequest = await req.json();
-
-    // Handle test requests for accessibility check
-    if ((req as any).test === true) {
-      return new Response(
-        JSON.stringify({ success: true, message: 'Function is accessible' }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200,
-        }
-      );
-    }
+    // Destructure payment parameters from the parsed body
+    const { amount, currency = 'TJS', gate = 'korti_milli', orderData }: PaymentRequest = requestBody;
 
     // Validate request
     if (!amount || amount <= 0) {
