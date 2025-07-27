@@ -90,6 +90,27 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
       let data, functionError;
       
       try {
+        // First, check if the function exists by making a simple test call
+        const testResult = await fetch(`${supabaseUrl}/functions/v1/alif-payment-init`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+          },
+          body: JSON.stringify({ test: true })
+        });
+
+        if (!testResult.ok) {
+          if (testResult.status === 404) {
+            throw new Error('FUNCTION_NOT_DEPLOYED');
+          } else if (testResult.status === 401) {
+            throw new Error('FUNCTION_UNAUTHORIZED');
+          } else {
+            throw new Error(`FUNCTION_ERROR_${testResult.status}`);
+          }
+        }
+
+        // If test passes, make the actual function call
         const result = await supabase.functions.invoke(
           'alif-payment-init',
           {
@@ -98,33 +119,51 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
               currency,
               orderData: enhancedOrderData,
               gate
-            },
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
             }
           }
         );
         data = result.data;
         functionError = result.error;
       } catch (invokeError) {
-        console.error('Edge Function invocation failed:', invokeError);
+        console.error('Edge Function accessibility check failed:', invokeError);
         
-        if (isDevelopment) {
-          // In development, show helpful error message
-          throw new Error(`
-            Edge Function не развернута или недоступна.
-            
-            Для исправления:
-            1. Убедитесь, что Supabase CLI установлен
-            2. Выполните: supabase login
-            3. Выполните: supabase link --project-ref ${supabaseUrl.split('//')[1].split('.')[0]}
-            4. Выполните: supabase functions deploy
-            
-            Или проверьте настройки Edge Functions в панели Supabase.
-          `);
+        const errorMessage = invokeError instanceof Error ? invokeError.message : String(invokeError);
+        
+        if (errorMessage.includes('FUNCTION_NOT_DEPLOYED') || errorMessage.includes('404')) {
+          throw new Error(`❌ Edge Function не развернута
+
+🔧 Для исправления выполните команды:
+
+1️⃣ Установите Supabase CLI:
+   npm install -g supabase
+
+2️⃣ Войдите в аккаунт:
+   supabase login
+
+3️⃣ Подключите проект:
+   supabase link --project-ref ${supabaseUrl.split('//')[1].split('.')[0]}
+
+4️⃣ Разверните функции:
+   supabase functions deploy
+
+📋 Или разверните через панель Supabase:
+   Dashboard → Edge Functions → Create Function`);
+        } else if (errorMessage.includes('FUNCTION_UNAUTHORIZED') || errorMessage.includes('401')) {
+          throw new Error(`❌ Ошибка авторизации Edge Function
+
+🔧 Проверьте:
+• VITE_SUPABASE_ANON_KEY в файле .env
+• Настройки RLS для Edge Functions
+• Права доступа в Supabase Dashboard`);
         } else {
-          throw new Error('Сервис платежей временно недоступен. Попробуйте позже.');
+          throw new Error(`❌ Edge Function недоступна
+
+🔧 Возможные причины:
+• Функция не развернута
+• Неправильная конфигурация
+• Проблемы с сетью
+
+💡 Проверьте статус в Supabase Dashboard → Edge Functions`);
         }
       }
 
