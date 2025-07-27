@@ -354,6 +354,7 @@ const ProductsPage = () => {
               </div>
             </div>
             {/* Age */}
+            {selectedCategories.includes('mattresses') && (
             <div>
               <h3 className="font-medium mb-3">Возраст</h3>
               <div className="space-y-2">
@@ -379,6 +380,7 @@ const ProductsPage = () => {
                 ))}
               </div>
             </div>
+            )}
 
             {/* Availability */}
             <div>
