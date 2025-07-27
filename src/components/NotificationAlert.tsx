@@ -1,9 +1,52 @@
 import React, { useState } from 'react';
 import { Bell, X } from 'lucide-react';
 
+// Cookie utility functions
+const setCookie = (name: string, value: string, days: number) => {
+  const expires = new Date();
+  expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+  document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
+};
+
+const getCookie = (name: string): string | null => {
+  const nameEQ = name + "=";
+  const ca = document.cookie.split(';');
+  for (let i = 0; i < ca.length; i++) {
+    let c = ca[i];
+    while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+    if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+  }
+  return null;
+};
+
 const NotificationAlert = () => {
-  const [isVisible, setIsVisible] = useState(true);
-  const [isDismissed, setIsDismissed] = useState(false);
+  // Check if user has already seen the notification
+  const hasSeenNotification = getCookie('sakina_notification_dismissed') === 'true';
+  
+  const [isVisible, setIsVisible] = useState(!hasSeenNotification);
+  const [isDismissed, setIsDismissed] = useState(hasSeenNotification);
+
+  const handleDismiss = (accepted: boolean = false) => {
+    setIsVisible(false);
+    // Set cookie to remember user's choice for 30 days
+    setCookie('sakina_notification_dismissed', 'true', 30);
+    if (accepted) {
+      setCookie('sakina_notifications_enabled', 'true', 365);
+    }
+    setTimeout(() => setIsDismissed(true), 300);
+  };
+
+  const handleEnable = () => {
+    // Here you would typically request browser notification permission
+    if ('Notification' in window) {
+      Notification.requestPermission().then((permission) => {
+        if (permission === 'granted') {
+          console.log('Notifications enabled');
+        }
+      });
+    }
+    handleDismiss(true);
+  };
 
   if (isDismissed) return null;
 
@@ -23,16 +66,13 @@ const NotificationAlert = () => {
             </p>
             <div className="mt-4 flex space-x-3">
               <button
-                onClick={() => setIsVisible(false)}
+                onClick={handleEnable}
                 className="bg-teal-500 text-white px-4 py-2 rounded hover:bg-teal-600 transition-colors"
               >
                 Включить
               </button>
               <button
-                onClick={() => {
-                  setIsVisible(false);
-                  setTimeout(() => setIsDismissed(true), 300);
-                }}
+                onClick={() => handleDismiss(false)}
                 className="text-gray-600 hover:text-gray-800"
               >
                 Нет, спасибо
@@ -40,10 +80,7 @@ const NotificationAlert = () => {
             </div>
           </div>
           <button
-            onClick={() => {
-              setIsVisible(false);
-              setTimeout(() => setIsDismissed(true), 300);
-            }}
+            onClick={() => handleDismiss(false)}
             className="flex-shrink-0 ml-4 text-gray-400 hover:text-gray-600"
           >
             <X size={20} />
