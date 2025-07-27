@@ -58,7 +58,6 @@ const ProductsPage = () => {
   });
 
   const [sortBy, setSortBy] = useState('popularity');
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   // Category mapping for display names
   const categoryDisplayNames: Record<string, string> = {
