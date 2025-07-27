@@ -65,6 +65,17 @@ Deno.serve(async (req) => {
 
     const { amount, currency = 'TJS', gate = 'korti_milli', orderData }: PaymentRequest = await req.json();
 
+    // Handle test requests for accessibility check
+    if ((req as any).test === true) {
+      return new Response(
+        JSON.stringify({ success: true, message: 'Function is accessible' }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        }
+      );
+    }
+
     // Validate request
     if (!amount || amount <= 0) {
       throw new Error('Invalid amount');
