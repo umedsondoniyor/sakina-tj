@@ -575,6 +575,12 @@ const CheckoutPage = () => {
                         address: formData.deliveryType === 'home' ? formData.address : undefined
                       },
                       invoices: {
+                        invoices: items.map(item => ({
+                          category: 'products',
+                          name: item.name,
+                          price: item.price,
+                          quantity: item.quantity
+                        })),
                         is_hold_required: false,
                         is_outbox_marked: false
                       }
@@ -614,12 +620,6 @@ const CheckoutPage = () => {
           </div>
 
           {/* Order Summary */}
-                      invoices: items.map(item => ({
-                        category: 'products',
-                        name: item.name,
-                        price: item.price,
-                        quantity: item.quantity
-                      })),
           <div className="lg:col-span-1">
             <div className="bg-white rounded-lg shadow p-6 sticky top-4">
               <div className="flex items-center justify-between mb-4">
