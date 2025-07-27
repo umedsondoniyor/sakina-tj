@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   BedDouble,
   Sofa,
@@ -37,6 +38,17 @@ const menuItems = [
 const regularMenuItems = ['О нас'];
 
 const NavigationMenu = () => {
+  const navigate = useNavigate();
+
+  const handleCategoryClick = (categoryId: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    if (categoryId === 'mattresses') {
+      navigate('/mattresses');
+    } else {
+      navigate(`/products?category=${categoryId}`);
+    }
+  };
+
   return (
     <nav className="mt-4">
       <ul className="flex justify-between w-full">
@@ -54,20 +66,20 @@ const NavigationMenu = () => {
                 className="w-8 h-8 text-brand-turquoise"
               />
             )}
-            <a
-              href={`/products?category=${item.id}`}
+            <button
+              onClick={(e) => handleCategoryClick(item.id, e)}
               className="text-gray-700 hover:text-brand-turquoise"
             >
               {item.title}
-            </a>
+            </button>
           </li>
         ))}
         {regularMenuItems.map((item) => (
           <li key={item} className="flex">
             <Users size={24} className="text-brand-turquoise mr-1" />
-            <a href="#" className="text-gray-700 hover:text-brand-turquoise">
+            <button className="text-gray-700 hover:text-brand-turquoise">
               {item}
-            </a>
+            </button>
           </li>
         ))}
       </ul>
