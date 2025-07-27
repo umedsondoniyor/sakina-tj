@@ -86,6 +86,17 @@ const ProductsPage = () => {
 
   // Initialize selected categories with immediate state processing
   const [selectedCategories, setSelectedCategories] = useState<string[]>(processNavigationState());
+  
+  // Update filters when selectedCategories changes to reflect in UI
+  useEffect(() => {
+    if (selectedCategories.length > 0) {
+      setFilters(prev => ({
+        ...prev,
+        productType: selectedCategories
+      }));
+    }
+  }, [selectedCategories]);
+  
   // Get display name for current category
   const categoryDisplayName = useMemo(() => {
     return categoryDisplayNames[currentCategory] || categoryDisplayNames[currentCategory === 'mattresses' ? 'mattresses' : ''] || 'Все товары';
