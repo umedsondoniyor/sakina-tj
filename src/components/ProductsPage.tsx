@@ -36,7 +36,7 @@ const ProductsPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { filters: initialFilters, selections } = (location.state as LocationState) || { filters: {}, selections: {} };
+  const { filters: initialFilters = {}, selections = {} } = (location.state || {}) as Partial<LocationState>;
   
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,7 +44,7 @@ const ProductsPage = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [showSortModal, setShowSortModal] = useState(false);
   const [filters, setFilters] = useState<FilterState>({
-    age: getInitialAgeFilter(selections),
+    age: getInitialAgeFilter(selections || {}),
     hardness: [],
     width: initialFilters?.width || [],
     length: initialFilters?.length || [],
@@ -79,7 +79,7 @@ const ProductsPage = () => {
     return categoryDisplayNames[currentCategory] || categoryDisplayNames[currentCategory === 'mattresses' ? 'mattresses' : ''] || 'Все товары';
   }, [currentCategory]);
 
-  function getInitialAgeFilter(selections: Record<string, string>) {
+  function getInitialAgeFilter(selections: Record<string, string> = {}) {
     if (selections.boy_age) return [selections.boy_age];
     if (selections.girl_age) return [selections.girl_age];
     return [];
