@@ -96,15 +96,25 @@ const ProductsPage = () => {
     }
     
     // Handle navigation from header with state
-    if (location.state?.selectedCategories) {
+    if (location.state?.selectedCategories && location.state.selectedCategories.length > 0) {
       setSelectedCategories(location.state.selectedCategories);
+      
       // Clear the state to prevent it from persisting
-      navigate(location.pathname + location.search, { 
-        replace: true, 
-        state: null 
-      });
+      setTimeout(() => {
+        navigate(location.pathname + location.search, { 
+          replace: true, 
+          state: null 
+        });
+      }, 100);
     }
-  }, [currentCategory]);
+  }, [currentCategory, location.state]);
+
+  // Debug logging to track category selection
+  useEffect(() => {
+    console.log('Selected categories updated:', selectedCategories);
+    console.log('Current category from URL:', currentCategory);
+    console.log('Location state:', location.state);
+  }, [selectedCategories, currentCategory, location.state]);
 
   const loadProductsByCategories = async () => {
     try {
