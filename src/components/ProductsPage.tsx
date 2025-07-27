@@ -74,6 +74,19 @@ const ProductsPage = () => {
   // Get current category from URL params
   const currentCategory = searchParams.get('category') || '';
 
+  // Process navigation state immediately during initialization
+  const processNavigationState = () => {
+    if (location.state?.selectedCategories && location.state.selectedCategories.length > 0) {
+      return location.state.selectedCategories;
+    }
+    if (currentCategory) {
+      return [currentCategory];
+    }
+    return [];
+  };
+
+  // Initialize selected categories with immediate state processing
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(processNavigationState());
   // Get display name for current category
   const categoryDisplayName = useMemo(() => {
     return categoryDisplayNames[currentCategory] || categoryDisplayNames[currentCategory === 'mattresses' ? 'mattresses' : ''] || 'Все товары';
@@ -89,25 +102,26 @@ const ProductsPage = () => {
     loadProductsByCategories();
   }, [selectedCategories, filters, sortBy]);
 
-  // Initialize selected categories from URL parameter
+  // Handle URL parameter changes and navigation state
   useEffect(() => {
-    if (currentCategory) {
-      setSelectedCategories([currentCategory]);
+    const newCategories = processNavigationState();
+    
+    // Only update if categories have actually changed
+    if (JSON.stringify(newCategories) !== JSON.stringify(selectedCategories)) {
+      setSelectedCategories(newCategories);
     }
     
-    // Handle navigation from header with state
-    if (location.state?.selectedCategories && location.state.selectedCategories.length > 0) {
-      setSelectedCategories(location.state.selectedCategories);
-      
-      // Clear the state to prevent it from persisting
-      setTimeout(() => {
+    // Clear navigation state after processing
+    if (location.state?.selectedCategories) {
+      // Use a microtask to ensure state is processed first
+      Promise.resolve().then(() => {
         navigate(location.pathname + location.search, { 
           replace: true, 
           state: null 
         });
-      }, 100);
+      });
     }
-  }, [currentCategory, location.state]);
+  }, [currentCategory, location.state, navigate]);
 
   // Debug logging to track category selection
   useEffect(() => {
