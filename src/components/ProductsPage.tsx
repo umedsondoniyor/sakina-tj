@@ -94,6 +94,16 @@ const ProductsPage = () => {
     if (currentCategory) {
       setSelectedCategories([currentCategory]);
     }
+    
+    // Handle navigation from header with state
+    if (location.state?.selectedCategories) {
+      setSelectedCategories(location.state.selectedCategories);
+      // Clear the state to prevent it from persisting
+      navigate(location.pathname + location.search, { 
+        replace: true, 
+        state: null 
+      });
+    }
   }, [currentCategory]);
 
   const loadProductsByCategories = async () => {

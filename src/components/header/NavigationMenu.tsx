@@ -45,7 +45,13 @@ const NavigationMenu = () => {
     if (categoryId === 'mattresses') {
       navigate('/mattresses');
     } else {
-      navigate(`/products?category=${categoryId}`);
+      // Navigate to products page with specific category selected
+      navigate('/products', { 
+        state: { 
+          selectedCategories: [categoryId],
+          clearOtherFilters: true 
+        } 
+      });
     }
   };
 
@@ -68,7 +74,7 @@ const NavigationMenu = () => {
             )}
             <button
               onClick={(e) => handleCategoryClick(item.id, e)}
-              className="text-gray-700 hover:text-brand-turquoise"
+              className="text-gray-700 hover:text-brand-turquoise transition-colors"
             >
               {item.title}
             </button>
