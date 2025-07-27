@@ -126,9 +126,8 @@ const ProductsPage = () => {
       
       // Apply category filter using OR logic for multiple selections
       if (selectedCategories.length > 0) {
-        // Build OR condition for multiple categories
-        const categoryFilter = selectedCategories.map(cat => `category.eq.${cat}`).join(',');
-        query = query.or(categoryFilter);
+        // Use IN filter for better category matching
+        query = query.in('category', selectedCategories);
       }
       
       const { data, error } = await query;
