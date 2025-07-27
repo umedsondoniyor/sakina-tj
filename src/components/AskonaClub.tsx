@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { MessageCircleHeart, Percent, Cake } from 'lucide-react';
 import RegistrationModal from './RegistrationModal';
+import ClubBenefits from './club/ClubBenefits';
 
 const AskonaClub = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -25,20 +25,7 @@ const AskonaClub = () => {
               Получайте еще больше бонусов и преимуществ
             </div>
             
-            <div className="grid grid-cols-3 gap-8 mb-4">
-              <div>
-                <MessageCircleHeart className="w-16 h-16 text-brand-turquoise justify-self-center" />
-                <p className="text-sm text-gray-600 mt-2">Получайте еженедельные советы по здоровому и комфортному сну.</p>
-              </div>
-              <div>
-                <Percent className="w-16 h-16 text-brand-turquoise justify-self-center" />
-                <p className="text-sm text-gray-600 mt-2">Узнайте первыми об акции и скидках.</p>
-              </div>
-              <div>
-                <Cake className="w-16 h-16 text-brand-turquoise justify-self-center" />
-                <p className="text-sm text-gray-600 mt-2">Бонусы в день рождения.</p>
-              </div>
-            </div>
+            <ClubBenefits />
 
             <button
               onClick={() => setIsModalOpen(true)}

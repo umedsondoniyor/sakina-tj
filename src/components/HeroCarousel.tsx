@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { getCarouselSlides } from '../lib/api';
 import type { CarouselSlide } from '../lib/types';
 import { PackageOpen } from 'lucide-react';
+import HeroSlide from './hero/HeroSlide';
+import SlideIndicators from './hero/SlideIndicators';
 
 const HeroCarousel = () => {
   const [slides, setSlides] = useState<CarouselSlide[]>([]);
@@ -155,50 +157,22 @@ const HeroCarousel = () => {
           onMouseLeave={handleMouseLeave}
         >
           {slides.map((slide, index) => (
-            <div
+            <HeroSlide
               key={slide.id}
-              className={`relative float-left -mr-[100%] w-full transition-transform duration-[600ms] ease-in-out motion-reduce:transition-none ${
-                index === currentSlide ? 'opacity-100' : 'opacity-0'
-              }`}
-              style={{ pointerEvents: index === currentSlide ? 'auto' : 'none' }}
-            >
-              <div className="relative w-full mx-auto">
-                <img
-                  src={slide.image_url}
-                  alt={slide.title}
-                  className="hero-image mx-auto"
-                />
-                {/* {(slide.title || slide.subtitle) && (
-                  <div className="absolute bottom-8 left-8 text-white">
-                    {slide.title && (
-                      <h2 className="text-2xl md:text-4xl font-bold mb-2">{slide.title}</h2>
-                    )}
-                    {slide.subtitle && (
-                      <p className="text-lg md:text-xl">{slide.subtitle}</p>
-                    )}
-                  </div>
-                )} */}
-              </div>
-            </div>
+              slide={slide}
+              isActive={index === currentSlide}
+            />
           ))}
         </div>
       </div>
 
       {/* Slide Indicators */}
-      <div className="flex justify-center items-center space-x-1.5 py-2">
-        {slides.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => {
-              setCurrentSlide(index);
-              startAutoPlay();
-            }}
-            className={`w-1.5 h-1.5 rounded-full transition-colors ${
-              index === currentSlide ? 'bg-teal-500' : 'bg-gray-300'
-            } hover:bg-teal-400`}
-          />
-        ))}
-      </div>
+      <SlideIndicators
+        totalSlides={slides.length}
+        currentSlide={currentSlide}
+        onSlideChange={setCurrentSlide}
+        onStartAutoPlay={startAutoPlay}
+      />
     </div>
   );
 };

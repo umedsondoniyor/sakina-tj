@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react'; 
 import { useNavigate } from 'react-router-dom';
+import CategoryItem from './category/CategoryItem';
+import CategoryScrollControls from './category/CategoryScrollControls';
+import SwipeHint from './category/SwipeHint';
 
 const categories = [
   {
@@ -157,25 +159,12 @@ const CategoryGrid = () => {
   return (
     <div className="relative max-w-7xl mx-auto px-4 py-4">
       <div className="relative">
-        {/* Navigation Buttons - Desktop Only */}
-        <div className="hidden md:block">
-          {canScrollLeft && (
-            <button
-              onClick={handleScrollLeft}
-              className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 w-8 h-8 bg-white rounded-full shadow-md flex items-center justify-center transition-all hover:scale-110 hover:bg-gray-50"
-            >
-              <ChevronLeft className="w-5 h-5 text-gray-600" />
-            </button>
-          )}
-          {canScrollRight && (
-            <button
-              onClick={handleScrollRight}
-              className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 w-8 h-8 bg-white rounded-full shadow-md flex items-center justify-center transition-all hover:scale-110 hover:bg-gray-50"
-            >
-              <ChevronRight className="w-5 h-5 text-gray-600" />
-            </button>
-          )}
-        </div>
+        <CategoryScrollControls
+          canScrollLeft={canScrollLeft}
+          canScrollRight={canScrollRight}
+          onScrollLeft={handleScrollLeft}
+          onScrollRight={handleScrollRight}
+        />
 
         <div
           ref={scrollContainerRef}
@@ -188,62 +177,27 @@ const CategoryGrid = () => {
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
-          {/* Mobile Swipe Hint */}
-          {showSwipeHint && (
-            <div className="md:hidden absolute inset-0 z-10 pointer-events-none">
-              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/70 text-white px-4 py-2 rounded-full flex items-center">
-                <svg className="w-4 h-4 mr-1.5\" viewBox="0 0 24 24\" fill="none\" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M14 5l7 7m0 0l-7 7m7-7H3\" stroke="currentColor\" strokeWidth="2\" strokeLinecap="round\" strokeLinejoin="round"/>
-                </svg>
-                <span className="text-sm">Листайте</span>
-              </div>
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-swipe" />
-            </div>
-          )}
+          <SwipeHint showSwipeHint={showSwipeHint} />
 
           {/* Desktop View */}
           <div className="hidden md:flex justify-between w-full">
             {categories.map((category) => (
-              <a
+              <CategoryItem
                 key={category.id}
-                href={category.slug === 'mattresses' ? '/mattresses' : `/products?category=${category.slug}`}
-                onClick={(e) => handleCategoryClick(category, e)}
-                className="group content-center"
-              >
-                <div className="aspect-square bg-white rounded-lg overflow-hidden">
-                  <img
-                    src={category.image}
-                    alt={category.name}
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-                <span className="block text-[16px] font-medium leading-tight text-center text-gray-900 group-hover:text-brand-turquoise">
-                  {category.name}
-                </span>
-              </a>
+                category={category}
+                onCategoryClick={handleCategoryClick}
+              />
             ))}
           </div>
 
           {/* Mobile View */}
           <div className="md:hidden grid grid-rows-2 grid-flow-col gap-x-4 gap-y-4 auto-cols-[110px] min-w-max">
             {categories.map((category) => (
-              <a
+              <CategoryItem
                 key={category.id}
-                href={category.slug === 'mattresses' ? '/mattresses' : `/products?category=${category.slug}`}
-                onClick={(e) => handleCategoryClick(category, e)}
-                className="group"
-              >
-                <div className="aspect-square mb-1.5 bg-white rounded-lg overflow-hidden">
-                  <img
-                    src={category.image}
-                    alt={category.name}
-                    className="w-full h-full object-contain p-2"
-                  />
-                </div>
-                <span className="block text-[11px] leading-tight text-center text-gray-900 group-hover:text-brand-turquoise">
-                  {category.name}
-                </span>
-              </a>
+                category={category}
+                onCategoryClick={handleCategoryClick}
+              />
             ))}
           </div>
         </div>

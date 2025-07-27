@@ -1,4 +1,5 @@
 import React from 'react';
+import StatItem from './stats/StatItem';
 
 interface StatItem {
   image: string;
@@ -46,19 +47,7 @@ const ProductionStats = () => {
         {/* Stats Grid */}
         <div className="md:col-span-3 grid grid-cols-2 gap-4 md:gap-6">
           {stats.map((stat, index) => (
-            <div key={index} className="flex items-center space-x-3 md:space-x-4">
-              <div className="w-16 h-16 md:w-24 md:h-24 flex-shrink-0">
-                <img
-                  src={stat.image}
-                  alt={stat.label}
-                  className="w-full h-full object-cover rounded-lg"
-                />
-              </div>
-              <div>
-                <div className="text-2xl md:text-4xl font-bold text-teal-500">{stat.number}</div>
-                <div className="text-sm md:text-base text-gray-600">{stat.label}</div>
-              </div>
-            </div>
+            <StatItem key={index} stat={stat} />
           ))}
         </div>
       </div>

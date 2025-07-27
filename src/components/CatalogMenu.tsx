@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ChevronRight, Bed, BedDouble, Box, Sofa, Pill as Pillow, Shirt, Baby, BookOpen, Table, Twitch as Kitchen, Heart, Coffee, Home, Lamp, Tv, Package, Palmtree, Phone, X } from 'lucide-react';
 import Logo from './Logo';
+import CategoryMenuItem from './catalog/CategoryMenuItem';
+import CategoryContent from './catalog/CategoryContent';
 
 interface MenuItem {
   id: string;
@@ -280,62 +282,20 @@ const CatalogMenu: React.FC<CatalogMenuProps> = ({ isOpen, onClose }) => {
 
               <div className="py-2">
                 {menuItems.map((item) => (
-                  <button
+                  <CategoryMenuItem
                     key={item.id}
-                    onClick={() => handleCategoryClick(item.id)}
-                    onMouseEnter={() => handleCategoryHover(item.id)}
-                    onMouseLeave={handleCategoryLeave}
-                    className={`flex items-center justify-between w-full px-4 py-2 text-left hover:text-teal-600 ${
-                      selectedCategory === item.id ? 'text-teal-600 bg-gray-50' : ''
-                    }`}
-                  >
-                    <div className="flex items-center space-x-3">
-                      <item.icon size={20} className="text-gray-400" />
-                      <span>{item.name}</span>
-                    </div>
-                    <ChevronRight size={20} />
-                  </button>
+                    item={item}
+                    isSelected={selectedCategory === item.id}
+                    onCategoryClick={handleCategoryClick}
+                    onCategoryHover={handleCategoryHover}
+                    onCategoryLeave={handleCategoryLeave}
+                  />
                 ))}
               </div>
             </div>
 
             {/* Right Panel - Category Content */}
-            <div className="flex-1 p-6 overflow-y-auto">
-              <h2 className="text-2xl font-bold mb-6">{currentContent.title}</h2>
-
-              <div className="grid grid-cols-4 gap-8">
-                <div className="col-span-3 grid grid-cols-3 gap-8">
-                  {currentContent.categories.map((category) => (
-                    <div key={category.title}>
-                      <h3 className="font-semibold mb-4">{category.title}</h3>
-                      <div className="space-y-2">
-                        {category.items.map((item) => (
-                          <a key={item} href="#" className="block py-1 hover:text-teal-600">
-                            {item}
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="space-y-6">
-                  {currentContent.promos.map((promo) => (
-                    <div key={promo.title}>
-                      <img
-                        src={promo.image}
-                        alt={promo.title}
-                        className="w-full h-auto rounded-lg mb-4"
-                      />
-                      <a href="#" className="block text-teal-600 hover:text-teal-700 font-medium">
-                        {promo.title}
-                      </a>
-                      <p className="text-sm text-gray-600">{promo.description}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+            <CategoryContent content={currentContent} />
           </div>
         </div>
       </div>

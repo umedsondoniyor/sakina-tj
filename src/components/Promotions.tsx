@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import PromotionCard from './promotions/PromotionCard';
+import MobilePromotionCard from './promotions/MobilePromotionCard';
 
 interface Promotion {
   id: number;
@@ -99,22 +101,7 @@ const Promotions = () => {
       {/* Desktop View */}
       <div className="hidden md:grid grid-cols-4 gap-6">
         {promotions.map((promo) => (
-          <div key={promo.id} className="group cursor-pointer">
-            <div className="relative rounded-lg overflow-hidden">
-              <img
-                src={promo.image}
-                alt={promo.title}
-                className="w-full h-80 object-cover transition-transform group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent p-6 flex flex-col justify-end">
-                <span className="inline-block bg-yellow-400 text-black px-2 py-1 rounded text-sm font-medium mb-2">
-                  {promo.discount}
-                </span>
-                <h3 className="text-white text-xl font-bold mb-2">{promo.title}</h3>
-                <p className="text-white/80">{promo.subtitle}</p>
-              </div>
-            </div>
-          </div>
+          <PromotionCard key={promo.id} promo={promo} />
         ))}
       </div>
 
@@ -126,25 +113,7 @@ const Promotions = () => {
         >
           <div className="flex space-x-4">
             {promotions.map((promo) => (
-              <div
-                key={promo.id}
-                className="flex-none w-[280px] cursor-pointer"
-              >
-                <div className="relative rounded-lg overflow-hidden">
-                  <img
-                    src={promo.image}
-                    alt={promo.title}
-                    className="w-full h-48 object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent p-4 flex flex-col justify-end">
-                    <span className="inline-block bg-yellow-400 text-black px-2 py-1 rounded text-sm font-medium mb-2">
-                      {promo.discount}
-                    </span>
-                    <h3 className="text-white text-lg font-bold mb-1">{promo.title}</h3>
-                    <p className="text-white/80 text-sm">{promo.subtitle}</p>
-                  </div>
-                </div>
-              </div>
+              <MobilePromotionCard key={promo.id} promo={promo} />
             ))}
           </div>
         </div>
