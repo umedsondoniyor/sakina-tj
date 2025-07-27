@@ -1,0 +1,143 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@keyframes swipe {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-swipe {
+  animation: swipe 1.5s ease-in-out infinite;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hamburger Menu Animation */
+.hamburger-icon {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+}
+
+.hamburger-icon span {
+  position: absolute;
+  height: 2px;
+  width: 100%;
+  background-color: currentColor;
+  transition: all 0.3s ease;
+  border-radius: 2px;
+}
+
+.hamburger-icon span:first-child {
+  top: 6px;
+}
+
+.hamburger-icon span:nth-child(2) {
+  top: 11px;
+}
+
+.hamburger-icon span:last-child {
+  top: 16px;
+}
+
+.hamburger-icon.active span:first-child {
+  transform: rotate(45deg);
+  top: 11px;
+}
+
+.hamburger-icon.active span:nth-child(2) {
+  opacity: 0;
+}
+
+.hamburger-icon.active span:last-child {
+  transform: rotate(-45deg);
+  top: 11px;
+}
+
+/* Hero Carousel Media Queries */
+.hero-image {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 2/1;
+  object-fit: cover;
+}
+
+/* Club Image Styles */
+.club-image {
+  height: auto;
+  max-width: 468px;
+  bottom: -19px;
+  object-fit: cover;
+  position: absolute;
+}
+
+/* Mobile devices (portrait) */
+@media screen and (max-width: 480px) {
+  .hero-image {
+    aspect-ratio: 430/215;
+    max-height: 150px;
+  }
+  
+  .club-image {
+    position: relative;
+    max-width: 100%;
+  }
+}
+
+/* Mobile devices (landscape) */
+@media screen and (min-width: 481px) and (max-width: 767px) {
+  .hero-image {
+    aspect-ratio: 16/9;
+    max-height: 300px;
+  }
+  
+  .club-image {
+    position: relative;
+    max-width: 100%;
+  }
+}
+
+/* Tablets */
+@media screen and (min-width: 768px) and (max-width: 1023px) {
+  .hero-image {
+    aspect-ratio: 16/9;
+    max-height: 300px;
+  }
+  
+  .club-image {
+    max-width: 360px;
+  }
+}
+
+/* Small laptops */
+@media screen and (min-width: 1024px) and (max-width: 1279px) {
+  .hero-image {
+    aspect-ratio: 16/9;
+    max-height: 430px;
+  }
+  
+  .club-image {
+    max-width: 420px;
+  }
+}
+
+/* Desktops and larger screens */
+@media screen and (min-width: 1280px) {
+  .hero-image {
+    aspect-ratio: 16/9;
+    max-height: 530px;
+  }
+}
