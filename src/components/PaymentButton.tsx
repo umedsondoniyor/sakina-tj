@@ -74,15 +74,15 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
       // Prepare order data with invoices structure for Alif Bank
       const enhancedOrderData = {
         ...orderData,
-        invoices: {
+        invoices: orderData.invoices || {
           invoices: orderData.items.map(item => ({
             category: item.category || 'general',
             name: item.name,
             price: item.price,
             quantity: item.quantity
           })),
-          is_hold_required: orderData.invoices?.is_hold_required || false,
-          is_outbox_marked: orderData.invoices?.is_outbox_marked || false
+          is_hold_required: false,
+          is_outbox_marked: false
         }
       };
 

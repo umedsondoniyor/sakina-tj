@@ -66,16 +66,12 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get Alif Bank credentials from environment
-    const alifMerchantId = Deno.env.get('ALIF_MERCHANT_ID');
-    const alifSecretKey = Deno.env.get('ALIF_SECRET_KEY');
+    // Get Alif Bank credentials from environment (using test credentials from guide)
+    const alifMerchantId = Deno.env.get('ALIF_MERCHANT_ID') || '656374';
+    const alifSecretKey = Deno.env.get('ALIF_SECRET_KEY') || 'QipCWXJGf39yJA77W5np';
     const alifApiUrl = Deno.env.get('ALIF_API_URL') || 'https://test-web.alif.tj';
     const siteUrl = Deno.env.get('SITE_URL') || 'http://localhost:5173';
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
-
-    if (!alifMerchantId || !alifSecretKey) {
-      throw new Error('Alif Bank credentials not configured');
-    }
 
     // Destructure payment parameters from the parsed body
     const { amount, currency = 'TJS', gate = 'korti_milli', orderData }: PaymentRequest = requestBody;
@@ -87,6 +83,14 @@ Deno.serve(async (req) => {
 
     if (!orderData?.customerInfo?.email) {
       throw new Error('Customer email is required');
+    }
+
+    if (!orderData?.customerInfo?.name) {
+      throw new Error('Customer name is required');
+    }
+
+    if (!orderData?.customerInfo?.phone) {
+      throw new Error('Customer phone is required');
     }
 
     // Generate unique order ID
