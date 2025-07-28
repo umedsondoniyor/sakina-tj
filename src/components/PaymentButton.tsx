@@ -90,27 +90,7 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
       let data, functionError;
       
       try {
-        // First, check if the function exists by making a simple test call
-        const testResult = await fetch(`${supabaseUrl}/functions/v1/alif-payment-init`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
-          },
-          body: JSON.stringify({ test: true })
-        });
-
-        if (!testResult.ok) {
-          if (testResult.status === 404) {
-            throw new Error('FUNCTION_NOT_DEPLOYED');
-          } else if (testResult.status === 401) {
-            throw new Error('FUNCTION_UNAUTHORIZED');
-          } else {
-            throw new Error(`FUNCTION_ERROR_${testResult.status}`);
-          }
-        }
-
-        // If test passes, make the actual function call
+        // Make the function call directly
         const result = await supabase.functions.invoke(
           'alif-payment-init',
           {
@@ -124,7 +104,7 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
         );
         data = result.data;
         functionError = result.error;
-      } catch (invokeError) {
+      } catch (invokeError: any) {
         console.error('Edge Function accessibility check failed:', invokeError);
         
         const errorMessage = invokeError instanceof Error ? invokeError.message : String(invokeError);
@@ -132,7 +112,7 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
         if (errorMessage.includes('FUNCTION_NOT_DEPLOYED') || errorMessage.includes('404')) {
           throw new Error(`❌ Edge Function не развернута
 
-🔧 Для исправления выполните команды:
+🔧 Для исправления выполните следующие шаги:
 
 1️⃣ Установите Supabase CLI:
    npm install -g supabase
@@ -147,7 +127,7 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
    supabase functions deploy
 
 📋 Или разверните через панель Supabase:
-   Dashboard → Edge Functions → Create Function`);
+   Dashboard → Edge Functions → Create Function → Скопируйте код из supabase/functions/alif-payment-init/index.ts`);
         } else if (errorMessage.includes('FUNCTION_UNAUTHORIZED') || errorMessage.includes('401')) {
           throw new Error(`❌ Ошибка авторизации Edge Function
 
@@ -155,12 +135,25 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
 • VITE_SUPABASE_ANON_KEY в файле .env
 • Настройки RLS для Edge Functions
 • Права доступа в Supabase Dashboard`);
+        } else if (errorMessage.includes('Failed to send a request') || errorMessage.includes('NetworkError') || errorMessage.includes('fetch')) {
+          throw new Error(`❌ Не удается подключиться к Edge Function
+
+🔧 Возможные причины:
+• Edge Function не развернута в Supabase
+• Неправильный URL в переменных окружения
+• Проблемы с сетевым подключением
+• Функция временно недоступна
+
+💡 Решение:
+1. Проверьте VITE_SUPABASE_URL в файле .env
+2. Разверните Edge Functions: supabase functions deploy
+3. Проверьте статус в Supabase Dashboard → Edge Functions`);
         } else {
           throw new Error(`❌ Edge Function недоступна
 
 🔧 Возможные причины:
 • Функция не развернута
-• Неправильная конфигурация
+• Неправильная конфигурация переменных окружения
 • Проблемы с сетью
 
 💡 Проверьте статус в Supabase Dashboard → Edge Functions`);
@@ -169,7 +162,7 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
 
       if (functionError) {
         console.error('Supabase function error details:', {
-          message: functionError.message,
+          message: functionError.message || functionError,
           details: functionError.details,
           hint: functionError.hint,
           code: functionError.code
@@ -178,7 +171,7 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
         if (functionError.message?.includes('Function not found')) {
           throw new Error(`
             Edge Function 'alif-payment-init' не найдена.
-            
+
             Проверьте:
             1. Функция развернута в Supabase
             2. Имя функции указано правильно
@@ -186,7 +179,7 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
           `);
         }
         
-        throw new Error(`Edge Function Error: ${functionError.message || 'Payment initialization failed'}`);
+        throw new Error(`Edge Function Error: ${functionError.message || functionError || 'Payment initialization failed'}`);
       }
 
       if (!data.success) {
