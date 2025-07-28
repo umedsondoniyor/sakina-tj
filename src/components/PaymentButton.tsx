@@ -77,6 +77,24 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
         itemsCount: orderData.items.length
       });
 
+      // First, test if the Edge Function is accessible
+      console.log('🔍 Testing Edge Function accessibility...');
+      try {
+        const testResponse = await supabase.functions.invoke('alif-payment-init', {
+          body: { test: true }
+        });
+        
+        if (testResponse.error) {
+          console.error('❌ Edge Function test failed:', testResponse.error);
+          throw new Error(`Edge Function not accessible: ${testResponse.error.message}`);
+        }
+        
+        console.log('✅ Edge Function is accessible:', testResponse.data);
+      } catch (testError) {
+        console.error('❌ Edge Function accessibility test failed:', testError);
+        throw new Error(`Edge Function deployment issue: ${testError.message}`);
+      }
+
       // Prepare order data with invoices structure for Alif Bank
       const enhancedOrderData = {
         ...orderData,
