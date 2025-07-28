@@ -4,13 +4,20 @@ import toast from 'react-hot-toast';
 // Ensure environment variables are available
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseFunctionsUrl = import.meta.env.VITE_SUPABASE_FUNCTIONS_URL;
 
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables');
 }
 
 // Create Supabase client with enhanced configuration
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+export const supabase = createClient(
+  supabaseUrl, 
+  supabaseAnonKey, 
+  {
+  functions: {
+      url: supabaseFunctionsUrl!,
+    },
   auth: {
     persistSession: true,
     autoRefreshToken: true,
