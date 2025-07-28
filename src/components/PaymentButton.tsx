@@ -63,13 +63,19 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
     setError(null);
 
     try {
-      // Check if we're in development mode and Edge Functions are not available
-      const isDevelopment = import.meta.env.DEV;
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       
       if (!supabaseUrl) {
         throw new Error('Supabase URL not configured. Please check your environment variables.');
       }
+
+      console.log('🚀 Initiating payment with Supabase URL:', supabaseUrl);
+      console.log('📦 Order data:', {
+        amount,
+        currency,
+        customerInfo: orderData.customerInfo,
+        itemsCount: orderData.items.length
+      });
 
       // Prepare order data with invoices structure for Alif Bank
       const enhancedOrderData = {
@@ -86,105 +92,79 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
         }
       };
 
+      console.log('📋 Enhanced order data prepared');
+
       // Call Supabase Edge Function to initialize payment
-      let data, functionError;
+      console.log('🔄 Calling Edge Function: alif-payment-init');
       
-      try {
-        // Make the function call directly
-        const result = await supabase.functions.invoke(
-          'alif-payment-init',
-          {
-            body: {
-              amount,
-              currency,
-              orderData: enhancedOrderData,
-              gate
-            }
+      const { data, error: functionError } = await supabase.functions.invoke(
+        'alif-payment-init',
+        {
+          body: {
+            amount,
+            currency,
+            orderData: enhancedOrderData,
+            gate
           }
-        );
-        data = result.data;
-        functionError = result.error;
-      } catch (invokeError: any) {
-        console.error('Edge Function accessibility check failed:', invokeError);
-        
-        const errorMessage = invokeError instanceof Error ? invokeError.message : String(invokeError);
-        
-        if (errorMessage.includes('FUNCTION_NOT_DEPLOYED') || errorMessage.includes('404')) {
-          throw new Error(`❌ Edge Function не развернута
-
-🔧 Для исправления выполните следующие шаги:
-
-1️⃣ Установите Supabase CLI:
-   npm install -g supabase
-
-2️⃣ Войдите в аккаунт:
-   supabase login
-
-3️⃣ Подключите проект:
-   supabase link --project-ref ${supabaseUrl.split('//')[1].split('.')[0]}
-
-4️⃣ Разверните функции:
-   supabase functions deploy
-
-📋 Или разверните через панель Supabase:
-   Dashboard → Edge Functions → Create Function → Скопируйте код из supabase/functions/alif-payment-init/index.ts`);
-        } else if (errorMessage.includes('FUNCTION_UNAUTHORIZED') || errorMessage.includes('401')) {
-          throw new Error(`❌ Ошибка авторизации Edge Function
-
-🔧 Проверьте:
-• VITE_SUPABASE_ANON_KEY в файле .env
-• Настройки RLS для Edge Functions
-• Права доступа в Supabase Dashboard`);
-        } else if (errorMessage.includes('Failed to send a request') || errorMessage.includes('NetworkError') || errorMessage.includes('fetch')) {
-          throw new Error(`❌ Не удается подключиться к Edge Function
-
-🔧 Возможные причины:
-• Edge Function не развернута в Supabase
-• Неправильный URL в переменных окружения
-• Проблемы с сетевым подключением
-• Функция временно недоступна
-
-💡 Решение:
-1. Проверьте VITE_SUPABASE_URL в файле .env
-2. Разверните Edge Functions: supabase functions deploy
-3. Проверьте статус в Supabase Dashboard → Edge Functions`);
-        } else {
-          throw new Error(`❌ Edge Function недоступна
-
-🔧 Возможные причины:
-• Функция не развернута
-• Неправильная конфигурация переменных окружения
-• Проблемы с сетью
-
-💡 Проверьте статус в Supabase Dashboard → Edge Functions`);
         }
-      }
+      );
 
       if (functionError) {
-        console.error('Supabase function error details:', {
+        console.error('❌ Supabase function error details:', {
           message: functionError.message || functionError,
           details: functionError.details,
           hint: functionError.hint,
-          code: functionError.code
+          code: functionError.code,
+          status: functionError.status
         });
         
-        if (functionError.message?.includes('Function not found')) {
-          throw new Error(`
-            Edge Function 'alif-payment-init' не найдена.
+        // Handle specific error types
+        const errorMessage = functionError.message || String(functionError);
+        
+        if (errorMessage.includes('Function not found') || functionError.status === 404) {
+          throw new Error(`❌ Edge Function 'alif-payment-init' не найдена
 
-            Проверьте:
-            1. Функция развернута в Supabase
-            2. Имя функции указано правильно
-            3. У вас есть права доступа к функции
-          `);
+🔧 Решение:
+1. Откройте Supabase Dashboard: https://supabase.com/dashboard
+2. Перейдите в Edge Functions
+3. Создайте функцию 'alif-payment-init'
+4. Скопируйте код из файла: supabase/functions/alif-payment-init/index.ts
+5. Установите переменные окружения в настройках функции`);
+        }
+        
+        if (errorMessage.includes('Failed to send a request') || errorMessage.includes('fetch')) {
+          throw new Error(`❌ Не удается подключиться к Edge Function
+
+🔧 Возможные причины:
+• Edge Function не развернута
+• Неправильные переменные окружения
+• Проблемы с сетью
+
+💡 Проверьте:
+1. Supabase Dashboard → Edge Functions → alif-payment-init
+2. Переменные окружения в настройках функции
+3. Статус развертывания функции`);
+        }
+        
+        if (functionError.status === 401 || errorMessage.includes('unauthorized')) {
+          throw new Error(`❌ Ошибка авторизации
+
+🔧 Проверьте:
+• VITE_SUPABASE_ANON_KEY в .env файле
+• Права доступа к Edge Functions в Supabase Dashboard`);
         }
         
         throw new Error(`Edge Function Error: ${functionError.message || functionError || 'Payment initialization failed'}`);
       }
 
+      console.log('✅ Edge Function response received:', data);
+
       if (!data.success) {
+        console.error('❌ Payment initialization failed:', data.error);
         throw new Error(data.error || 'Payment initialization failed');
       }
+
+      console.log('💳 Payment URL received:', data.payment_url);
 
       // Store payment info for later reference
       sessionStorage.setItem('sakina_payment_id', data.payment_id);
@@ -192,6 +172,7 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
 
       // Redirect to Alif Bank payment page
       if (data.payment_url) {
+        console.log('🔄 Redirecting to payment page...');
         window.location.href = data.payment_url;
       } else {
         throw new Error('Payment URL not received from Alif Bank');
@@ -202,7 +183,7 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
 
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Произошла ошибка при инициализации платежа';
-      console.error('Payment initiation error:', err);
+      console.error('❌ Payment initiation error:', err);
       
       setError(errorMessage);
       onError?.(errorMessage);
