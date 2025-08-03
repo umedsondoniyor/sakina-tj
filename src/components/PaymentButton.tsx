@@ -23,6 +23,12 @@ interface PaymentButtonProps {
       type: string;
       address?: string;
     };
+    cardInfo?: {
+      cardNumber: string;
+      expiryDate: string;
+      cvv: string;
+      cardholderName: string;
+    };
     invoices?: {
       is_hold_required?: boolean;
       is_outbox_marked?: boolean;

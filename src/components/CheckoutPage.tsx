@@ -29,6 +29,12 @@ interface FormData {
   // Payment Information
   paymentMethod: 'online' | 'cash' | 'installment';
   
+  // Card Information
+  cardNumber: string;
+  expiryDate: string;
+  cvv: string;
+  cardholderName: string;
+  
   // Additional
   comments: string;
   sameAsBilling: boolean;
@@ -57,6 +63,10 @@ const CheckoutPage = () => {
     floor: '',
     intercom: '',
     paymentMethod: 'online',
+    cardNumber: '',
+    expiryDate: '',
+    cvv: '',
+    cardholderName: '',
     comments: '',
     sameAsBilling: true
   });
@@ -102,6 +112,30 @@ const CheckoutPage = () => {
       newErrors.address = 'Адрес обязателен для доставки на дом';
     }
 
+    // Card validation for online payment
+    if (formData.paymentMethod === 'online') {
+      if (!formData.cardNumber.trim()) {
+        newErrors.cardNumber = 'Номер карты обязателен';
+      } else if (formData.cardNumber.replace(/\s/g, '').length < 16) {
+        newErrors.cardNumber = 'Неверный номер карты';
+      }
+
+      if (!formData.expiryDate.trim()) {
+        newErrors.expiryDate = 'Срок действия обязателен';
+      } else if (!/^\d{2}\/\d{2}$/.test(formData.expiryDate)) {
+        newErrors.expiryDate = 'Неверный формат (MM/YY)';
+      }
+
+      if (!formData.cvv.trim()) {
+        newErrors.cvv = 'CVV обязателен';
+      } else if (formData.cvv.length < 3) {
+        newErrors.cvv = 'CVV должен содержать 3-4 цифры';
+      }
+
+      if (!formData.cardholderName.trim()) {
+        newErrors.cardholderName = 'Имя владельца карты обязательно';
+      }
+    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -251,6 +285,14 @@ const CheckoutPage = () => {
               <PaymentMethodForm
                 paymentMethod={formData.paymentMethod}
                 onPaymentMethodChange={(method) => handleInputChange('paymentMethod', method)}
+                cardDetails={{
+                  cardNumber: formData.cardNumber,
+                  expiryDate: formData.expiryDate,
+                  cvv: formData.cvv,
+                  cardholderName: formData.cardholderName
+                }}
+                onCardDetailsChange={handleInputChange}
+                cardErrors={errors}
               />
 
               {/* Submit Button */}
@@ -264,6 +306,12 @@ const CheckoutPage = () => {
                 errors={errors}
                 loading={loading}
                 onSubmit={handleSubmit}
+                cardDetails={{
+                  cardNumber: formData.cardNumber,
+                  expiryDate: formData.expiryDate,
+                  cvv: formData.cvv,
+                  cardholderName: formData.cardholderName
+                }}
               />
             </form>
           </div>

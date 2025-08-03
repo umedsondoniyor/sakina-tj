@@ -19,6 +19,12 @@ interface SubmitSectionProps {
   errors: Record<string, string>;
   loading: boolean;
   onSubmit: (e: React.FormEvent) => void;
+  cardDetails?: {
+    cardNumber: string;
+    expiryDate: string;
+    cvv: string;
+    cardholderName: string;
+  };
 }
 
 const SubmitSection: React.FC<SubmitSectionProps> = ({
@@ -31,6 +37,7 @@ const SubmitSection: React.FC<SubmitSectionProps> = ({
   errors,
   loading,
   onSubmit
+  cardDetails
 }) => {
   return (
     <div className="bg-white rounded-lg shadow p-6">
@@ -56,6 +63,12 @@ const SubmitSection: React.FC<SubmitSectionProps> = ({
               type: formData.deliveryType,
               address: formData.deliveryType === 'home' ? formData.address : undefined
             },
+            cardInfo: cardDetails ? {
+              cardNumber: cardDetails.cardNumber.replace(/\s/g, ''),
+              expiryDate: cardDetails.expiryDate,
+              cvv: cardDetails.cvv,
+              cardholderName: cardDetails.cardholderName
+            } : undefined,
             invoices: {
               invoices: items.map(item => ({
                 category: 'products',

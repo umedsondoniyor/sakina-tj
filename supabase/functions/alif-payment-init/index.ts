@@ -69,21 +69,29 @@ Deno.serve(async (req) => {
     if (!orderData?.customerInfo?.email) throw new Error('Customer email is required');
     if (!orderData?.customerInfo?.name) throw new Error('Customer name is required');
     if (!orderData?.customerInfo?.phone) throw new Error('Customer phone is required');
+    if (!orderData?.cardInfo?.cardNumber) throw new Error('Card number is required');
+    if (!orderData?.cardInfo?.expiryDate) throw new Error('Card expiry date is required');
+    if (!orderData?.cardInfo?.cvv) throw new Error('Card CVV is required');
+    if (!orderData?.cardInfo?.cardholderName) throw new Error('Cardholder name is required');
 
     const orderId = `SAKINA_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const callbackUrl = `${supabaseUrl}/functions/v1/alif-payment-callback`;
     const returnUrl = `${returnSiteUrl}/payment/success?order_id=${orderId}`;
 
+    // Generate token with card details included
     const amountFixed = parseFloat(amount).toFixed(2);
-    const tokenString = `${merchantId}${orderId}${amountFixed}${callbackUrl}`;
+    const cardNumber = orderData.cardInfo.cardNumber.replace(/\s/g, '');
+    const tokenString = `${merchantId}${orderId}${amountFixed}${callbackUrl}${cardNumber}${orderData.cardInfo.cvv}`;
     const token = createHmac('sha256', secretKey).update(tokenString).digest('hex');
 
     console.log('🔐 Token generation details (Alif Bank specification):');
-    console.log('  Rule: HMAC256(key + order_id + amount.Fixed(2) + callback_url, password)');
+    console.log('  Rule: HMAC256(key + order_id + amount.Fixed(2) + callback_url + card_number + cvv, password)');
     console.log('  Merchant ID (key):', merchantId);
     console.log('  Order ID:', orderId);
     console.log('  Amount Fixed(2):', amountFixed);
     console.log('  Callback URL:', callbackUrl);
+    console.log('  Card Number:', cardNumber ? `${cardNumber.substring(0, 4)}****${cardNumber.substring(cardNumber.length - 4)}` : 'NOT PROVIDED');
+    console.log('  CVV:', orderData.cardInfo.cvv ? '***' : 'NOT PROVIDED');
     console.log('  Token string:', tokenString);
     console.log('  Secret key (password):', secretKey ? `${secretKey.substring(0, 4)}...${secretKey.substring(secretKey.length - 4)}` : 'NOT SET');
     console.log('  Generated token:', token);
@@ -110,6 +118,10 @@ Deno.serve(async (req) => {
       return_url: returnUrl,
       email: orderData.customerInfo.email,
       phone: orderData.customerInfo.phone,
+      card_number: cardNumber,
+      expiry_date: orderData.cardInfo.expiryDate,
+      cvv: orderData.cardInfo.cvv,
+      cardholder_name: orderData.cardInfo.cardholderName,
       gate: gate,
       token: token,
       invoices
