@@ -67,9 +67,10 @@ Deno.serve(async (req) => {
     console.log('  Order ID:', orderId);
     console.log('  Amount (fixed 2):', amountFixed);
     console.log('  Callback URL:', callbackUrl);
-    console.log('  Token string:', tokenString);
-    console.log('  Secret key (first 10 chars):', secretKey?.substring(0, 10) + '...');
+    console.log('  Token string for HMAC:', tokenString);
+    console.log('  Secret key length:', secretKey?.length);
     console.log('  Generated token:', token);
+    console.log('  Expected format: merchantId + orderId + amount.toFixed(2) + callbackUrl');
 
     const invoices = orderData?.invoices?.invoices?.length > 0
       ? orderData.invoices
