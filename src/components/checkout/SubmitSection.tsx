@@ -41,7 +41,7 @@ const SubmitSection: React.FC<SubmitSectionProps> = ({
 }) => {
   return (
     <div className="bg-white rounded-lg shadow p-6">
-      {paymentMethod === 'online' ? (
+      {paymentMethod === 'online' && cardDetails ? (
         <PaymentButton
           amount={calculateFinalTotal()}
           currency="TJS"
@@ -86,6 +86,17 @@ const SubmitSection: React.FC<SubmitSectionProps> = ({
         >
           Оплатить онлайн
         </PaymentButton>
+      ) : paymentMethod === 'online' ? (
+        <div className="text-center py-4">
+          <p className="text-gray-600 mb-4">Заполните данные карты выше для продолжения</p>
+          <button
+            type="button"
+            disabled={true}
+            className="w-full bg-gray-400 text-white py-4 rounded-lg font-semibold cursor-not-allowed"
+          >
+            Введите данные карты
+          </button>
+        </div>
       ) : (
         <button
           type="submit"

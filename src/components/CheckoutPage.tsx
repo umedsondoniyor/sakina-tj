@@ -114,25 +114,25 @@ const CheckoutPage = () => {
 
     // Card validation for online payment
     if (formData.paymentMethod === 'online') {
-      if (!formData.cardNumber.trim()) {
+      if (!formData.cardNumber || !formData.cardNumber.trim()) {
         newErrors.cardNumber = 'Номер карты обязателен';
-      } else if (formData.cardNumber.replace(/\s/g, '').length < 16) {
+      } else if (formData.cardNumber.replace(/\s/g, '').length !== 16) {
         newErrors.cardNumber = 'Неверный номер карты';
       }
 
-      if (!formData.expiryDate.trim()) {
+      if (!formData.expiryDate || !formData.expiryDate.trim()) {
         newErrors.expiryDate = 'Срок действия обязателен';
       } else if (!/^\d{2}\/\d{2}$/.test(formData.expiryDate)) {
         newErrors.expiryDate = 'Неверный формат (MM/YY)';
       }
 
-      if (!formData.cvv.trim()) {
+      if (!formData.cvv || !formData.cvv.trim()) {
         newErrors.cvv = 'CVV обязателен';
-      } else if (formData.cvv.length < 3) {
+      } else if (formData.cvv.length < 3 || formData.cvv.length > 4) {
         newErrors.cvv = 'CVV должен содержать 3-4 цифры';
       }
 
-      if (!formData.cardholderName.trim()) {
+      if (!formData.cardholderName || !formData.cardholderName.trim()) {
         newErrors.cardholderName = 'Имя владельца карты обязательно';
       }
     }

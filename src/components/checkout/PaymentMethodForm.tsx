@@ -128,7 +128,7 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
       </div>
 
       {/* Card Details Form - Show only when online payment is selected */}
-      {paymentMethod === 'online' && (
+      {paymentMethod === 'online' && onCardDetailsChange && (
         <div className="mt-6 p-6 bg-gray-50 rounded-lg border">
           <div className="flex items-center mb-4">
             <Lock className="mr-2 text-teal-600" size={20} />
@@ -212,7 +212,7 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
           <div className="mt-4 p-3 bg-blue-50 rounded-lg">
             <div className="flex items-center text-blue-700">
               <Lock size={16} className="mr-2" />
-              <span className="text-sm">Ваши данные защищены SSL-шифрованием</span>
+              <span className="text-sm">Ваши данные защищены SSL-шифрованием. Оплата будет произведена после подтверждения заказа.</span>
             </div>
           </div>
         </div>
