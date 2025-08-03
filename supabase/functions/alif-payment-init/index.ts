@@ -98,7 +98,7 @@ Deno.serve(async (req) => {
         };
 
     const paymentData = {
-      merchant_id: merchantId,
+      key: merchantId,
       order_id: orderId,
       amount: parseFloat(amountFixed),
       callback_url: callbackUrl,
@@ -106,7 +106,6 @@ Deno.serve(async (req) => {
       email: orderData.customerInfo.email,
       phone: orderData.customerInfo.phone,
       gate: gate,
-      info: `Заказ в магазине Sakina #${orderId}`,
       token: token,
       invoices
     };
