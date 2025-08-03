@@ -20,11 +20,9 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Parse request body first
     const requestBody = await req.json();
     console.log('📥 Received payment request:', requestBody);
 
-    // Handle test requests for accessibility check
     if (requestBody.test === true) {
       return new Response(JSON.stringify({
         success: true,
@@ -38,7 +36,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Get Alif Bank credentials from environment
     const alifMerchantId = Deno.env.get('ALIF_MERCHANT_ID');
     const alifSecretKey = Deno.env.get('ALIF_SECRET_KEY');
     const alifApiUrl = Deno.env.get('ALIF_API_URL');
@@ -52,13 +49,11 @@ Deno.serve(async (req) => {
       siteUrl: siteUrl ? 'SET' : 'MISSING'
     });
 
-    // Use fallback values if environment variables are not set
     const merchantId = alifMerchantId || '656374';
     const secretKey = alifSecretKey || 'QipCWXJGf39yJA77W5np';
     const apiUrl = alifApiUrl || 'https://test-web.alif.tj';
     const returnSiteUrl = siteUrl || 'https://sakina-tj.netlify.app';
 
-    // Destructure payment parameters from the parsed body
     const { amount, currency = 'TJS', gate = 'korti_milli', orderData } = requestBody;
 
     console.log('📋 Parsed request parameters:', {
@@ -70,34 +65,16 @@ Deno.serve(async (req) => {
       itemsCount: orderData?.items?.length
     });
 
-    // Validate request
-    if (!amount || amount <= 0) {
-      console.error('❌ Validation failed: Invalid amount:', amount);
-      throw new Error('Invalid amount');
-    }
-    if (!orderData?.customerInfo?.email) {
-      console.error('❌ Validation failed: Missing customer email');
-      throw new Error('Customer email is required');
-    }
-    if (!orderData?.customerInfo?.name) {
-      console.error('❌ Validation failed: Missing customer name');
-      throw new Error('Customer name is required');
-    }
-    if (!orderData?.customerInfo?.phone) {
-      console.error('❌ Validation failed: Missing customer phone');
-      throw new Error('Customer phone is required');
-    }
+    if (!amount || amount <= 0) throw new Error('Invalid amount');
+    if (!orderData?.customerInfo?.email) throw new Error('Customer email is required');
+    if (!orderData?.customerInfo?.name) throw new Error('Customer name is required');
+    if (!orderData?.customerInfo?.phone) throw new Error('Customer phone is required');
 
     console.log('✅ All validations passed');
 
-    // Generate unique order ID
     const orderId = `SAKINA_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-    // Prepare callback URL
     const callbackUrl = `${supabaseUrl}/functions/v1/alif-payment-callback`;
     const returnUrl = `${returnSiteUrl}/payment/success?order_id=${orderId}`;
-
-    // Generate token using Alif Bank's formula: HMAC256(key + order_id + amount.Fixed(2) + callback_url, password)
     const amountFixed = amount.toFixed(2);
     const tokenString = `${merchantId}${orderId}${amountFixed}${callbackUrl}`;
     const token = createHmac('sha256', secretKey).update(tokenString).digest('hex');
@@ -107,11 +84,10 @@ Deno.serve(async (req) => {
       orderId,
       amountFixed,
       callbackUrl,
-      tokenString: `${merchantId}${orderId}${amountFixed}${callbackUrl}`,
+      tokenString,
       token: token.substring(0, 8) + '...'
     });
 
-    // Prepare payment data exactly as per Alif Bank API specification
     const paymentData = {
       key: merchantId,
       order_id: orderId,
@@ -137,11 +113,9 @@ Deno.serve(async (req) => {
       }
     });
 
-    // Make request to Alif Bank with exact headers as per documentation
     console.log('🌐 Making request to:', `${apiUrl}/v2/`);
     console.log('📋 Request headers:', {
       'Content-Type': 'application/json',
-      'gate': gate,
       'isMarketPlace': 'false'
     });
 
@@ -149,7 +123,6 @@ Deno.serve(async (req) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'gate': gate,
         'isMarketPlace': 'false'
       },
       body: JSON.stringify(paymentData)
@@ -171,8 +144,7 @@ Deno.serve(async (req) => {
           key: '[HIDDEN]'
         }
       });
-      
-      // Return detailed error for debugging
+
       return new Response(JSON.stringify({
         success: false,
         error: `Alif Bank API error: ${alifResponse.status} - ${errorText}`,
@@ -201,7 +173,7 @@ Deno.serve(async (req) => {
 
     if (alifData.code !== 0) {
       console.error('❌ Alif Bank business logic error:', alifData);
-      
+
       return new Response(JSON.stringify({
         success: false,
         error: `Alif Bank error: ${alifData.message || 'Unknown error'}`,
@@ -218,7 +190,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Store payment record in database
     const { data: payment, error: dbError } = await supabaseClient
       .from('payments')
       .insert({
@@ -234,7 +205,7 @@ Deno.serve(async (req) => {
 
     if (dbError) {
       console.error('❌ Database error:', dbError);
-      
+
       return new Response(JSON.stringify({
         success: false,
         error: 'Failed to create payment record',
@@ -252,7 +223,6 @@ Deno.serve(async (req) => {
 
     console.log('✅ Payment record created:', payment.id);
 
-    // Return success response with payment URL
     const response = {
       success: true,
       payment_id: payment.id,
