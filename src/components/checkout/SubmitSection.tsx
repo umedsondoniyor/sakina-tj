@@ -36,7 +36,7 @@ const SubmitSection: React.FC<SubmitSectionProps> = ({
   onPaymentError,
   errors,
   loading,
-  onSubmit
+  onSubmit,
   cardDetails
 }) => {
   return (
