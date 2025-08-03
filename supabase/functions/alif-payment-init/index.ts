@@ -61,19 +61,34 @@ Deno.serve(async (req) => {
     // Destructure payment parameters from the parsed body
     const { amount, currency = 'TJS', gate = 'korti_milli', orderData } = requestBody;
 
+    console.log('📋 Parsed request parameters:', {
+      amount,
+      currency,
+      gate,
+      orderDataKeys: Object.keys(orderData || {}),
+      customerInfo: orderData?.customerInfo,
+      itemsCount: orderData?.items?.length
+    });
+
     // Validate request
     if (!amount || amount <= 0) {
+      console.error('❌ Validation failed: Invalid amount:', amount);
       throw new Error('Invalid amount');
     }
     if (!orderData?.customerInfo?.email) {
+      console.error('❌ Validation failed: Missing customer email');
       throw new Error('Customer email is required');
     }
     if (!orderData?.customerInfo?.name) {
+      console.error('❌ Validation failed: Missing customer name');
       throw new Error('Customer name is required');
     }
     if (!orderData?.customerInfo?.phone) {
+      console.error('❌ Validation failed: Missing customer phone');
       throw new Error('Customer phone is required');
     }
+
+    console.log('✅ All validations passed');
 
     // Generate unique order ID
     const orderId = `SAKINA_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -120,10 +135,21 @@ Deno.serve(async (req) => {
     console.log('📤 Sending payment request to Alif Bank:', {
       ...paymentData,
       token: '[HIDDEN]',
-      key: '[HIDDEN]'
+      key: '[HIDDEN]',
+      invoices: {
+        ...paymentData.invoices,
+        invoicesCount: paymentData.invoices.invoices.length
+      }
     });
 
     // Make request to Alif Bank with exact headers as per documentation
+    console.log('🌐 Making request to:', `${apiUrl}/v2/`);
+    console.log('📋 Request headers:', {
+      'Content-Type': 'application/json',
+      'gate': gate,
+      'isMarketPlace': 'false'
+    });
+
     const alifResponse = await fetch(`${apiUrl}/v2/`, {
       method: 'POST',
       headers: {
@@ -135,15 +161,44 @@ Deno.serve(async (req) => {
     });
 
     console.log('📥 Alif Bank response status:', alifResponse.status);
+    console.log('📥 Alif Bank response headers:', Object.fromEntries(alifResponse.headers.entries()));
 
     if (!alifResponse.ok) {
       const errorText = await alifResponse.text();
       console.error('❌ Alif Bank API error:', {
         status: alifResponse.status,
         statusText: alifResponse.statusText,
-        body: errorText
+        body: errorText,
+        url: `${apiUrl}/v2/`,
+        requestData: {
+          ...paymentData,
+          token: '[HIDDEN]',
+          key: '[HIDDEN]'
+        }
       });
-      throw new Error(`Alif Bank API error: ${alifResponse.status} - ${errorText}`);
+      
+      // Return detailed error for debugging
+      return new Response(JSON.stringify({
+        success: false,
+        error: `Alif Bank API error: ${alifResponse.status} - ${errorText}`,
+        debug: {
+          status: alifResponse.status,
+          statusText: alifResponse.statusText,
+          responseBody: errorText,
+          requestUrl: `${apiUrl}/v2/`,
+          environmentCheck: {
+            alifMerchantId: alifMerchantId ? 'SET' : 'MISSING',
+            alifSecretKey: alifSecretKey ? 'SET' : 'MISSING',
+            alifApiUrl: alifApiUrl ? 'SET' : 'MISSING'
+          }
+        }
+      }), {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        },
+        status: 400
+      });
     }
 
     const alifData = await alifResponse.json();
@@ -151,7 +206,21 @@ Deno.serve(async (req) => {
 
     if (alifData.code !== 0) {
       console.error('❌ Alif Bank business logic error:', alifData);
-      throw new Error(`Alif Bank error: ${alifData.message || 'Unknown error'}`);
+      
+      return new Response(JSON.stringify({
+        success: false,
+        error: `Alif Bank error: ${alifData.message || 'Unknown error'}`,
+        debug: {
+          alifResponse: alifData,
+          code: alifData.code
+        }
+      }), {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        },
+        status: 400
+      });
     }
 
     // Store payment record in database
@@ -170,7 +239,20 @@ Deno.serve(async (req) => {
 
     if (dbError) {
       console.error('❌ Database error:', dbError);
-      throw new Error('Failed to create payment record');
+      
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Failed to create payment record',
+        debug: {
+          dbError: dbError
+        }
+      }), {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        },
+        status: 500
+      });
     }
 
     console.log('✅ Payment record created:', payment.id);
@@ -199,7 +281,12 @@ Deno.serve(async (req) => {
 
     return new Response(JSON.stringify({
       success: false,
-      error: error instanceof Error ? error.message : 'Payment init failed'
+      error: error instanceof Error ? error.message : 'Payment init failed',
+      debug: {
+        errorType: error.constructor.name,
+        errorMessage: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      }
     }), {
       headers: {
         ...corsHeaders,
