@@ -138,8 +138,22 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
           status: functionError.status
         });
         
+        // Try to get more detailed error information
+        let detailedError = functionError.message || String(functionError);
+        
+        // If we have response data, try to parse it for more details
+        if (data && typeof data === 'object') {
+          console.log('📋 Edge Function response data:', data);
+          if (data.error) {
+            detailedError = data.error;
+          }
+          if (data.debug) {
+            console.log('🔍 Debug information:', data.debug);
+          }
+        }
+        
         // Handle specific error types
-        const errorMessage = functionError.message || String(functionError);
+        const errorMessage = detailedError;
         
         if (errorMessage.includes('Function not found') || functionError.status === 404) {
           throw new Error(`❌ Edge Function 'alif-payment-init' не найдена
