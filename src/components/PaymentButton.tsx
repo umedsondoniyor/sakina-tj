@@ -123,11 +123,12 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
           'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
           'Content-Type': 'application/json',
         },
-        body: {
-          amount: orderData.amount,
-          currency: orderData.currency,
+        body: JSON.stringify({
+          amount: amount,
+          currency: currency,
+          gate: gate,
           orderData: enhancedOrderData
-        }
+        })
       });
 
       const responseText = await response.text();
