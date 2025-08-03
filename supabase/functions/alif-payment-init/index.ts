@@ -125,10 +125,6 @@ Deno.serve(async (req) => {
       info_hash: "",
       token: token,
       invoices: orderData.invoices,
-      mpTerminalInfo: [] // Empty array for non-marketplace payments
-    };
-
-    console.log('📤 Sending payment request to Alif Bank:', {
       ...paymentData,
       token: '[HIDDEN]',
       key: '[HIDDEN]',
