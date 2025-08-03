@@ -16,7 +16,7 @@ interface PaymentMethodFormProps {
 
 const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
   paymentMethod,
-  onPaymentMethodChange
+  onPaymentMethodChange,
   cardDetails,
   onCardDetailsChange,
   cardErrors = {}
