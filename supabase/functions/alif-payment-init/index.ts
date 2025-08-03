@@ -42,6 +42,12 @@ Deno.serve(async (req) => {
     const siteUrl = Deno.env.get('SITE_URL');
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
 
+    console.log('🔧 Environment variables check:');
+    console.log('  ALIF_MERCHANT_ID:', alifMerchantId ? 'SET' : 'NOT SET');
+    console.log('  ALIF_SECRET_KEY:', alifSecretKey ? 'SET' : 'NOT SET');
+    console.log('  ALIF_API_URL:', alifApiUrl ? 'SET' : 'NOT SET');
+    console.log('  SITE_URL:', siteUrl ? 'SET' : 'NOT SET');
+
     if (!alifMerchantId) {
       throw new Error('ALIF_MERCHANT_ID environment variable is not set');
     }
@@ -72,17 +78,16 @@ Deno.serve(async (req) => {
     const tokenString = `${merchantId}${orderId}${amountFixed}${callbackUrl}`;
     const token = createHmac('sha256', secretKey).update(tokenString).digest('hex');
 
-    console.log('🔐 Token generation details:');
-    console.log('  Merchant ID:', merchantId);
+    console.log('🔐 Token generation details (Alif Bank specification):');
+    console.log('  Rule: HMAC256(key + order_id + amount.Fixed(2) + callback_url, password)');
+    console.log('  Merchant ID (key):', merchantId);
     console.log('  Order ID:', orderId);
-    console.log('  Amount (fixed 2):', amountFixed);
+    console.log('  Amount Fixed(2):', amountFixed);
     console.log('  Callback URL:', callbackUrl);
-    console.log('  Token string for HMAC (merchant+order+amount+secret):', tokenString);
-    console.log('  Secret key:', secretKey);
+    console.log('  Token string:', tokenString);
+    console.log('  Secret key (password):', secretKey ? `${secretKey.substring(0, 4)}...${secretKey.substring(secretKey.length - 4)}` : 'NOT SET');
     console.log('  Generated token:', token);
-    console.log('  Expected format: merchant_id + order_id + amount.toFixed(2) + secret_key');
     console.log('  Token string length:', tokenString.length);
-    console.log('  Token string bytes:', new TextEncoder().encode(tokenString));
 
     const invoices = orderData?.invoices?.invoices?.length > 0
       ? orderData.invoices
