@@ -42,9 +42,9 @@ Deno.serve(async (req) => {
     const siteUrl = Deno.env.get('SITE_URL');
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
 
-    const merchantId = alifMerchantId || '656374';
-    const secretKey = alifSecretKey || 'QipCWXJGf39yJA77W5np';
-    const apiUrl = alifApiUrl || 'https://test-web.alif.tj';
+    const merchantId = '656374';
+    const secretKey = 'QipCWXJGf39yJA77W5np';
+    const apiUrl = 'https://test-web.alif.tj';
     const returnSiteUrl = siteUrl || 'https://sakina-tj.netlify.app';
 
     const { amount, currency = 'TJS', gate = 'korti_milli', orderData } = requestBody;
