@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
     const returnUrl = `${returnSiteUrl}/payment/success?order_id=${orderId}`;
 
     const amountFixed = parseFloat(amount).toFixed(2);
-    const tokenString = `${merchantId}${orderId}${amountFixed}${secretKey}`;
+    const tokenString = `${merchantId}${orderId}${amountFixed}${callbackUrl}`;
     const token = createHmac('sha256', secretKey).update(tokenString).digest('hex');
 
     console.log('🔐 Token generation details:');
