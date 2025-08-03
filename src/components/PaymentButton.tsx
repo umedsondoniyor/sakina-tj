@@ -117,104 +117,44 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
 
       console.log(JSON.stringify(enhancedOrderData));
       
-      const { data, error: functionError } = await supabase.functions.invoke(
-        'alif-payment-init',
-        {
-          body: {
-            amount,
-            currency,
-            orderData: enhancedOrderData,
-            gate
-          }
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/alif-payment-init`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: {
+          amount: orderData.amount,
+          currency: orderData.currency,
+          orderData: enhancedOrderData
         }
-      );
+      });
 
-      if (functionError) {
-        console.error('❌ Supabase function error details:', {
-          message: functionError.message || functionError,
-          details: functionError.details,
-          hint: functionError.hint,
-          code: functionError.code,
-          status: functionError.status
-        });
-        
-        // Try to get the actual response from the Edge Function
-        let detailedError = functionError.message || String(functionError);
-        
-        // The Edge Function might have returned error details in the response body
-        // even though Supabase reports it as an error due to non-2xx status
+      const responseText = await response.text();
+      console.log('📄 Raw response:', responseText);
+      
+      if (!response.ok) {
+        let errorDetails;
         try {
-          // Make a direct fetch to get the actual response
-          const directResponse = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/alif-payment-init`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              amount,
-              currency,
-              orderData: enhancedOrderData,
-              gate
-            })
-          });
-          
-          const responseText = await directResponse.text();
-          console.log('📋 Direct Edge Function response:', responseText);
-          
-          try {
-            const responseData = JSON.parse(responseText);
-            if (responseData.error) {
-              detailedError = responseData.error;
-            }
-            if (responseData.debug) {
-              console.log('🔍 Debug information:', responseData.debug);
-            }
-          } catch (parseError) {
-            console.log('📋 Raw response (not JSON):', responseText);
-            detailedError = responseText || detailedError;
-          }
-        } catch (directFetchError) {
-          console.error('❌ Direct fetch also failed:', directFetchError);
+          errorDetails = JSON.parse(responseText);
+          console.error('❌ Edge Function error details:', errorDetails);
+          throw new Error(`Edge Function Error: ${errorDetails.error || errorDetails.message || 'Unknown error'}`);
+        } catch (parseError) {
+          console.error('❌ Failed to parse error response:', responseText);
+          throw new Error(`Edge Function Error: ${response.status} - ${responseText}`);
         }
-        
-        // Handle specific error types
-        const errorMessage = detailedError;
-        
-        if (errorMessage.includes('Function not found') || functionError.status === 404) {
-          throw new Error(`❌ Edge Function 'alif-payment-init' не найдена
+      }
 
-🔧 Решение:
-1. Откройте Supabase Dashboard: https://supabase.com/dashboard
-2. Перейдите в Edge Functions
-3. Создайте функцию 'alif-payment-init'
-4. Скопируйте код из файла: supabase/functions/alif-payment-init/index.ts
-5. Установите переменные окружения в настройках функции`);
-        }
-        
-        if (errorMessage.includes('Failed to send a request') || errorMessage.includes('fetch')) {
-          throw new Error(`❌ Не удается подключиться к Edge Function
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('❌ Failed to parse success response:', responseText);
+        throw new Error('Invalid response format from payment service');
+      }
 
-🔧 Возможные причины:
-• Edge Function не развернута
-• Неправильные переменные окружения
-• Проблемы с сетью
-
-💡 Проверьте:
-1. Supabase Dashboard → Edge Functions → alif-payment-init
-2. Переменные окружения в настройках функции
-3. Статус развертывания функции`);
-        }
-        
-        if (functionError.status === 401 || errorMessage.includes('unauthorized')) {
-          throw new Error(`❌ Ошибка авторизации
-
-🔧 Проверьте:
-• VITE_SUPABASE_ANON_KEY в .env файле
-• Права доступа к Edge Functions в Supabase Dashboard`);
-        }
-        
-        throw new Error(`Edge Function Error: ${functionError.message || functionError || 'Payment initialization failed'}`);
+      if (!data.success) {
+        throw new Error(`Payment failed: ${data.error || 'Unknown error'}`);
       }
 
       console.log('✅ Edge Function response received:', data);
