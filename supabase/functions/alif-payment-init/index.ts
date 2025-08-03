@@ -42,9 +42,19 @@ Deno.serve(async (req) => {
     const siteUrl = Deno.env.get('SITE_URL');
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
 
-    const merchantId = '656374';
-    const secretKey = 'QipCWXJGf39yJA77W5np';
-    const apiUrl = 'https://test-web.alif.tj';
+    if (!alifMerchantId) {
+      throw new Error('ALIF_MERCHANT_ID environment variable is not set');
+    }
+    if (!alifSecretKey) {
+      throw new Error('ALIF_SECRET_KEY environment variable is not set');
+    }
+    if (!alifApiUrl) {
+      throw new Error('ALIF_API_URL environment variable is not set');
+    }
+
+    const merchantId = alifMerchantId;
+    const secretKey = alifSecretKey;
+    const apiUrl = alifApiUrl;
     const returnSiteUrl = siteUrl || 'https://sakina-tj.netlify.app';
 
     const { amount, currency = 'TJS', gate = 'korti_milli', orderData } = requestBody;
