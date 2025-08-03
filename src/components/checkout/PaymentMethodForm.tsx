@@ -1,5 +1,5 @@
 import React from 'react';
-import { CreditCard, Home, Info, Lock } from 'lucide-react';
+import { CreditCard, Home, Info, Lock, AlertCircle } from 'lucide-react';
 
 interface PaymentMethodFormProps {
   paymentMethod: 'online' | 'cash' | 'installment';
@@ -64,6 +64,7 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
       onCardDetailsChange?.('cvv', v);
     }
   };
+
   return (
     <div className="bg-white rounded-lg shadow p-6">
       <h2 className="text-xl font-semibold mb-6 flex items-center">
@@ -71,7 +72,7 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
         Способ оплаты
       </h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         {/* Online Payment */}
         <div className={`border rounded-lg p-4 cursor-pointer transition-colors ${
           paymentMethod === 'online' ? 'border-teal-500 bg-teal-50' : 'border-gray-300'
@@ -85,7 +86,7 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
               className="mb-2"
             />
             <h3 className="font-medium">Оплата онлайн</h3>
-            <p className="text-sm text-gray-600">Visa, Mastercard, МИР, СБП и Халва</p>
+            <p className="text-sm text-gray-600">Visa, Mastercard, МИР</p>
           </div>
         </div>
 
@@ -129,7 +130,7 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
 
       {/* Card Details Form - Show only when online payment is selected */}
       {paymentMethod === 'online' && onCardDetailsChange && (
-        <div className="mt-6 p-6 bg-gray-50 rounded-lg border">
+        <div className="p-6 bg-gray-50 rounded-lg border">
           <div className="flex items-center mb-4">
             <Lock className="mr-2 text-teal-600" size={20} />
             <h3 className="font-medium">Данные карты</h3>
@@ -150,7 +151,10 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
                 }`}
               />
               {cardErrors.cardNumber && (
-                <p className="mt-1 text-sm text-red-600">{cardErrors.cardNumber}</p>
+                <p className="mt-1 text-sm text-red-600 flex items-center">
+                  <AlertCircle size={16} className="mr-1" />
+                  {cardErrors.cardNumber}
+                </p>
               )}
             </div>
 
@@ -168,7 +172,10 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
                 }`}
               />
               {cardErrors.expiryDate && (
-                <p className="mt-1 text-sm text-red-600">{cardErrors.expiryDate}</p>
+                <p className="mt-1 text-sm text-red-600 flex items-center">
+                  <AlertCircle size={16} className="mr-1" />
+                  {cardErrors.expiryDate}
+                </p>
               )}
             </div>
 
@@ -186,7 +193,10 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
                 }`}
               />
               {cardErrors.cvv && (
-                <p className="mt-1 text-sm text-red-600">{cardErrors.cvv}</p>
+                <p className="mt-1 text-sm text-red-600 flex items-center">
+                  <AlertCircle size={16} className="mr-1" />
+                  {cardErrors.cvv}
+                </p>
               )}
             </div>
 
@@ -204,7 +214,10 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
                 }`}
               />
               {cardErrors.cardholderName && (
-                <p className="mt-1 text-sm text-red-600">{cardErrors.cardholderName}</p>
+                <p className="mt-1 text-sm text-red-600 flex items-center">
+                  <AlertCircle size={16} className="mr-1" />
+                  {cardErrors.cardholderName}
+                </p>
               )}
             </div>
           </div>
