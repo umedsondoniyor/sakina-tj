@@ -114,6 +114,8 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
 
       // Call Supabase Edge Function to initialize payment
       console.log('🔄 Calling Edge Function: alif-payment-init');
+
+      console.log(JSON.stringify(enhancedOrderData));
       
       const { data, error: functionError } = await supabase.functions.invoke(
         'alif-payment-init',
