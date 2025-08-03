@@ -124,7 +124,10 @@ Deno.serve(async (req) => {
       info: `Заказ в магазине Sakina #${orderId}`,
       info_hash: "",
       token: token,
-      invoices: orderData.invoices,
+      invoices: orderData.invoices
+    };
+
+    console.log('📋 Payment data prepared:', {
       ...paymentData,
       token: '[HIDDEN]',
       key: '[HIDDEN]',
