@@ -58,9 +58,18 @@ Deno.serve(async (req) => {
     const callbackUrl = `${supabaseUrl}/functions/v1/alif-payment-callback`;
     const returnUrl = `${returnSiteUrl}/payment/success?order_id=${orderId}`;
 
-    const amountFixed = amount.toFixed(2);
+    const amountFixed = parseFloat(amount).toFixed(2);
     const tokenString = `${merchantId}${orderId}${amountFixed}${callbackUrl}`;
     const token = createHmac('sha256', secretKey).update(tokenString).digest('hex');
+
+    console.log('🔐 Token generation details:');
+    console.log('  Merchant ID:', merchantId);
+    console.log('  Order ID:', orderId);
+    console.log('  Amount (fixed 2):', amountFixed);
+    console.log('  Callback URL:', callbackUrl);
+    console.log('  Token string:', tokenString);
+    console.log('  Secret key (first 10 chars):', secretKey?.substring(0, 10) + '...');
+    console.log('  Generated token:', token);
 
     const invoices = orderData?.invoices?.invoices?.length > 0
       ? orderData.invoices
