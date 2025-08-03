@@ -1,20 +1,28 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.39.7';
 import { createHmac } from 'node:crypto';
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-application-name',
   'Access-Control-Allow-Methods': 'POST, OPTIONS'
 };
-Deno.serve(async (req)=>{
+
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', {
       headers: corsHeaders
     });
   }
+
   try {
-    const supabaseClient = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
     const requestBody = await req.json();
     console.log('📥 Received payment request:', requestBody);
+
     if (requestBody.test === true) {
       return new Response(JSON.stringify({
         success: true,
@@ -27,26 +35,46 @@ Deno.serve(async (req)=>{
         status: 200
       });
     }
+
     const alifMerchantId = Deno.env.get('ALIF_MERCHANT_ID');
     const alifSecretKey = Deno.env.get('ALIF_SECRET_KEY');
     const alifApiUrl = Deno.env.get('ALIF_API_URL');
     const siteUrl = Deno.env.get('SITE_URL');
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
+
     const merchantId = alifMerchantId || '656374';
     const secretKey = alifSecretKey || 'QipCWXJGf39yJA77W5np';
     const apiUrl = alifApiUrl || 'https://test-web.alif.tj';
     const returnSiteUrl = siteUrl || 'https://sakina-tj.netlify.app';
+
     const { amount, currency = 'TJS', gate = 'korti_milli', orderData } = requestBody;
+
     if (!amount || amount <= 0) throw new Error('Invalid amount');
     if (!orderData?.customerInfo?.email) throw new Error('Customer email is required');
     if (!orderData?.customerInfo?.name) throw new Error('Customer name is required');
     if (!orderData?.customerInfo?.phone) throw new Error('Customer phone is required');
+
     const orderId = `SAKINA_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const callbackUrl = `${supabaseUrl}/functions/v1/alif-payment-callback`;
     const returnUrl = `${returnSiteUrl}/payment/success?order_id=${orderId}`;
+
     const amountFixed = amount.toFixed(2);
     const tokenString = `${merchantId}${orderId}${amountFixed}${callbackUrl}`;
     const token = createHmac('sha256', secretKey).update(tokenString).digest('hex');
+
+    const invoices = orderData?.invoices?.invoices?.length > 0
+      ? orderData.invoices
+      : {
+          invoices: orderData.items.map((item: any) => ({
+            category: item.category || 'products',
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity
+          })),
+          is_hold_required: false,
+          is_outbox_marked: false
+        };
+
     const paymentData = {
       key: merchantId,
       order_id: orderId,
@@ -59,17 +87,9 @@ Deno.serve(async (req)=>{
       info: `Заказ в магазине Sakina #${orderId}`,
       info_hash: '',
       token: token,
-      invoices: orderData.invoices || {
-        invoices: orderData.items.map((item)=>({
-            category: item.category || 'products',
-            name: item.name,
-            price: item.price,
-            quantity: item.quantity
-          })),
-        is_hold_required: false,
-        is_outbox_marked: false
-      }
+      invoices
     };
+
     const alifResponse = await fetch(`${apiUrl}/v2/`, {
       method: 'POST',
       headers: {
@@ -79,6 +99,7 @@ Deno.serve(async (req)=>{
       },
       body: JSON.stringify(paymentData)
     });
+
     if (!alifResponse.ok) {
       const errorText = await alifResponse.text();
       return new Response(JSON.stringify({
@@ -92,6 +113,7 @@ Deno.serve(async (req)=>{
         status: 400
       });
     }
+
     const alifData = await alifResponse.json();
     if (alifData.code !== 0) {
       return new Response(JSON.stringify({
@@ -105,14 +127,20 @@ Deno.serve(async (req)=>{
         status: 400
       });
     }
-    const { data: payment, error: dbError } = await supabaseClient.from('payments').insert({
-      alif_order_id: orderId,
-      amount: amount,
-      currency: currency,
-      status: 'pending',
-      order_data: orderData,
-      user_id: null
-    }).select().single();
+
+    const { data: payment, error: dbError } = await supabaseClient
+      .from('payments')
+      .insert({
+        alif_order_id: orderId,
+        amount: amount,
+        currency: currency,
+        status: 'pending',
+        order_data: orderData,
+        user_id: null
+      })
+      .select()
+      .single();
+
     if (dbError) {
       return new Response(JSON.stringify({
         success: false,
@@ -125,6 +153,7 @@ Deno.serve(async (req)=>{
         status: 500
       });
     }
+
     const response = {
       success: true,
       payment_id: payment.id,
@@ -132,6 +161,7 @@ Deno.serve(async (req)=>{
       payment_url: alifData.url,
       message: alifData.message
     };
+
     return new Response(JSON.stringify(response), {
       headers: {
         ...corsHeaders,
@@ -139,6 +169,7 @@ Deno.serve(async (req)=>{
       },
       status: 200
     });
+
   } catch (error) {
     return new Response(JSON.stringify({
       success: false,
