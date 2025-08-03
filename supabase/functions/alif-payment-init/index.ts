@@ -68,8 +68,8 @@ Deno.serve(async (req) => {
           invoices: orderData.items.map((item: any) => ({
             category: item.category || 'products',
             name: item.name,
-            price: item.price,
-            quantity: item.quantity
+            price: Number(item.price),
+            quantity: Number(item.quantity)
           })),
           is_hold_required: false,
           is_outbox_marked: false
@@ -90,6 +90,8 @@ Deno.serve(async (req) => {
       invoices
     };
 
+    console.log("🛒 Payload to Alif:", JSON.stringify(paymentData, null, 2));
+
     const alifResponse = await fetch(`${apiUrl}/v2/`, {
       method: 'POST',
       headers: {
@@ -102,6 +104,7 @@ Deno.serve(async (req) => {
 
     if (!alifResponse.ok) {
       const errorText = await alifResponse.text();
+      console.error("❌ Alif Error Raw:", errorText);
       return new Response(JSON.stringify({
         success: false,
         error: `Alif Bank API error: ${alifResponse.status} - ${errorText}`
@@ -171,6 +174,7 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
+    console.error('❌ Uncaught error:', error);
     return new Response(JSON.stringify({
       success: false,
       error: error instanceof Error ? error.message : 'Payment init failed'
