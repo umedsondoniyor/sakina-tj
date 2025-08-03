@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
     const returnUrl = `${returnSiteUrl}/payment/success?order_id=${orderId}`;
 
     const amountFixed = parseFloat(amount).toFixed(2);
-    const tokenString = `${merchantId}${orderId}${amountFixed}${callbackUrl}`;
+    const tokenString = `${merchantId}${orderId}${amountFixed}${secretKey}`;
     const token = createHmac('sha256', secretKey).update(tokenString).digest('hex');
 
     console.log('🔐 Token generation details:');
@@ -77,10 +77,10 @@ Deno.serve(async (req) => {
     console.log('  Order ID:', orderId);
     console.log('  Amount (fixed 2):', amountFixed);
     console.log('  Callback URL:', callbackUrl);
-    console.log('  Token string for HMAC:', tokenString);
+    console.log('  Token string for HMAC (merchant+order+amount+secret):', tokenString);
     console.log('  Secret key:', secretKey);
     console.log('  Generated token:', token);
-    console.log('  Expected format: merchant_id + order_id + amount.toFixed(2) + callback_url');
+    console.log('  Expected format: merchant_id + order_id + amount.toFixed(2) + secret_key');
     console.log('  Token string length:', tokenString.length);
     console.log('  Token string bytes:', new TextEncoder().encode(tokenString));
 
