@@ -70,7 +70,9 @@ Deno.serve(async (req) => {
     console.log('  Token string for HMAC:', tokenString);
     console.log('  Secret key:', secretKey);
     console.log('  Generated token:', token);
-    console.log('  Expected format: key + order_id + amount.Fixed(2) + callback_url');
+    console.log('  Expected format: merchant_id + order_id + amount.toFixed(2) + callback_url');
+    console.log('  Token string length:', tokenString.length);
+    console.log('  Token string bytes:', new TextEncoder().encode(tokenString));
 
     const invoices = orderData?.invoices?.invoices?.length > 0
       ? orderData.invoices
@@ -86,16 +88,15 @@ Deno.serve(async (req) => {
         };
 
     const paymentData = {
-      key: merchantId,
+      merchant_id: merchantId,
       order_id: orderId,
-      amount: amountFixed,
+      amount: parseFloat(amountFixed),
       callback_url: callbackUrl,
       return_url: returnUrl,
       email: orderData.customerInfo.email,
       phone: orderData.customerInfo.phone,
       gate: gate,
       info: `Заказ в магазине Sakina #${orderId}`,
-      info_hash: '',
       token: token,
       invoices
     };
