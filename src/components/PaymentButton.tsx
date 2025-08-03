@@ -138,18 +138,44 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
           status: functionError.status
         });
         
-        // Try to get more detailed error information
+        // Try to get the actual response from the Edge Function
         let detailedError = functionError.message || String(functionError);
         
-        // If we have response data, try to parse it for more details
-        if (data && typeof data === 'object') {
-          console.log('📋 Edge Function response data:', data);
-          if (data.error) {
-            detailedError = data.error;
+        // The Edge Function might have returned error details in the response body
+        // even though Supabase reports it as an error due to non-2xx status
+        try {
+          // Make a direct fetch to get the actual response
+          const directResponse = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/alif-payment-init`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              amount,
+              currency,
+              orderData: enhancedOrderData,
+              gate
+            })
+          });
+          
+          const responseText = await directResponse.text();
+          console.log('📋 Direct Edge Function response:', responseText);
+          
+          try {
+            const responseData = JSON.parse(responseText);
+            if (responseData.error) {
+              detailedError = responseData.error;
+            }
+            if (responseData.debug) {
+              console.log('🔍 Debug information:', responseData.debug);
+            }
+          } catch (parseError) {
+            console.log('📋 Raw response (not JSON):', responseText);
+            detailedError = responseText || detailedError;
           }
-          if (data.debug) {
-            console.log('🔍 Debug information:', data.debug);
-          }
+        } catch (directFetchError) {
+          console.error('❌ Direct fetch also failed:', directFetchError);
         }
         
         // Handle specific error types
