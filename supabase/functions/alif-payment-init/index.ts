@@ -124,11 +124,7 @@ Deno.serve(async (req) => {
       info: `Заказ в магазине Sakina #${orderId}`,
       info_hash: "",
       token: token,
-      invoices: {
-        invoices: orderData.invoices.invoices,
-        is_hold_required: orderData.invoices.is_hold_required,
-        is_outbox_marked: orderData.invoices.is_outbox_marked
-      },
+      invoices: orderData.invoices,
       mpTerminalInfo: [] // Empty array for non-marketplace payments
     };
 
