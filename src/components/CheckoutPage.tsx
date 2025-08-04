@@ -29,12 +29,6 @@ interface FormData {
   // Payment Information
   paymentMethod: 'online' | 'cash' | 'installment';
   
-  // Card Information
-  cardNumber: string;
-  expiryDate: string;
-  cvv: string;
-  cardholderName: string;
-  
   // Additional
   comments: string;
   sameAsBilling: boolean;
@@ -63,10 +57,6 @@ const CheckoutPage = () => {
     floor: '',
     intercom: '',
     paymentMethod: 'online',
-    cardNumber: '',
-    expiryDate: '',
-    cvv: '',
-    cardholderName: '',
     comments: '',
     sameAsBilling: true
   });
@@ -115,30 +105,7 @@ const CheckoutPage = () => {
     }
 
     if (currentStep === 3) {
-      // Validate payment info
-      if (formData.paymentMethod === 'online') {
-        if (!formData.cardNumber || !formData.cardNumber.trim()) {
-          newErrors.cardNumber = 'Номер карты обязателен';
-        } else if (formData.cardNumber.replace(/\s/g, '').length !== 16) {
-          newErrors.cardNumber = 'Неверный номер карты';
-        }
-
-        if (!formData.expiryDate || !formData.expiryDate.trim()) {
-          newErrors.expiryDate = 'Срок действия обязателен';
-        } else if (!/^\d{2}\/\d{2}$/.test(formData.expiryDate)) {
-          newErrors.expiryDate = 'Неверный формат (MM/YY)';
-        }
-
-        if (!formData.cvv || !formData.cvv.trim()) {
-          newErrors.cvv = 'CVV обязателен';
-        } else if (formData.cvv.length < 3 || formData.cvv.length > 4) {
-          newErrors.cvv = 'CVV должен содержать 3-4 цифры';
-        }
-
-        if (!formData.cardholderName || !formData.cardholderName.trim()) {
-          newErrors.cardholderName = 'Имя владельца карты обязательно';
-        }
-      }
+      // No validation needed for payment method selection
     }
 
     setErrors(newErrors);
@@ -269,14 +236,6 @@ const CheckoutPage = () => {
           <PaymentMethodForm
             paymentMethod={formData.paymentMethod}
             onPaymentMethodChange={(method) => handleInputChange('paymentMethod', method)}
-            cardDetails={{
-              cardNumber: formData.cardNumber,
-              expiryDate: formData.expiryDate,
-              cvv: formData.cvv,
-              cardholderName: formData.cardholderName
-            }}
-            onCardDetailsChange={handleInputChange}
-            cardErrors={errors}
           />
         );
       case 4:
@@ -309,11 +268,6 @@ const CheckoutPage = () => {
                   {formData.paymentMethod === 'online' ? 'Оплата онлайн' : 
                    formData.paymentMethod === 'cash' ? 'При получении' : 'Оплата частями'}
                 </p>
-                {formData.paymentMethod === 'online' && formData.cardNumber && (
-                  <p className="text-sm text-gray-600">
-                    Карта: ****{formData.cardNumber.replace(/\s/g, '').slice(-4)}
-                  </p>
-                )}
               </div>
             </div>
 
@@ -339,12 +293,6 @@ const CheckoutPage = () => {
                   deliveryInfo: {
                     type: formData.deliveryType,
                     address: formData.deliveryType === 'home' ? formData.address : undefined
-                  },
-                  cardInfo: {
-                    cardNumber: formData.cardNumber.replace(/\s/g, ''),
-                    expiryDate: formData.expiryDate,
-                    cvv: formData.cvv,
-                    cardholderName: formData.cardholderName
                   },
                   invoices: {
                     invoices: items.map(item => ({
