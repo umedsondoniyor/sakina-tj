@@ -64,35 +64,38 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
       </div>
 
       {/* Size Selection */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="font-medium">Размер (Ш×Д)</h3>
-          <a href="#" className="text-sm text-teal-600 hover:text-teal-700">
-            Все размеры (14)
-          </a>
+      {/* Size Selection - Only for mattresses */}
+      {product.category === 'mattresses' && (
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="font-medium">Размер (Ш×Д)</h3>
+            <a href="#" className="text-sm text-teal-600 hover:text-teal-700">
+              Все размеры (14)
+            </a>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            {sizes.map(({ size, price }) => (
+              <button
+                key={size}
+                onClick={() => onSizeChange(size)}
+                className={`p-2 text-center border rounded-lg transition-colors ${
+                  selectedSize === size
+                    ? 'border-teal-500 bg-teal-50'
+                    : 'border-gray-200 hover:border-teal-500'
+                }`}
+              >
+                <div className="font-medium">{size}</div>
+                <div className="text-sm text-gray-600">
+                  {price.toLocaleString()} ₽
+                </div>
+                {selectedSize === size && (
+                  <div className="text-xs text-teal-600">В наличии</div>
+                )}
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="grid grid-cols-3 gap-3">
-          {sizes.map(({ size, price }) => (
-            <button
-              key={size}
-              onClick={() => onSizeChange(size)}
-              className={`p-2 text-center border rounded-lg transition-colors ${
-                selectedSize === size
-                  ? 'border-teal-500 bg-teal-50'
-                  : 'border-gray-200 hover:border-teal-500'
-              }`}
-            >
-              <div className="font-medium">{size}</div>
-              <div className="text-sm text-gray-600">
-                {price.toLocaleString()} ₽
-              </div>
-              {selectedSize === size && (
-                <div className="text-xs text-teal-600">В наличии</div>
-              )}
-            </button>
-          ))}
-        </div>
-      </div>
+      )}
 
       {/* Warranty Info */}
       <div className="bg-gray-50 p-4 rounded-lg mb-6">
