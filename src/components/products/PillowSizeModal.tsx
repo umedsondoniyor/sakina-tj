@@ -78,7 +78,6 @@ const PillowSizeModal: React.FC<PillowSizeModalProps> = ({
               <p className="text-sm">Обратитесь к администратору</p>
             </div>
           )}
-          </div>
         </div>
       </div>
     </div>
