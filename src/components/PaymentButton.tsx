@@ -95,27 +95,32 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
         throw new Error(`Edge Function deployment issue: ${testError.message}`);
       }
 
-      // Prepare order data with invoices structure for Alif Bank
-      const enhancedOrderData = {
-        ...orderData,
-        invoices: orderData.invoices || {
-          invoices: orderData.items.map(item => ({
-            category: item.category || 'general',
-            name: item.name,
-            price: item.price,
-            quantity: item.quantity
-          })),
-          is_hold_required: false,
-          is_outbox_marked: false
-        }
+      // Prepare simplified order data that matches working Postman payload
+      const simplifiedOrderData = {
+        customerInfo: {
+          name: orderData.customerInfo.name,
+          email: orderData.customerInfo.email,
+          phone: orderData.customerInfo.phone
+        },
+        items: orderData.items.map(item => ({
+          name: item.name,
+          price: Number(item.price),
+          quantity: Number(item.quantity),
+          category: item.category || 'general'
+        }))
       };
 
-      console.log('📋 Enhanced order data prepared');
+      console.log('📋 Simplified order data prepared');
 
       // Call Supabase Edge Function to initialize payment
       console.log('🔄 Calling Edge Function: alif-payment-init');
 
-      console.log(JSON.stringify(enhancedOrderData));
+      console.log('📦 Payload:', JSON.stringify({
+        amount: amount,
+        currency: currency,
+        gate: gate,
+        orderData: simplifiedOrderData
+      }));
       
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/alif-payment-init`, {
         method: 'POST',
@@ -127,7 +132,7 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
           amount: amount,
           currency: currency,
           gate: gate,
-          orderData: enhancedOrderData
+          orderData: simplifiedOrderData
         })
       });
 
