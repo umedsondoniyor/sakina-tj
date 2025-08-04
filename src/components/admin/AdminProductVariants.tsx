@@ -217,7 +217,7 @@ const AdminProductVariants = () => {
                         variant.in_stock ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                       }`}
                     >
-                      {variant.in_stock ? 'In Stock' : 'Out of Stock'}
+                      {variant.in_stock ? `In Stock (${variant.stock_quantity || 0})` : 'Out of Stock'}
                     </button>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">

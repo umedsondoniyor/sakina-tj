@@ -26,6 +26,7 @@ export interface ProductVariant {
   price: number;
   old_price?: number;
   in_stock: boolean;
+  stock_quantity?: number;
   display_order: number;
   created_at: string;
   updated_at: string;

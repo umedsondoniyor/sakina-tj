@@ -38,7 +38,8 @@ const ProductVariantForm: React.FC<ProductVariantFormProps> = ({
     price: '',
     old_price: '',
     in_stock: true,
-    display_order: '0'
+    display_order: '0',
+    stock_quantity: '0'
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -55,7 +56,8 @@ const ProductVariantForm: React.FC<ProductVariantFormProps> = ({
         price: variant.price.toString(),
         old_price: variant.old_price?.toString() || '',
         in_stock: variant.in_stock,
-        display_order: variant.display_order.toString()
+        display_order: variant.display_order.toString(),
+        stock_quantity: variant.stock_quantity?.toString() || '0'
       });
     } else {
       setFormData({
@@ -68,7 +70,8 @@ const ProductVariantForm: React.FC<ProductVariantFormProps> = ({
         price: '',
         old_price: '',
         in_stock: true,
-        display_order: '0'
+        display_order: '0',
+        stock_quantity: '0'
       });
     }
     setError('');
@@ -105,6 +108,7 @@ const ProductVariantForm: React.FC<ProductVariantFormProps> = ({
         old_price: formData.old_price ? parseFloat(formData.old_price) : null,
         in_stock: formData.in_stock,
         display_order: parseInt(formData.display_order) || 0,
+        stock_quantity: parseInt(formData.stock_quantity) || 0,
         updated_at: new Date().toISOString()
       };
 
@@ -328,8 +332,23 @@ const ProductVariantForm: React.FC<ProductVariantFormProps> = ({
                 />
               </div>
 
+              {/* Stock Quantity */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Stock Quantity
+                </label>
+                <input
+                  type="number"
+                  value={formData.stock_quantity}
+                  onChange={(e) => setFormData({ ...formData, stock_quantity: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  min="0"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center">
               {/* In Stock */}
-              <div className="flex items-center pt-6">
                 <input
                   type="checkbox"
                   id="in_stock"
@@ -340,7 +359,6 @@ const ProductVariantForm: React.FC<ProductVariantFormProps> = ({
                 <label htmlFor="in_stock" className="text-sm font-medium text-gray-700">
                   In Stock
                 </label>
-              </div>
             </div>
           </div>
 
