@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { getProducts } from '../lib/api';
 import { useCart } from '../contexts/CartContext';
-import type { Product } from '../lib/types';
+import type { Product, ProductVariant } from '../lib/types';
 
 // Import subcomponents
 import ProductBreadcrumbs from './product/ProductBreadcrumbs';
@@ -15,7 +15,7 @@ const ProductPage = () => {
   const { id } = useParams();
   const [product, setProduct] = React.useState<Product | null>(null);
   const [loading, setLoading] = React.useState(true);
-  const [selectedSize, setSelectedSize] = React.useState('140×200');
+  const [selectedVariant, setSelectedVariant] = React.useState<ProductVariant | null>(null);
   const { addItem } = useCart();
   
   React.useEffect(() => {
@@ -37,13 +37,24 @@ const ProductPage = () => {
   const handleAddToCart = () => {
     if (!product) return;
     
-    const cartItem = {
+    const cartItem = selectedVariant ? {
+      id: `${product.id}_${selectedVariant.id}`,
+      name: product.name,
+      price: selectedVariant.price,
+      quantity: 1,
+      image_url: product.image_urls[0],
+      size: product.category === 'pillows' && selectedVariant.height_cm
+        ? `${selectedVariant.size_name}, h - ${selectedVariant.height_cm}см`
+        : selectedVariant.width_cm && selectedVariant.length_cm
+        ? `${selectedVariant.width_cm}×${selectedVariant.length_cm}`
+        : selectedVariant.size_name,
+      variant_id: selectedVariant.id
+    } : {
       id: product.id,
       name: product.name,
       price: product.price,
       quantity: 1,
-      image_url: product.image_urls[0],
-      size: selectedSize
+      image_url: product.image_urls[0]
     };
     
     addItem(cartItem);
@@ -75,8 +86,8 @@ const ProductPage = () => {
         {/* Product Info */}
         <ProductInfo
           product={product}
-          selectedSize={selectedSize}
-          onSizeChange={setSelectedSize}
+          selectedVariant={selectedVariant}
+          onVariantChange={setSelectedVariant}
           onAddToCart={handleAddToCart}
         />
       </div>
