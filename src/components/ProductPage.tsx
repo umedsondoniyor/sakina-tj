@@ -49,6 +49,19 @@ const ProductPage = () => {
         ? `${selectedVariant.width_cm}×${selectedVariant.length_cm}`
         : selectedVariant.size_name,
       variant_id: selectedVariant.id
+    }
+    const cartItem = selectedVariant ? {
+      id: `${product.id}_${selectedVariant.id}`,
+      name: product.name,
+      price: selectedVariant.price,
+      quantity: 1,
+      image_url: product.image_urls[0],
+      size: product.category === 'pillows' && selectedVariant.height_cm
+        ? `${selectedVariant.size_name}, h - ${selectedVariant.height_cm}см`
+        : selectedVariant.width_cm && selectedVariant.length_cm
+        ? `${selectedVariant.width_cm}×${selectedVariant.length_cm}`
+        : selectedVariant.size_name,
+      variant_id: selectedVariant.id
     } : {
       id: product.id,
       name: product.name,
@@ -86,6 +99,9 @@ const ProductPage = () => {
         {/* Product Info */}
         <ProductInfo
           product={product}
+          selectedVariant={selectedVariant}
+          onVariantChange={setSelectedVariant}
+          onAddToCart={handleAddToCart}
           selectedVariant={selectedVariant}
           onVariantChange={setSelectedVariant}
           onAddToCart={handleAddToCart}
