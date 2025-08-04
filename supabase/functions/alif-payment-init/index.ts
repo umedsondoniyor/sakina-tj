@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
     const callbackUrl = `${supabaseUrl}/functions/v1/alif-payment-callback`;
     const returnUrl = `${returnSiteUrl}/payment/success?order_id=${orderId}`;
 
-    // Generate token using new Alif Bank formula: key + order_id + amount + callback_url
+    // Generate token using Alif Bank formula: key + order_id + amount + callback_url
     const amountFixed = parseFloat(amount).toFixed(2);
     const tokenString = `${merchantId}${orderId}${amountFixed}${callbackUrl}`;
     const token = createHmac('sha256', secretKey).update(tokenString).digest('hex');
@@ -90,19 +90,7 @@ Deno.serve(async (req) => {
     console.log('  Generated token:', token);
     console.log('  Token string length:', tokenString.length);
 
-    const invoices = orderData?.invoices?.invoices?.length > 0
-      ? orderData.invoices
-      : {
-          invoices: orderData.items.map((item: any) => ({
-            category: item.category || 'products',
-            name: item.name,
-            price: Number(item.price),
-            quantity: Number(item.quantity)
-          })),
-          is_hold_required: false,
-          is_outbox_marked: false
-        };
-
+    // Simplified payload according to Alif Bank support - remove marketplace fields
     const paymentData = {
       key: merchantId,
       order_id: orderId,
@@ -111,9 +99,7 @@ Deno.serve(async (req) => {
       return_url: returnUrl,
       email: orderData.customerInfo.email,
       phone: orderData.customerInfo.phone,
-      gate: gate,
-      token: token,
-      invoices
+      token: token
     };
 
     console.log("🛒 Payload to Alif:", JSON.stringify(paymentData, null, 2));
@@ -122,7 +108,7 @@ Deno.serve(async (req) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'gate': gate,
+        'gate': 'korti_milli',
         'isMarketPlace': 'false'
       },
       body: JSON.stringify(paymentData)
