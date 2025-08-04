@@ -77,7 +77,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) =
         image_url: product.image_url
       };
       addItem(cartItem);
-    } else {
+    } finally {
       setLoadingVariants(false);
     }
   };
