@@ -83,7 +83,10 @@ export async function getProducts(): Promise<Product[]> {
 
     const { data, error } = await supabase
       .from('products')
-      .select('*')
+      .select(`
+        *,
+        variants:product_variants(*)
+      `)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -101,6 +104,40 @@ export async function getProducts(): Promise<Product[]> {
   }, 3, 1000, 'getProducts');
 }
 
+export async function getProductVariants(productId: string): Promise<ProductVariant[]> {
+  return retryOperation(async () => {
+    const { data, error } = await supabase
+      .from('product_variants')
+      .select('*')
+      .eq('product_id', productId)
+      .order('display_order', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching product variants:', error);
+      throw error;
+    }
+
+    return data || [];
+  }, 3, 1000, `getProductVariants:${productId}`);
+}
+
+export async function getVariantsByType(sizeType: string): Promise<ProductVariant[]> {
+  return retryOperation(async () => {
+    const { data, error } = await supabase
+      .from('product_variants')
+      .select('*')
+      .eq('size_type', sizeType)
+      .eq('in_stock', true)
+      .order('display_order', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching variants by type:', error);
+      throw error;
+    }
+
+    return data || [];
+  }, 3, 1000, `getVariantsByType:${sizeType}`);
+}
 export async function getBestSellers(): Promise<Product[]> {
   return retryOperation(async () => {
     const { data, error } = await supabase

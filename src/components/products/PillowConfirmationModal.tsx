@@ -1,17 +1,13 @@
 import React from 'react';
 import { X } from 'lucide-react';
+import type { ProductVariant } from '../../lib/types';
 
 interface PillowConfirmationModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAddToCart: () => void;
   productName: string;
-  selectedSize: {
-    id: string;
-    name: string;
-    height: string;
-    price: number;
-  };
+  selectedVariant: ProductVariant;
 }
 
 const PillowConfirmationModal: React.FC<PillowConfirmationModalProps> = ({
@@ -19,7 +15,7 @@ const PillowConfirmationModal: React.FC<PillowConfirmationModalProps> = ({
   onClose,
   onAddToCart,
   productName,
-  selectedSize
+  selectedVariant
 }) => {
   if (!isOpen) return null;
 
@@ -43,7 +39,8 @@ const PillowConfirmationModal: React.FC<PillowConfirmationModalProps> = ({
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-gray-600">Размер</span>
               <span className="text-sm text-teal-600 flex items-center">
-                {selectedSize.name}, {selectedSize.height}
+                {selectedVariant.size_name}
+                {selectedVariant.height_cm && `, h - ${selectedVariant.height_cm} см`}
                 <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
@@ -55,7 +52,7 @@ const PillowConfirmationModal: React.FC<PillowConfirmationModalProps> = ({
             onClick={onAddToCart}
             className="w-full bg-teal-500 text-white py-3 rounded-lg hover:bg-teal-600 transition-colors font-medium"
           >
-            В корзину • {selectedSize.price.toLocaleString()} ₽
+            В корзину • {selectedVariant.price.toLocaleString()} ₽
           </button>
         </div>
       </div>

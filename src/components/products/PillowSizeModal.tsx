@@ -1,57 +1,21 @@
 import React from 'react';
 import { X } from 'lucide-react';
-
-interface PillowSize {
-  id: string;
-  name: string;
-  height: string;
-  price: number;
-  inStock: boolean;
-}
+import type { ProductVariant } from '../../lib/types';
 
 interface PillowSizeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelectSize: (size: PillowSize) => void;
+  onSelectSize: (variant: ProductVariant) => void;
   productName: string;
+  variants: ProductVariant[];
 }
-
-const pillowSizes: PillowSize[] = [
-  {
-    id: 'xs',
-    name: 'XS',
-    height: 'h - 7 см',
-    price: 5999,
-    inStock: true
-  },
-  {
-    id: 's',
-    name: 'S',
-    height: 'h - 9 см',
-    price: 5999,
-    inStock: true
-  },
-  {
-    id: 'm',
-    name: 'M',
-    height: 'h - 11,5 см',
-    price: 5999,
-    inStock: true
-  },
-  {
-    id: 'l',
-    name: 'L',
-    height: 'h - 14 см',
-    price: 5999,
-    inStock: true
-  }
-];
 
 const PillowSizeModal: React.FC<PillowSizeModalProps> = ({
   isOpen,
   onClose,
   onSelectSize,
-  productName
+  productName,
+  variants
 }) => {
   if (!isOpen) return null;
 
@@ -72,32 +36,48 @@ const PillowSizeModal: React.FC<PillowSizeModalProps> = ({
           <h3 className="text-lg font-medium mb-4">Конфигурация подушки</h3>
           
           <div className="space-y-3">
-            {pillowSizes.map((size) => (
+            {variants.map((variant) => (
               <button
-                key={size.id}
-                onClick={() => onSelectSize(size)}
-                className="w-full p-4 border border-gray-200 rounded-lg hover:border-teal-500 transition-colors text-left"
+                key={variant.id}
+                onClick={() => onSelectSize(variant)}
+                className={`w-full p-4 border rounded-lg transition-colors text-left ${
+                  variant.in_stock 
+                    ? 'border-gray-200 hover:border-teal-500' 
+                    : 'border-gray-100 bg-gray-50 cursor-not-allowed'
+                }`}
+                disabled={!variant.in_stock}
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="font-medium">{size.name}, {size.height}</div>
-                    {size.inStock && (
+                    <div className="font-medium">
+                      {variant.size_name}
+                      {variant.height_cm && `, h - ${variant.height_cm} см`}
+                    </div>
+                    {variant.in_stock ? (
                       <div className="text-sm text-teal-600">в наличии</div>
+                    ) : (
+                      <div className="text-sm text-red-600">нет в наличии</div>
                     )}
                   </div>
-                  <div className="text-lg font-bold">
-                    {size.price.toLocaleString()} ₽
+                  <div className={`text-lg font-bold ${!variant.in_stock ? 'text-gray-400' : ''}`}>
+                    {variant.price.toLocaleString()} ₽
+                    {variant.old_price && (
+                      <div className="text-sm text-gray-500 line-through">
+                        {variant.old_price.toLocaleString()} ₽
+                      </div>
+                    )}
                   </div>
                 </div>
               </button>
             ))}
           </div>
 
-          <div className="mt-6">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-gray-600">Размер</span>
-              <span className="text-sm text-teal-600">L, h - 14 см ›</span>
+          {variants.length === 0 && (
+            <div className="text-center py-8 text-gray-500">
+              <p>Размеры для этого товара не настроены</p>
+              <p className="text-sm">Обратитесь к администратору</p>
             </div>
+          )}
           </div>
         </div>
       </div>

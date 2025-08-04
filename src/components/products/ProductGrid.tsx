@@ -1,9 +1,10 @@
 import React from 'react';
 import { Star } from 'lucide-react';
-import type { Product } from '../../lib/types';
+import type { Product, ProductVariant } from '../../lib/types';
 import PillowSizeModal from './PillowSizeModal';
 import PillowConfirmationModal from './PillowConfirmationModal';
 import { useCart } from '../../contexts/CartContext';
+import { getProductVariants } from '../../lib/api';
 
 interface ProductGridProps {
   products: Product[];
@@ -14,17 +15,25 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) =
   const [showSizeModal, setShowSizeModal] = React.useState(false);
   const [showConfirmationModal, setShowConfirmationModal] = React.useState(false);
   const [selectedProduct, setSelectedProduct] = React.useState<Product | null>(null);
-  const [selectedSize, setSelectedSize] = React.useState<any>(null);
+  const [selectedVariant, setSelectedVariant] = React.useState<ProductVariant | null>(null);
+  const [productVariants, setProductVariants] = React.useState<ProductVariant[]>([]);
+  const [loadingVariants, setLoadingVariants] = React.useState(false);
   const { addItem } = useCart();
 
   const handleAddToCart = (product: Product, e: React.MouseEvent) => {
     e.stopPropagation();
     
-    if (product.category === 'pillows') {
+    // Check if product has variants or is a category that typically has variants
+    if (product.variants && product.variants.length > 0) {
+      // Product already has variants loaded
       setSelectedProduct(product);
+      setProductVariants(product.variants);
       setShowSizeModal(true);
+    } else if (['pillows', 'mattresses', 'beds'].includes(product.category)) {
+      // Load variants for this product
+      loadProductVariants(product);
     } else {
-      // For non-pillow products, add directly to cart
+      // For products without variants, add directly to cart
       const cartItem = {
         id: product.id,
         name: product.name,
@@ -36,33 +45,84 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) =
     }
   };
 
-  const handleSizeSelect = (size: any) => {
+  const loadProductVariants = async (product: Product) => {
+    try {
+      setLoadingVariants(true);
+      setSelectedProduct(product);
+      
+      const variants = await getProductVariants(product.id);
+      setProductVariants(variants);
+      
+      if (variants.length > 0) {
+        setShowSizeModal(true);
+      } else {
+        // No variants found, add product with default price
+        const cartItem = {
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          quantity: 1,
+          image_url: product.image_url
+        };
+        addItem(cartItem);
+      }
+    } catch (error) {
+      console.error('Error loading product variants:', error);
+      // Fallback to adding product without variants
+      const cartItem = {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        quantity: 1,
+        image_url: product.image_url
+      };
+      addItem(cartItem);
+    } else {
+      setLoadingVariants(false);
+    }
+  };
+
+  const handleVariantSelect = (variant: ProductVariant) => {
     if (!selectedProduct) return;
     
-    // Store the selected size and show confirmation modal
-    setSelectedSize(size);
+    // Store the selected variant and show confirmation modal
+    setSelectedVariant(variant);
     setShowSizeModal(false);
     setShowConfirmationModal(true);
   };
 
   const handleConfirmAddToCart = () => {
-    if (!selectedProduct || !selectedSize) return;
+    if (!selectedProduct || !selectedVariant) return;
     
     const cartItem = {
-      id: selectedProduct.id,
+      id: `${selectedProduct.id}_${selectedVariant.id}`,
       name: selectedProduct.name,
-      price: selectedSize.price,
+      price: selectedVariant.price,
       quantity: 1,
       image_url: selectedProduct.image_url,
-      size: `${selectedSize.name}, ${selectedSize.height}`
+      size: selectedVariant.height_cm 
+        ? `${selectedVariant.size_name}, h - ${selectedVariant.height_cm} см`
+        : selectedVariant.width_cm && selectedVariant.length_cm
+        ? `${selectedVariant.width_cm}×${selectedVariant.length_cm}`
+        : selectedVariant.size_name,
+      variant_id: selectedVariant.id
     };
     
     addItem(cartItem);
     setShowConfirmationModal(false);
     setSelectedProduct(null);
-    setSelectedSize(null);
+    setSelectedVariant(null);
+    setProductVariants([]);
   };
   if (products.length === 0) {
+  const handleCloseModals = () => {
+    setShowSizeModal(false);
+    setShowConfirmationModal(false);
+    setSelectedProduct(null);
+    setSelectedVariant(null);
+    setProductVariants([]);
+  };
+
     return (
       <div className="text-center py-12">
         <div className="text-gray-500 mb-4">
@@ -120,8 +180,9 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) =
               <button 
                 className="w-full mt-4 bg-teal-500 text-white py-2 rounded hover:bg-teal-600 transition-colors"
                 onClick={(e) => handleAddToCart(product, e)}
+                disabled={loadingVariants}
               >
-                В корзину
+                {loadingVariants ? 'Загрузка...' : 'В корзину'}
               </button>
             </div>
           </div>
@@ -131,25 +192,19 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) =
       {/* Pillow Size Selection Modal */}
       <PillowSizeModal
         isOpen={showSizeModal}
-        onClose={() => {
-          setShowSizeModal(false);
-          setSelectedProduct(null);
-        }}
-        onSelectSize={handleSizeSelect}
+        onClose={handleCloseModals}
+        onSelectSize={handleVariantSelect}
         productName={selectedProduct?.name || ''}
+        variants={productVariants}
       />
 
       {/* Pillow Confirmation Modal */}
       <PillowConfirmationModal
         isOpen={showConfirmationModal}
-        onClose={() => {
-          setShowConfirmationModal(false);
-          setSelectedProduct(null);
-          setSelectedSize(null);
-        }}
+        onClose={handleCloseModals}
         onAddToCart={handleConfirmAddToCart}
         productName={selectedProduct?.name || ''}
-        selectedSize={selectedSize}
+        selectedVariant={selectedVariant!}
       />
     </>
   );

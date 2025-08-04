@@ -4,6 +4,7 @@ import {
   Image,
   Star, 
   Package,
+  Layers,
   LogOut,
   Home
 } from 'lucide-react';
@@ -79,6 +80,20 @@ const AdminDashboard = () => {
               >
                 <Package size={20} />
                 <span>Товары</span>
+              </NavLink>
+
+              <NavLink
+                to="/admin/variants"
+                className={({ isActive }) =>
+                  `flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                    isActive
+                      ? 'bg-teal-500 text-white'
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`
+                }
+              >
+                <Layers size={20} />
+                <span>Размеры товаров</span>
               </NavLink>
 
               <a

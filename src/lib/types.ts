@@ -5,14 +5,31 @@ export interface Product {
   price: number;
   old_price?: number;
   image_url: string;
+  image_urls: string[];
   category: string;
   sale_percentage?: number;
   rating: number;
   review_count: number;
   created_at: string;
   updated_at: string;
+  variants?: ProductVariant[];
 }
 
+export interface ProductVariant {
+  id: string;
+  product_id: string;
+  size_name: string;
+  size_type: 'pillow' | 'mattress' | 'bed' | 'sofa' | 'blanket' | 'furniture';
+  height_cm?: number;
+  width_cm?: number;
+  length_cm?: number;
+  price: number;
+  old_price?: number;
+  in_stock: boolean;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+}
 export interface Category {
   id: string;
   name: string;
@@ -73,6 +90,7 @@ export interface CartItem {
   quantity: number;
   image_url: string;
   size?: string;
+  variant_id?: string;
 }
 
 export interface CartContextType {

@@ -29,6 +29,7 @@ import AdminProducts from './components/admin/AdminProducts';
 import AdminReviews from './components/admin/AdminReviews';
 import AdminBlog from './components/admin/AdminBlog';
 import AdminCarousel from './components/admin/AdminCarousel';
+import AdminProductVariants from './components/admin/AdminProductVariants';
 import AdminRoute from './components/admin/AdminRoute';
 import AdminLogin from './components/admin/AdminLogin';
 import Mattresses from './components/Mattresses';
@@ -50,6 +51,7 @@ function App() {
           <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>}>
             <Route index element={<AdminProducts />} />
             <Route path="products" element={<AdminProducts />} />
+            <Route path="variants" element={<AdminProductVariants />} />
             <Route path="reviews" element={<AdminReviews />} />
             <Route path="blog" element={<AdminBlog />} />
             <Route path="carousel" element={<AdminCarousel />} />
