@@ -21,12 +21,15 @@ Deno.serve(async (req) => {
     );
 
     const requestBody = await req.json();
-    console.log('📥 Received payment request:', requestBody);
 
-    if (requestBody.test === true) {
+    // Debug flags
+    if (requestBody.test === true && requestBody.showEnv) {
       return new Response(JSON.stringify({
-        success: true,
-        message: 'Function is accessible'
+        merchantId: Deno.env.get('ALIF_MERCHANT_ID'),
+        secretKey: Deno.env.get('ALIF_SECRET_KEY'),
+        apiUrl: Deno.env.get('ALIF_API_URL'),
+        siteUrl: Deno.env.get('SITE_URL'),
+        supabaseUrl: Deno.env.get('SUPABASE_URL')
       }), {
         headers: {
           ...corsHeaders,
@@ -36,35 +39,15 @@ Deno.serve(async (req) => {
       });
     }
 
-    const alifMerchantId = Deno.env.get('ALIF_MERCHANT_ID');
-    const alifSecretKey = Deno.env.get('ALIF_SECRET_KEY');
-    const alifApiUrl = Deno.env.get('ALIF_API_URL');
-    const siteUrl = Deno.env.get('SITE_URL');
+    const merchantId = Deno.env.get('ALIF_MERCHANT_ID');
+    const secretKey = Deno.env.get('ALIF_SECRET_KEY');
+    const apiUrl = Deno.env.get('ALIF_API_URL');
+    const returnSiteUrl = Deno.env.get('SITE_URL') || 'https://sakina-tj.netlify.app';
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
-
-    console.log('🔧 Environment variables check:');
-    console.log('  ALIF_MERCHANT_ID:', alifMerchantId ? 'SET' : 'NOT SET');
-    console.log('  ALIF_SECRET_KEY:', alifSecretKey ? 'SET' : 'NOT SET');
-    console.log('  ALIF_API_URL:', alifApiUrl ? 'SET' : 'NOT SET');
-    console.log('  SITE_URL:', siteUrl ? 'SET' : 'NOT SET');
-
-    if (!alifMerchantId) {
-      throw new Error('ALIF_MERCHANT_ID environment variable is not set');
-    }
-    if (!alifSecretKey) {
-      throw new Error('ALIF_SECRET_KEY environment variable is not set');
-    }
-    if (!alifApiUrl) {
-      throw new Error('ALIF_API_URL environment variable is not set');
-    }
-
-    const merchantId = alifMerchantId;
-    const secretKey = alifSecretKey;
-    const apiUrl = alifApiUrl;
-    const returnSiteUrl = siteUrl || 'https://sakina-tj.netlify.app';
 
     const { amount, currency = 'TJS', gate = 'korti_milli', orderData } = requestBody;
 
+    if (!merchantId || !secretKey || !apiUrl) throw new Error('Missing required environment variables');
     if (!amount || amount <= 0) throw new Error('Invalid amount');
     if (!orderData?.customerInfo?.email) throw new Error('Customer email is required');
     if (!orderData?.customerInfo?.name) throw new Error('Customer name is required');
@@ -74,23 +57,23 @@ Deno.serve(async (req) => {
     const callbackUrl = `${supabaseUrl}/functions/v1/alif-payment-callback`;
     const returnUrl = `${returnSiteUrl}/payment/success?order_id=${orderId}`;
 
-    // Generate token using Alif Bank formula: key + order_id + amount + callback_url
     const amountFixed = parseFloat(amount).toFixed(2);
     const tokenString = `${merchantId}${orderId}${amountFixed}${callbackUrl}`;
     const token = createHmac('sha256', secretKey).update(tokenString).digest('hex');
 
-    console.log('🔐 Token generation details (Alif Bank specification):');
-    console.log('  Rule: HMAC256(key + order_id + amount.Fixed(2) + callback_url, password)');
-    console.log('  Merchant ID (key):', merchantId);
-    console.log('  Order ID:', orderId);
-    console.log('  Amount Fixed(2):', amountFixed);
-    console.log('  Callback URL:', callbackUrl);
-    console.log('  Token string:', tokenString);
-    console.log('  Secret key (password):', secretKey ? `${secretKey.substring(0, 4)}...${secretKey.substring(secretKey.length - 4)}` : 'NOT SET');
-    console.log('  Generated token:', token);
-    console.log('  Token string length:', tokenString.length);
+    const invoices = orderData?.invoices?.invoices?.length > 0
+      ? orderData.invoices
+      : {
+          invoices: orderData.items.map((item: any) => ({
+            category: item.category || 'products',
+            name: item.name,
+            price: Number(item.price),
+            quantity: Number(item.quantity)
+          })),
+          is_hold_required: false,
+          is_outbox_marked: false
+        };
 
-    // Simplified payload according to Alif Bank support - remove marketplace fields
     const paymentData = {
       key: merchantId,
       order_id: orderId,
@@ -99,16 +82,16 @@ Deno.serve(async (req) => {
       return_url: returnUrl,
       email: orderData.customerInfo.email,
       phone: orderData.customerInfo.phone,
-      token: token
+      gate,
+      token,
+      invoices
     };
-
-    console.log("🛒 Payload to Alif:", JSON.stringify(paymentData, null, 2));
 
     const alifResponse = await fetch(`${apiUrl}/v2/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'gate': 'korti_milli',
+        'gate': gate,
         'isMarketPlace': 'false'
       },
       body: JSON.stringify(paymentData)
@@ -116,7 +99,6 @@ Deno.serve(async (req) => {
 
     if (!alifResponse.ok) {
       const errorText = await alifResponse.text();
-      console.error("❌ Alif Error Raw:", errorText);
       return new Response(JSON.stringify({
         success: false,
         error: `Alif Bank API error: ${alifResponse.status} - ${errorText}`
@@ -147,8 +129,8 @@ Deno.serve(async (req) => {
       .from('payments')
       .insert({
         alif_order_id: orderId,
-        amount: amount,
-        currency: currency,
+        amount,
+        currency,
         status: 'pending',
         order_data: orderData,
         user_id: null
@@ -184,9 +166,7 @@ Deno.serve(async (req) => {
       },
       status: 200
     });
-
   } catch (error) {
-    console.error('❌ Uncaught error:', error);
     return new Response(JSON.stringify({
       success: false,
       error: error instanceof Error ? error.message : 'Payment init failed'
