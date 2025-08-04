@@ -22,23 +22,6 @@ Deno.serve(async (req) => {
 
     const requestBody = await req.json();
 
-    // Debug flags
-    if (requestBody.test === true && requestBody.showEnv) {
-      return new Response(JSON.stringify({
-        merchantId: Deno.env.get('ALIF_MERCHANT_ID'),
-        secretKey: Deno.env.get('ALIF_SECRET_KEY'),
-        apiUrl: Deno.env.get('ALIF_API_URL'),
-        siteUrl: Deno.env.get('SITE_URL'),
-        supabaseUrl: Deno.env.get('SUPABASE_URL')
-      }), {
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json'
-        },
-        status: 200
-      });
-    }
-
     const merchantId = Deno.env.get('ALIF_MERCHANT_ID');
     const secretKey = Deno.env.get('ALIF_SECRET_KEY');
     const apiUrl = Deno.env.get('ALIF_API_URL');
@@ -151,21 +134,20 @@ Deno.serve(async (req) => {
       });
     }
 
-    const response = {
+    return new Response(JSON.stringify({
       success: true,
       payment_id: payment.id,
       order_id: orderId,
       payment_url: alifData.url,
       message: alifData.message
-    };
-
-    return new Response(JSON.stringify(response), {
+    }), {
       headers: {
         ...corsHeaders,
         'Content-Type': 'application/json'
       },
       status: 200
     });
+
   } catch (error) {
     return new Response(JSON.stringify({
       success: false,
