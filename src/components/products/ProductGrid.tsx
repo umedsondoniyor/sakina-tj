@@ -2,6 +2,7 @@ import React from 'react';
 import { Star } from 'lucide-react';
 import type { Product } from '../../lib/types';
 import PillowSizeModal from './PillowSizeModal';
+import PillowConfirmationModal from './PillowConfirmationModal';
 import { useCart } from '../../contexts/CartContext';
 
 interface ProductGridProps {
@@ -11,7 +12,9 @@ interface ProductGridProps {
 
 const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) => {
   const [showSizeModal, setShowSizeModal] = React.useState(false);
+  const [showConfirmationModal, setShowConfirmationModal] = React.useState(false);
   const [selectedProduct, setSelectedProduct] = React.useState<Product | null>(null);
+  const [selectedSize, setSelectedSize] = React.useState<any>(null);
   const { addItem } = useCart();
 
   const handleAddToCart = (product: Product, e: React.MouseEvent) => {
@@ -36,18 +39,28 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) =
   const handleSizeSelect = (size: any) => {
     if (!selectedProduct) return;
     
+    // Store the selected size and show confirmation modal
+    setSelectedSize(size);
+    setShowSizeModal(false);
+    setShowConfirmationModal(true);
+  };
+
+  const handleConfirmAddToCart = () => {
+    if (!selectedProduct || !selectedSize) return;
+    
     const cartItem = {
       id: selectedProduct.id,
       name: selectedProduct.name,
-      price: size.price,
+      price: selectedSize.price,
       quantity: 1,
       image_url: selectedProduct.image_url,
-      size: `${size.name}, ${size.height}`
+      size: `${selectedSize.name}, ${selectedSize.height}`
     };
     
     addItem(cartItem);
-    setShowSizeModal(false);
+    setShowConfirmationModal(false);
     setSelectedProduct(null);
+    setSelectedSize(null);
   };
   if (products.length === 0) {
     return (
@@ -124,6 +137,19 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) =
         }}
         onSelectSize={handleSizeSelect}
         productName={selectedProduct?.name || ''}
+      />
+
+      {/* Pillow Confirmation Modal */}
+      <PillowConfirmationModal
+        isOpen={showConfirmationModal}
+        onClose={() => {
+          setShowConfirmationModal(false);
+          setSelectedProduct(null);
+          setSelectedSize(null);
+        }}
+        onAddToCart={handleConfirmAddToCart}
+        productName={selectedProduct?.name || ''}
+        selectedSize={selectedSize}
       />
     </>
   );
