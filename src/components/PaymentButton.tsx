@@ -81,7 +81,26 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
       console.log('🔍 Testing Edge Function accessibility...');
       try {
         const testResponse = await supabase.functions.invoke('alif-payment-init', {
-          body: { test: true }
+          body: {
+            amount: 1.00,
+            currency: "TJS",
+            gate: "korti_milli",
+            orderData: {
+              customerInfo: {
+                name: "Test User",
+                email: "test@mail.ru",
+                phone: "+992917304745"
+              },
+              items: [
+                {
+                  name: "Test Product",
+                  price: 1.00,
+                  quantity: 1,
+                  category: "test"
+                }
+              ]
+            }
+          }
         });
         
         if (testResponse.error) {
@@ -115,61 +134,30 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
       // Call Supabase Edge Function to initialize payment
       console.log('🔄 Calling Edge Function: alif-payment-init');
 
-      console.log('📦 Payload:', JSON.stringify({
+      const paymentPayload = {
         amount: amount,
         currency: currency,
         gate: gate,
         orderData: simplifiedOrderData
-      }));
+      };
+
+      console.log('📦 Payload:', JSON.stringify(paymentPayload));
       
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/alif-payment-init`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          amount: amount,
-          currency: currency,
-          gate: gate,
-          orderData: simplifiedOrderData
-        })
+      const { data, error } = await supabase.functions.invoke('alif-payment-init', {
+        body: paymentPayload
       });
 
-      const responseText = await response.text();
-      console.log('📄 Raw response:', responseText);
-      
-      if (!response.ok) {
-        let errorDetails;
-        try {
-          errorDetails = JSON.parse(responseText);
-          console.error('❌ Edge Function error details:', errorDetails);
-          throw new Error(`Edge Function Error: ${errorDetails.error || errorDetails.message || 'Unknown error'}`);
-        } catch (parseError) {
-          console.error('❌ Failed to parse error response:', responseText);
-          throw new Error(`Edge Function Error: ${response.status} - ${responseText}`);
-        }
+      if (error) {
+        console.error('❌ Edge Function error:', error);
+        throw new Error(`Edge Function Error: ${error.message || 'Unknown error'}`);
       }
 
-      let data;
-      try {
-        data = JSON.parse(responseText);
-      } catch (parseError) {
-        console.error('❌ Failed to parse success response:', responseText);
-        throw new Error('Invalid response format from payment service');
-      }
-
-      if (!data.success) {
-        throw new Error(`Payment failed: ${data.error || 'Unknown error'}`);
+      if (!data || !data.success) {
+        console.error('❌ Payment initialization failed:', data?.error);
+        throw new Error(data?.error || 'Payment initialization failed');
       }
 
       console.log('✅ Edge Function response received:', data);
-
-      if (!data.success) {
-        console.error('❌ Payment initialization failed:', data.error);
-        throw new Error(data.error || 'Payment initialization failed');
-      }
-
       console.log('💳 Payment URL received:', data.payment_url);
 
       // Store payment info for later reference
