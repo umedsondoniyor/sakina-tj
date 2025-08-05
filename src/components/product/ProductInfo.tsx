@@ -118,7 +118,8 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
                   className={`p-2 text-center border rounded-lg transition-colors ${
                     selectedVariant?.id === variant.id
                       ? 'border-teal-500 bg-teal-50'
-                  className="p-2 text-center border rounded-lg transition-colors border-gray-200 hover:border-teal-500"
+                      : 'border-gray-200 hover:border-teal-500'
+                  }`}
                 >
                   <div className="font-medium">
                     {product.category === 'pillows' && variant.height_cm
