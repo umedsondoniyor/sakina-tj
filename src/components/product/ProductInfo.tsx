@@ -180,9 +180,10 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
             ].map(({ size, price }) => (
               <button
                 key={size}
-                    : variant.inventory?.in_stock
-                disabled={!variant.inventory?.in_stock}
-                  'border-gray-200 hover:border-teal-500'
+                className={`p-2 text-center border rounded-lg transition-colors ${
+                  true
+                    ? 'border-gray-200 hover:border-teal-500'
+                    : 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-50'
                 }`}
               >
                 <div className="font-medium">{size}</div>
