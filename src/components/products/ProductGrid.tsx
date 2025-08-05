@@ -20,6 +20,14 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) =
   const [loadingVariants, setLoadingVariants] = React.useState(false);
   const { addItem } = useCart();
 
+  const handleCloseModals = () => {
+    setShowSizeModal(false);
+    setShowConfirmationModal(false);
+    setSelectedProduct(null);
+    setSelectedVariant(null);
+    setProductVariants([]);
+  };
+
   const handleAddToCart = (product: Product, e: React.MouseEvent) => {
     e.stopPropagation();
     
@@ -114,15 +122,8 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) =
     setSelectedVariant(null);
     setProductVariants([]);
   };
-  if (products.length === 0) {
-  const handleCloseModals = () => {
-    setShowSizeModal(false);
-    setShowConfirmationModal(false);
-    setSelectedProduct(null);
-    setSelectedVariant(null);
-    setProductVariants([]);
-  };
 
+  if (products.length === 0) {
     return (
       <div className="text-center py-12">
         <div className="text-gray-500 mb-4">
