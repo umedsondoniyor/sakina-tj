@@ -37,9 +37,9 @@ const ProductVariantForm: React.FC<ProductVariantFormProps> = ({
     length_cm: '',
     price: '',
     old_price: '',
-    in_stock: true,
     display_order: '0',
-    stock_quantity: '0'
+    stock_quantity: '0',
+    in_stock: true
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -55,9 +55,9 @@ const ProductVariantForm: React.FC<ProductVariantFormProps> = ({
         length_cm: variant.length_cm?.toString() || '',
         price: variant.price.toString(),
         old_price: variant.old_price?.toString() || '',
-        in_stock: variant.in_stock,
         display_order: variant.display_order.toString(),
-        stock_quantity: variant.stock_quantity?.toString() || '0'
+        stock_quantity: variant.inventory?.stock_quantity?.toString() || '0',
+        in_stock: variant.inventory?.in_stock ?? true
       });
     } else {
       setFormData({
@@ -69,9 +69,9 @@ const ProductVariantForm: React.FC<ProductVariantFormProps> = ({
         length_cm: '',
         price: '',
         old_price: '',
-        in_stock: true,
         display_order: '0',
-        stock_quantity: '0'
+        stock_quantity: '0',
+        in_stock: true
       });
     }
     setError('');
@@ -106,13 +106,25 @@ const ProductVariantForm: React.FC<ProductVariantFormProps> = ({
         length_cm: formData.length_cm ? parseFloat(formData.length_cm) : null,
         price: price,
         old_price: formData.old_price ? parseFloat(formData.old_price) : null,
-        in_stock: formData.in_stock,
         display_order: parseInt(formData.display_order) || 0,
-        stock_quantity: parseInt(formData.stock_quantity) || 0,
         updated_at: new Date().toISOString()
       };
 
+      // Get default location
+      const { data: defaultLocation, error: locationError } = await supabase
+        .from('locations')
+        .select('id')
+        .eq('is_active', true)
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .single();
+
+      if (locationError || !defaultLocation) {
+        throw new Error('No active location found');
+      }
+
       let error;
+      let variantId = variant?.id;
 
       if (variant?.id) {
         // Update existing variant
@@ -123,16 +135,32 @@ const ProductVariantForm: React.FC<ProductVariantFormProps> = ({
         error = updateError;
       } else {
         // Create new variant
-        const { error: insertError } = await supabase
+        const { data: insertData, error: insertError } = await supabase
           .from('product_variants')
           .insert([{
             ...variantData,
             created_at: new Date().toISOString()
-          }]);
+          }])
+          .select()
+          .single();
         error = insertError;
+        variantId = insertData?.id;
       }
 
       if (error) throw error;
+
+      // Update or create inventory record
+      const { error: inventoryError } = await supabase
+        .from('inventory')
+        .upsert({
+          location_id: defaultLocation.id,
+          product_variant_id: variantId,
+          stock_quantity: parseInt(formData.stock_quantity) || 0,
+          in_stock: formData.in_stock,
+          updated_at: new Date().toISOString()
+        });
+
+      if (inventoryError) throw inventoryError;
 
       toast.success(variant?.id ? 'Variant updated successfully' : 'Variant created successfully');
       onSuccess();
