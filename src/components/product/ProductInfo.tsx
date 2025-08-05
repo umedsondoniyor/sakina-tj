@@ -259,6 +259,179 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
       </div>
 
       {/* Product Description and Characteristics */}
+      <div className="mt-12 space-y-8">
+        {/* Description Section */}
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">О товаре</h2>
+          
+          {product.description ? (
+            <div className="prose prose-gray max-w-none">
+              <p className="text-gray-700 leading-relaxed text-base">
+                {product.description}
+              </p>
+            </div>
+          ) : (
+            <div className="prose prose-gray max-w-none">
+              <p className="text-gray-700 leading-relaxed text-base">
+                Инновационный двусторонний матрас {product.name} создан для тех, кто ценит простоту и комфорт. 
+                Одна сторона обеспечивает мягкую поддержку для расслабления, а другая — более упругую для активного восстановления. 
+                Независимые пружины адаптируются под контуры тела, обеспечивая правильное положение позвоночника во время сна.
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Characteristics Table */}
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Характеристики</h2>
+          
+          <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+            <div className="divide-y divide-gray-200">
+              {/* Height */}
+              {selectedVariant?.height_cm && (
+                <div className="flex py-4 px-6">
+                  <div className="w-1/3 text-gray-600">Высота</div>
+                  <div className="w-2/3 font-medium">{selectedVariant.height_cm} см</div>
+                </div>
+              )}
+              
+              {/* Hardness */}
+              <div className="flex py-4 px-6">
+                <div className="w-1/3 text-gray-600">Жесткость</div>
+                <div className="w-2/3 font-medium">Средняя</div>
+              </div>
+              
+              {/* Spring count */}
+              {product.category === 'mattresses' && (
+                <div className="flex py-4 px-6">
+                  <div className="w-1/3 text-gray-600">Количество пружин</div>
+                  <div className="w-2/3 font-medium">500</div>
+                </div>
+              )}
+              
+              {/* Spring type */}
+              {product.category === 'mattresses' && (
+                <div className="flex py-4 px-6">
+                  <div className="w-1/3 text-gray-600">Пружинный блок</div>
+                  <div className="w-2/3 font-medium">Независимый</div>
+                </div>
+              )}
+              
+              {/* Maximum weight */}
+              <div className="flex py-4 px-6">
+                <div className="w-1/3 text-gray-600">Вес на спальное место, до</div>
+                <div className="w-2/3 font-medium">90 кг</div>
+              </div>
+              
+              {/* Filling */}
+              <div className="flex py-4 px-6">
+                <div className="w-1/3 text-gray-600">Наполнитель</div>
+                <div className="w-2/3 font-medium">
+                  {product.category === 'pillows' ? 'Memory Foam' : 'Анатомическая пена + кокосовая койра'}
+                </div>
+              </div>
+              
+              {/* Cover material */}
+              <div className="flex py-4 px-6">
+                <div className="w-1/3 text-gray-600">Материал чехла</div>
+                <div className="w-2/3 font-medium">Трикотажный жаккард</div>
+              </div>
+              
+              {/* Cover type */}
+              <div className="flex py-4 px-6">
+                <div className="w-1/3 text-gray-600">Съемный чехол</div>
+                <div className="w-2/3 font-medium">Нет</div>
+              </div>
+              
+              {/* Spring block */}
+              {product.category === 'mattresses' && (
+                <div className="flex py-4 px-6">
+                  <div className="w-1/3 text-gray-600">Пружинный блок</div>
+                  <div className="w-2/3 font-medium">Блок независимых пружин</div>
+                </div>
+              )}
+              
+              {/* Warranty */}
+              <div className="flex py-4 px-6">
+                <div className="w-1/3 text-gray-600">Гарантия</div>
+                <div className="w-2/3 font-medium">1.5 года</div>
+              </div>
+              
+              {/* Recommended mattress pad */}
+              <div className="flex py-4 px-6">
+                <div className="w-1/3 text-gray-600">Рекомендуемый наматрасник</div>
+                <div className="w-2/3 font-medium">1 слой</div>
+              </div>
+              
+              {/* Category */}
+              <div className="flex py-4 px-6">
+                <div className="w-1/3 text-gray-600">Категория</div>
+                <div className="w-2/3 font-medium capitalize">
+                  {product.category === 'mattresses' ? 'Матрасы' : 
+                   product.category === 'pillows' ? 'Подушки' : 
+                   product.category === 'beds' ? 'Кровати' : product.category}
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Show more link */}
+          <div className="mt-4">
+            <button className="text-teal-600 hover:text-teal-700 text-sm font-medium">
+              Смотреть все характеристики →
+            </button>
+          </div>
+        </div>
+
+        {/* Guarantees Section */}
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Гарантии</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
+              <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center">
+                <svg className="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <div className="font-medium text-gray-900">Гарантия на товар 1.5 года</div>
+                <div className="text-sm text-gray-600">35 лет при покупке с чехлом</div>
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
+              <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center">
+                <svg className="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <div className="font-medium text-gray-900">Бесплатная доставка</div>
+                <div className="text-sm text-gray-600">при заказе от 3 товаров</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Additional Information */}
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Дополнительно</h2>
+          
+          <div className="bg-gray-50 rounded-lg p-6">
+            <div className="flex items-start space-x-3">
+              <svg className="w-5 h-5 text-teal-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div className="text-sm text-gray-700">
+                <p className="font-medium mb-1">Доставляется в сжатом виде, до 4 раз. Comfort Plus до 2102-2024 года</p>
+                <p>Внимание! Покупая два матраса одного размера, вы экономите производственные затраты и получаете скидку 5% на общую сумму заказа.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      {/* Product Description and Characteristics */}
       <div className="mt-8 space-y-6">
         {/* Description */}
         {product.description && (
