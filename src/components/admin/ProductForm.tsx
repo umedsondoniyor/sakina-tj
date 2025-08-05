@@ -174,7 +174,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onClose, initialDa
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg w-full max-w-2xl">
+      <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b">
           <h2 className="text-xl font-semibold">
             {initialData ? 'Edit Product' : 'Add New Product'}
@@ -193,7 +193,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onClose, initialDa
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="p-6">
+        <form onSubmit={handleSubmit} className="p-6 max-h-[calc(90vh-120px)] overflow-y-auto">
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -314,10 +314,10 @@ const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onClose, initialDa
 
           {/* Mattress Characteristics - Only show for mattresses category */}
           {formData.category === 'mattresses' && (
-            <div className="border-t pt-6 mt-6">
+            <div className="border-t pt-6 mt-6 space-y-6">
               <h3 className="text-lg font-semibold mb-4 text-gray-900">Характеристики матраса</h3>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Тип матраса
@@ -473,7 +473,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onClose, initialDa
             </div>
           )}
 
-          <div className="mt-6 flex justify-end space-x-3">
+          <div className="sticky bottom-0 bg-white pt-6 mt-6 border-t flex justify-end space-x-3">
             <button
               type="button"
               onClick={onClose}
