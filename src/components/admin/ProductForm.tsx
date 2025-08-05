@@ -312,6 +312,167 @@ const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onClose, initialDa
             </div>
           </div>
 
+          {/* Mattress Characteristics - Only show for mattresses category */}
+          {formData.category === 'mattresses' && (
+            <div className="border-t pt-6 mt-6">
+              <h3 className="text-lg font-semibold mb-4 text-gray-900">Характеристики матраса</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Тип матраса
+                  </label>
+                  <input
+                    type="text"
+                    name="mattress_type"
+                    value={formData.mattress_type}
+                    onChange={handleInputChange}
+                    placeholder="e.g., Ортопедический"
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Жесткость
+                  </label>
+                  <select
+                    name="hardness"
+                    value={formData.hardness}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  >
+                    <option value="">Выберите жесткость</option>
+                    <option value="Мягкая">Мягкая</option>
+                    <option value="Средняя">Средняя</option>
+                    <option value="Жесткая">Жесткая</option>
+                    <option value="Разная жесткость сторон">Разная жесткость сторон</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Количество пружин
+                  </label>
+                  <input
+                    type="number"
+                    name="spring_count"
+                    value={formData.spring_count}
+                    onChange={handleInputChange}
+                    placeholder="e.g., 500"
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    min="0"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Пружинный блок
+                  </label>
+                  <select
+                    name="spring_block_type"
+                    value={formData.spring_block_type}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  >
+                    <option value="">Выберите тип блока</option>
+                    <option value="Независимый">Независимый</option>
+                    <option value="Зависимый">Зависимый</option>
+                    <option value="Блок независимых пружин">Блок независимых пружин</option>
+                    <option value="Беспружинный">Беспружинный</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Материал чехла
+                  </label>
+                  <input
+                    type="text"
+                    name="cover_material"
+                    value={formData.cover_material}
+                    onChange={handleInputChange}
+                    placeholder="e.g., Трикотаж"
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Съемный чехол
+                  </label>
+                  <select
+                    name="removable_cover"
+                    value={formData.removable_cover.toString()}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  >
+                    <option value="false">Нет</option>
+                    <option value="true">Да</option>
+                  </select>
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Наполнитель
+                  </label>
+                  <input
+                    type="text"
+                    name="filler_material"
+                    value={formData.filler_material}
+                    onChange={handleInputChange}
+                    placeholder="e.g., Анатомическая пена + кокосовая койра"
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Гарантия (лет)
+                  </label>
+                  <input
+                    type="number"
+                    name="warranty_years"
+                    value={formData.warranty_years}
+                    onChange={handleInputChange}
+                    placeholder="e.g., 8"
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    min="1"
+                    max="50"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Рекомендуемый наматрасник
+                  </label>
+                  <input
+                    type="text"
+                    name="recommended_mattress_pad"
+                    value={formData.recommended_mattress_pad}
+                    onChange={handleInputChange}
+                    placeholder="e.g., 1 слой"
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Страна производства
+                  </label>
+                  <input
+                    type="text"
+                    name="country_of_origin"
+                    value={formData.country_of_origin}
+                    onChange={handleInputChange}
+                    placeholder="e.g., Таджикистан"
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="mt-6 flex justify-end space-x-3">
             <button
               type="button"

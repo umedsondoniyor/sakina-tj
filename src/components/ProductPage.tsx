@@ -128,13 +128,18 @@ const ProductPage = () => {
                   <span className="font-medium">
                     {product.category === 'mattresses' ? 'Матрасы' : 
                      product.category === 'pillows' ? 'Подушки' : 
-                     product.category === 'beds' ? 'Кровати' : product.category}
+                     product.category === 'beds' ? 'Кровати' : 
+                     product.category === 'smartchair' ? 'Массажные кресла' :
+                     product.category === 'map' ? 'Карты' :
+                     product.category}
                   </span>
                 </div>
-                <div className="flex justify-between py-4 px-6">
-                  <span className="text-gray-600">Тип матраса:</span>
-                  <span className="font-medium">Ортопедический</span>
-                </div>
+                {product.category === 'mattresses' && (
+                  <div className="flex justify-between py-4 px-6">
+                    <span className="text-gray-600">Тип матраса:</span>
+                    <span className="font-medium">{product.mattress_type || 'Ортопедический'}</span>
+                  </div>
+                )}
               </div>
 
               {/* Size and Hardness */}
@@ -148,10 +153,12 @@ const ProductPage = () => {
                         : selectedVariant.size_name}
                     </span>
                   </div>
-                  <div className="flex justify-between py-4 px-6">
-                    <span className="text-gray-600">Жесткость:</span>
-                    <span className="font-medium">Средняя</span>
-                  </div>
+                  {product.category === 'mattresses' && (
+                    <div className="flex justify-between py-4 px-6">
+                      <span className="text-gray-600">Жесткость:</span>
+                      <span className="font-medium">{product.hardness || 'Средняя'}</span>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -163,40 +170,80 @@ const ProductPage = () => {
                     {selectedVariant?.height_cm ? `${selectedVariant.height_cm} см` : '30 см'}
                   </span>
                 </div>
-                <div className="flex justify-between py-4 px-6">
-                  <span className="text-gray-600">Пружинный блок:</span>
-                  <span className="font-medium">Независимый</span>
-                </div>
+                {product.category === 'mattresses' && (
+                  <div className="flex justify-between py-4 px-6">
+                    <span className="text-gray-600">Пружинный блок:</span>
+                    <span className="font-medium">{product.spring_block_type || 'Независимый'}</span>
+                  </div>
+                )}
               </div>
 
-              {/* Type and Material */}
+              {/* Spring Count and Cover Material (for mattresses) */}
+              {product.category === 'mattresses' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-200">
+                  <div className="flex justify-between py-4 px-6">
+                    <span className="text-gray-600">Количество пружин:</span>
+                    <span className="font-medium">{product.spring_count || '500'}</span>
+                  </div>
+                  <div className="flex justify-between py-4 px-6">
+                    <span className="text-gray-600">Материал чехла:</span>
+                    <span className="font-medium">{product.cover_material || 'Трикотаж'}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Removable Cover and Filler Material (for mattresses) */}
+              {product.category === 'mattresses' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-200">
+                  <div className="flex justify-between py-4 px-6">
+                    <span className="text-gray-600">Съемный чехол:</span>
+                    <span className="font-medium">{product.removable_cover ? 'Да' : 'Нет'}</span>
+                  </div>
+                  <div className="flex justify-between py-4 px-6">
+                    <span className="text-gray-600">Наполнитель:</span>
+                    <span className="font-medium">{product.filler_material || 'Анатомическая пена + кокосовая койра'}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Type and Recommended Pad (for mattresses) */}
+              {product.category === 'mattresses' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-200">
+                  <div className="flex justify-between py-4 px-6">
+                    <span className="text-gray-600">Рекомендуемый наматрасник:</span>
+                    <span className="font-medium">{product.recommended_mattress_pad || '1 слой'}</span>
+                  </div>
+                  <div className="flex justify-between py-4 px-6">
+                    <span className="text-gray-600">Гарантия:</span>
+                    <span className="font-medium">{product.warranty_years || 8} лет</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Generic Type and Material for non-mattress products */}
+              {product.category !== 'mattresses' && (
               <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-200">
                 <div className="flex justify-between py-4 px-6">
                   <span className="text-gray-600">Тип размера:</span>
                   <span className="font-medium capitalize">{selectedVariant?.size_type || 'Mattress'}</span>
                 </div>
                 <div className="flex justify-between py-4 px-6">
-                  <span className="text-gray-600">Материал чехла:</span>
-                  <span className="font-medium">Трикотаж</span>
+                  <span className="text-gray-600">Гарантия:</span>
+                  <span className="font-medium">{product.warranty_years || 8} лет</span>
                 </div>
               </div>
+              )}
 
-              {/* Rating and Warranty */}
+              {/* Rating and Country */}
               <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-200">
                 <div className="flex justify-between py-4 px-6">
                   <span className="text-gray-600">Рейтинг:</span>
                   <span className="font-medium">{product.rating}/5 ({product.review_count} отзывов)</span>
                 </div>
                 <div className="flex justify-between py-4 px-6">
-                  <span className="text-gray-600">Гарантия:</span>
-                  <span className="font-medium">8 лет</span>
+                  <span className="text-gray-600">Страна производства:</span>
+                  <span className="font-medium">{product.country_of_origin || 'Таджикистан'}</span>
                 </div>
-              </div>
-
-              {/* Country of Origin */}
-              <div className="flex justify-between py-4 px-6">
-                <span className="text-gray-600">Страна производства:</span>
-                <span className="font-medium">Таджикистан</span>
               </div>
             </div>
           </div>
