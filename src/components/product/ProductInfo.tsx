@@ -431,140 +431,141 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
           </div>
         </div>
 
-      {/* Product Description and Characteristics */}
-      <div className="mt-8 space-y-6">
-        {/* Description */}
-        {product.description && (
+        {/* Product Description and Characteristics */}
+        <div className="mt-8 space-y-6">
+          {/* Description */}
+          {product.description && (
+            <div>
+              <h3 className="text-xl font-semibold text-brand-navy mb-4">Описание товара</h3>
+              <div className="prose prose-sm max-w-none">
+                <p className="text-gray-700 leading-relaxed">{product.description}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Characteristics */}
           <div>
-            <h3 className="text-xl font-semibold text-brand-navy mb-4">Описание товара</h3>
-            <div className="prose prose-sm max-w-none">
-              <p className="text-gray-700 leading-relaxed">{product.description}</p>
-            </div>
-          </div>
-        )}
-
-        {/* Characteristics */}
-        <div>
-          <h3 className="text-xl font-semibold text-brand-navy mb-4">Характеристики</h3>
-          <div className="bg-gray-50 rounded-lg p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Basic Product Info */}
-              <div className="space-y-3">
-                <div className="flex justify-between py-2 border-b border-gray-200">
-                  <span className="text-gray-600">Категория:</span>
-                  <span className="font-medium capitalize">{product.category}</span>
-                </div>
-                
-                {selectedVariant && (
-                  <>
-                    {selectedVariant.width_cm && selectedVariant.length_cm && (
+            <h3 className="text-xl font-semibold text-brand-navy mb-4">Характеристики</h3>
+            <div className="bg-gray-50 rounded-lg p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Basic Product Info */}
+                <div className="space-y-3">
+                  <div className="flex justify-between py-2 border-b border-gray-200">
+                    <span className="text-gray-600">Категория:</span>
+                    <span className="font-medium capitalize">{product.category}</span>
+                  </div>
+                  
+                  {selectedVariant && (
+                    <>
+                      {selectedVariant.width_cm && selectedVariant.length_cm && (
+                        <div className="flex justify-between py-2 border-b border-gray-200">
+                          <span className="text-gray-600">Размер (Ш×Д):</span>
+                          <span className="font-medium">{selectedVariant.width_cm}×{selectedVariant.length_cm} см</span>
+                        </div>
+                      )}
+                      
+                      {selectedVariant.height_cm && (
+                        <div className="flex justify-between py-2 border-b border-gray-200">
+                          <span className="text-gray-600">Высота:</span>
+                          <span className="font-medium">{selectedVariant.height_cm} см</span>
+                        </div>
+                      )}
+                      
                       <div className="flex justify-between py-2 border-b border-gray-200">
-                        <span className="text-gray-600">Размер (Ш×Д):</span>
-                        <span className="font-medium">{selectedVariant.width_cm}×{selectedVariant.length_cm} см</span>
+                        <span className="text-gray-600">Тип размера:</span>
+                        <span className="font-medium capitalize">{selectedVariant.size_type}</span>
                       </div>
-                    )}
-                    
-                    {selectedVariant.height_cm && (
-                      <div className="flex justify-between py-2 border-b border-gray-200">
-                        <span className="text-gray-600">Высота:</span>
-                        <span className="font-medium">{selectedVariant.height_cm} см</span>
-                      </div>
-                    )}
-                    
-                    <div className="flex justify-between py-2 border-b border-gray-200">
-                      <span className="text-gray-600">Тип размера:</span>
-                      <span className="font-medium capitalize">{selectedVariant.size_type}</span>
-                    </div>
-                  </>
-                )}
-                
-                <div className="flex justify-between py-2 border-b border-gray-200">
-                  <span className="text-gray-600">Рейтинг:</span>
-                  <span className="font-medium">{product.rating}/5 ({product.review_count} отзывов)</span>
+                    </>
+                  )}
+                  
+                  <div className="flex justify-between py-2 border-b border-gray-200">
+                    <span className="text-gray-600">Рейтинг:</span>
+                    <span className="font-medium">{product.rating}/5 ({product.review_count} отзывов)</span>
+                  </div>
                 </div>
-              </div>
 
-              {/* Additional Characteristics */}
-              <div className="space-y-3">
-                {product.category === 'mattresses' && (
-                  <>
-                    <div className="flex justify-between py-2 border-b border-gray-200">
-                      <span className="text-gray-600">Тип матраса:</span>
-                      <span className="font-medium">Ортопедический</span>
-                    </div>
-                    
-                    <div className="flex justify-between py-2 border-b border-gray-200">
-                      <span className="text-gray-600">Жесткость:</span>
-                      <span className="font-medium">Средняя</span>
-                    </div>
-                    
-                    <div className="flex justify-between py-2 border-b border-gray-200">
-                      <span className="text-gray-600">Пружинный блок:</span>
-                      <span className="font-medium">Независимый</span>
-                    </div>
-                    
-                    <div className="flex justify-between py-2 border-b border-gray-200">
-                      <span className="text-gray-600">Материал чехла:</span>
-                      <span className="font-medium">Трикотаж</span>
-                    </div>
-                  </>
-                )}
-                
-                {product.category === 'pillows' && (
-                  <>
-                    <div className="flex justify-between py-2 border-b border-gray-200">
-                      <span className="text-gray-600">Тип подушки:</span>
-                      <span className="font-medium">Анатомическая</span>
-                    </div>
-                    
-                    <div className="flex justify-between py-2 border-b border-gray-200">
-                      <span className="text-gray-600">Наполнитель:</span>
-                      <span className="font-medium">Memory Foam</span>
-                    </div>
-                    
-                    <div className="flex justify-between py-2 border-b border-gray-200">
-                      <span className="text-gray-600">Жесткость:</span>
-                      <span className="font-medium">Средняя</span>
-                    </div>
-                  </>
-                )}
-                
-                <div className="flex justify-between py-2 border-b border-gray-200">
-                  <span className="text-gray-600">Гарантия:</span>
-                  <span className="font-medium">8 лет</span>
-                </div>
-                
-                <div className="flex justify-between py-2">
-                  <span className="text-gray-600">Страна производства:</span>
-                  <span className="font-medium">Таджикистан</span>
+                {/* Additional Characteristics */}
+                <div className="space-y-3">
+                  {product.category === 'mattresses' && (
+                    <>
+                      <div className="flex justify-between py-2 border-b border-gray-200">
+                        <span className="text-gray-600">Тип матраса:</span>
+                        <span className="font-medium">Ортопедический</span>
+                      </div>
+                      
+                      <div className="flex justify-between py-2 border-b border-gray-200">
+                        <span className="text-gray-600">Жесткость:</span>
+                        <span className="font-medium">Средняя</span>
+                      </div>
+                      
+                      <div className="flex justify-between py-2 border-b border-gray-200">
+                        <span className="text-gray-600">Пружинный блок:</span>
+                        <span className="font-medium">Независимый</span>
+                      </div>
+                      
+                      <div className="flex justify-between py-2 border-b border-gray-200">
+                        <span className="text-gray-600">Материал чехла:</span>
+                        <span className="font-medium">Трикотаж</span>
+                      </div>
+                    </>
+                  )}
+                  
+                  {product.category === 'pillows' && (
+                    <>
+                      <div className="flex justify-between py-2 border-b border-gray-200">
+                        <span className="text-gray-600">Тип подушки:</span>
+                        <span className="font-medium">Анатомическая</span>
+                      </div>
+                      
+                      <div className="flex justify-between py-2 border-b border-gray-200">
+                        <span className="text-gray-600">Наполнитель:</span>
+                        <span className="font-medium">Memory Foam</span>
+                      </div>
+                      
+                      <div className="flex justify-between py-2 border-b border-gray-200">
+                        <span className="text-gray-600">Жесткость:</span>
+                        <span className="font-medium">Средняя</span>
+                      </div>
+                    </>
+                  )}
+                  
+                  <div className="flex justify-between py-2 border-b border-gray-200">
+                    <span className="text-gray-600">Гарантия:</span>
+                    <span className="font-medium">8 лет</span>
+                  </div>
+                  
+                  <div className="flex justify-between py-2">
+                    <span className="text-gray-600">Страна производства:</span>
+                    <span className="font-medium">Таджикистан</span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Care Instructions */}
-        <div>
-          <h3 className="text-xl font-semibold text-brand-navy mb-4">Уход за изделием</h3>
-          <div className="bg-blue-50 rounded-lg p-6">
-            <ul className="space-y-2 text-sm text-gray-700">
-              <li className="flex items-start">
-                <span className="w-2 h-2 bg-brand-turquoise rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                Регулярно проветривайте матрас
-              </li>
-              <li className="flex items-start">
-                <span className="w-2 h-2 bg-brand-turquoise rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                Используйте наматрасник для защиты от загрязнений
-              </li>
-              <li className="flex items-start">
-                <span className="w-2 h-2 bg-brand-turquoise rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                Переворачивайте матрас каждые 3 месяца
-              </li>
-              <li className="flex items-start">
-                <span className="w-2 h-2 bg-brand-turquoise rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                Избегайте прямого воздействия солнечных лучей
-              </li>
-            </ul>
+          {/* Care Instructions */}
+          <div>
+            <h3 className="text-xl font-semibold text-brand-navy mb-4">Уход за изделием</h3>
+            <div className="bg-blue-50 rounded-lg p-6">
+              <ul className="space-y-2 text-sm text-gray-700">
+                <li className="flex items-start">
+                  <span className="w-2 h-2 bg-brand-turquoise rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                  Регулярно проветривайте матрас
+                </li>
+                <li className="flex items-start">
+                  <span className="w-2 h-2 bg-brand-turquoise rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                  Используйте наматрасник для защиты от загрязнений
+                </li>
+                <li className="flex items-start">
+                  <span className="w-2 h-2 bg-brand-turquoise rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                  Переворачивайте матрас каждые 3 месяца
+                </li>
+                <li className="flex items-start">
+                  <span className="w-2 h-2 bg-brand-turquoise rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                  Избегайте прямого воздействия солнечных лучей
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>
