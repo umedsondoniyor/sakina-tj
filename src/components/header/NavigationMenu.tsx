@@ -35,7 +35,9 @@ const menuItems = [
   },
 ];
 
-const regularMenuItems = ['О нас'];
+const regularMenuItems = [
+  { title: 'О нас', link: '/about' }
+];
 
 const NavigationMenu = () => {
   const navigate = useNavigate();
@@ -86,11 +88,14 @@ const NavigationMenu = () => {
           </li>
         ))}
         {regularMenuItems.map((item) => (
-          <li key={item} className="flex">
+          <li key={item.title} className="flex">
             <Users size={24} className="text-brand-turquoise mr-1" />
-            <button className="text-gray-700 hover:text-brand-turquoise">
-              {item}
-            </button>
+            <a 
+              href={item.link}
+              className="text-gray-700 hover:text-brand-turquoise transition-colors"
+            >
+              {item.title}
+            </a>
           </li>
         ))}
       </ul>

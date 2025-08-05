@@ -37,6 +37,7 @@ import CheckoutPage from './components/CheckoutPage';
 import OrderConfirmationPage from './components/OrderConfirmationPage';
 import PaymentSuccessPage from './components/PaymentSuccessPage';
 import PaymentCancelPage from './components/PaymentCancelPage';
+import AboutUsPage from './components/AboutUsPage';
 
 function App() {
   return (
@@ -137,6 +138,17 @@ function App() {
           <Route
             path="/payment/cancel"
             element={<PaymentCancelPage />}
+          />
+          <Route
+            path="/about"
+            element={
+              <>
+                <TopHeader />
+                <MainHeader />
+                <AboutUsPage />
+                <Footer />
+              </>
+            }
           />
         </Routes>
       </div>
