@@ -34,7 +34,18 @@ const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onClose, initialDa
     price: initialData?.price || 0,
     old_price: initialData?.old_price || 0,
     category: initialData?.category || 'mattresses',
-    image_urls: initialData?.image_urls || ['']
+    image_urls: initialData?.image_urls || [''],
+    // Mattress characteristics
+    mattress_type: initialData?.mattress_type || '',
+    hardness: initialData?.hardness || '',
+    spring_count: initialData?.spring_count || 0,
+    spring_block_type: initialData?.spring_block_type || '',
+    cover_material: initialData?.cover_material || '',
+    removable_cover: initialData?.removable_cover || false,
+    filler_material: initialData?.filler_material || '',
+    warranty_years: initialData?.warranty_years || 8,
+    recommended_mattress_pad: initialData?.recommended_mattress_pad || '',
+    country_of_origin: initialData?.country_of_origin || 'Таджикистан'
   });
   const [submitting, setSubmitting] = useState(false);
 
@@ -44,7 +55,11 @@ const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onClose, initialDa
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'price' || name === 'old_price' ? parseFloat(value) || 0 : value
+      [name]: name === 'price' || name === 'old_price' || name === 'spring_count' || name === 'warranty_years' 
+        ? parseFloat(value) || 0 
+        : name === 'removable_cover' 
+        ? value === 'true' 
+        : value
     }));
   };
 

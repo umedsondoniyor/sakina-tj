@@ -13,6 +13,17 @@ export interface Product {
   created_at: string;
   updated_at: string;
   variants?: ProductVariant[];
+  // Mattress characteristics (optional, mainly for mattresses category)
+  mattress_type?: string;
+  hardness?: string;
+  spring_count?: number;
+  spring_block_type?: string;
+  cover_material?: string;
+  removable_cover?: boolean;
+  filler_material?: string;
+  warranty_years?: number;
+  recommended_mattress_pad?: string;
+  country_of_origin?: string;
 }
 
 export interface ProductVariant {
