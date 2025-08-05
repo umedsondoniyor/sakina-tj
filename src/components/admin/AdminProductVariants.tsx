@@ -21,12 +21,18 @@ const AdminProductVariants = () => {
     try {
       setLoading(true);
       
-      // Fetch variants with product names
+      // Fetch variants with product names and inventory information
       const { data: variantsData, error: variantsError } = await supabase
         .from('product_variants')
         .select(`
           *,
-          products!inner(name)
+          products!inner(name),
+          inventory(
+            stock_quantity,
+            in_stock,
+            location_id,
+            locations!inner(name, is_active)
+          )
         `)
         .order('created_at', { ascending: false });
 
@@ -43,7 +49,12 @@ const AdminProductVariants = () => {
       // Transform variants data to include product name
       const transformedVariants = variantsData?.map(variant => ({
         ...variant,
-        product_name: variant.products?.name
+        product_name: variant.products?.name,
+        inventory: variant.inventory?.[0] ? {
+          stock_quantity: variant.inventory[0].stock_quantity,
+          in_stock: variant.inventory[0].in_stock,
+          location_id: variant.inventory[0].location_id
+        } : undefined
       })) || [];
 
       setVariants(transformedVariants);
@@ -75,19 +86,45 @@ const AdminProductVariants = () => {
     }
   };
 
-  const toggleStock = async (variant: ProductVariant) => {
+  const toggleStock = async (variant: ProductVariant & { inventory?: any }) => {
     try {
+      // Get default location
+      const { data: defaultLocation } = await supabase
+        .from('locations')
+        .select('id')
+        .eq('is_active', true)
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .single();
+
+      if (!defaultLocation) {
+        throw new Error('No active location found');
+      }
+
+      const newInStock = !variant.inventory?.in_stock;
+      
       const { error } = await supabase
-        .from('product_variants')
-        .update({ in_stock: !variant.in_stock })
-        .eq('id', variant.id);
+        .from('inventory')
+        .upsert({
+          location_id: defaultLocation.id,
+          product_variant_id: variant.id,
+          in_stock: newInStock,
+          stock_quantity: newInStock ? (variant.inventory?.stock_quantity || 0) : 0,
+          updated_at: new Date().toISOString()
+        });
 
       if (error) throw error;
       
       setVariants(variants.map(v => 
-        v.id === variant.id ? { ...v, in_stock: !v.in_stock } : v
+        v.id === variant.id ? { 
+          ...v, 
+          inventory: v.inventory ? {
+            ...v.inventory,
+            in_stock: newInStock
+          } : { stock_quantity: 0, in_stock: newInStock, location_id: defaultLocation.id }
+        } : v
       ));
-      toast.success(`Variant ${variant.in_stock ? 'marked as out of stock' : 'marked as in stock'}`);
+      toast.success(`Variant ${variant.inventory?.in_stock ? 'marked as out of stock' : 'marked as in stock'}`);
     } catch (error) {
       console.error('Error updating stock status:', error);
       toast.error('Failed to update stock status');
@@ -214,10 +251,10 @@ const AdminProductVariants = () => {
                     <button
                       onClick={() => toggleStock(variant)}
                       className={`px-2 py-1 rounded text-xs ${
-                        variant.in_stock ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        variant.inventory?.in_stock ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                       }`}
                     >
-                      {variant.in_stock ? `In Stock (${variant.stock_quantity || 0})` : 'Out of Stock'}
+                      {variant.inventory?.in_stock ? `In Stock (${variant.inventory?.stock_quantity || 0})` : 'Out of Stock'}
                     </button>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
