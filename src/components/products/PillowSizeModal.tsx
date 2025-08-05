@@ -41,11 +41,11 @@ const PillowSizeModal: React.FC<PillowSizeModalProps> = ({
                 key={variant.id}
                 onClick={() => onSelectSize(variant)}
                 className={`w-full p-4 border rounded-lg transition-colors text-left ${
-                  variant.in_stock 
+                  variant.inventory?.in_stock 
                     ? 'border-gray-200 hover:border-teal-500' 
                     : 'border-gray-100 bg-gray-50 cursor-not-allowed'
                 }`}
-                disabled={!variant.in_stock}
+                disabled={!variant.inventory?.in_stock}
               >
                 <div className="flex items-center justify-between">
                   <div>
@@ -53,7 +53,7 @@ const PillowSizeModal: React.FC<PillowSizeModalProps> = ({
                       {variant.size_name}
                       {variant.height_cm && `, h - ${variant.height_cm} см`}
                     </div>
-                    {variant.in_stock ? (
+                    {variant.inventory?.in_stock ? (
                       <div className="text-sm text-teal-600">в наличии</div>
                     ) : (
                       <div className="text-sm text-red-600">нет в наличии</div>

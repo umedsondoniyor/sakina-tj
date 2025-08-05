@@ -135,9 +135,9 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
                     {variant.price.toLocaleString()} ₽
                   </div>
                   <div className="text-xs">
-                    {variant.in_stock ? (
+                    {variant.inventory?.in_stock ? (
                       <span className="text-teal-600">
-                        В наличии {variant.stock_quantity ? `(${variant.stock_quantity})` : ''}
+                        В наличии {variant.inventory?.stock_quantity ? `(${variant.inventory.stock_quantity})` : ''}
                       </span>
                     ) : (
                       <span className="text-red-600">Нет в наличии</span>
@@ -180,8 +180,8 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
             ].map(({ size, price }) => (
               <button
                 key={size}
-                onClick={() => {}}
-                className={`p-2 text-center border rounded-lg transition-colors ${
+                    : variant.inventory?.in_stock
+                disabled={!variant.inventory?.in_stock}
                   'border-gray-200 hover:border-teal-500'
                 }`}
               >

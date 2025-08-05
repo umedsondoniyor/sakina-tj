@@ -25,9 +25,32 @@ export interface ProductVariant {
   length_cm?: number;
   price: number;
   old_price?: number;
-  in_stock: boolean;
-  stock_quantity?: number;
   display_order: number;
+  created_at: string;
+  updated_at: string;
+  // Stock information will come from inventory table
+  inventory?: {
+    stock_quantity: number;
+    in_stock: boolean;
+    location_id: string;
+  };
+}
+
+export interface Location {
+  id: string;
+  name: string;
+  address?: string;
+  phone?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Inventory {
+  location_id: string;
+  product_variant_id: string;
+  stock_quantity: number;
+  in_stock: boolean;
   created_at: string;
   updated_at: string;
 }

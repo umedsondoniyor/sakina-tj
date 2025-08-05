@@ -108,8 +108,17 @@ export async function getProductVariants(productId: string): Promise<ProductVari
   return retryOperation(async () => {
     const { data, error } = await supabase
       .from('product_variants')
-      .select('*')
+      .select(`
+        *,
+        inventory!inner(
+          stock_quantity,
+          in_stock,
+          location_id,
+          locations!inner(name, is_active)
+        )
+      `)
       .eq('product_id', productId)
+      .eq('inventory.locations.is_active', true)
       .order('display_order', { ascending: true });
 
     if (error) {
@@ -117,7 +126,17 @@ export async function getProductVariants(productId: string): Promise<ProductVari
       throw error;
     }
 
-    return data || [];
+    // Transform data to include inventory information
+    const transformedData = (data || []).map(variant => ({
+      ...variant,
+      inventory: variant.inventory?.[0] ? {
+        stock_quantity: variant.inventory[0].stock_quantity,
+        in_stock: variant.inventory[0].in_stock,
+        location_id: variant.inventory[0].location_id
+      } : undefined
+    }));
+
+    return transformedData;
   }, 3, 1000, `getProductVariants:${productId}`);
 }
 
@@ -125,9 +144,18 @@ export async function getVariantsByType(sizeType: string): Promise<ProductVarian
   return retryOperation(async () => {
     const { data, error } = await supabase
       .from('product_variants')
-      .select('*')
+      .select(`
+        *,
+        inventory!inner(
+          stock_quantity,
+          in_stock,
+          location_id,
+          locations!inner(name, is_active)
+        )
+      `)
       .eq('size_type', sizeType)
-      .eq('in_stock', true)
+      .eq('inventory.in_stock', true)
+      .eq('inventory.locations.is_active', true)
       .order('display_order', { ascending: true });
 
     if (error) {
@@ -135,9 +163,39 @@ export async function getVariantsByType(sizeType: string): Promise<ProductVarian
       throw error;
     }
 
-    return data || [];
+    // Transform data to include inventory information
+    const transformedData = (data || []).map(variant => ({
+      ...variant,
+      inventory: variant.inventory?.[0] ? {
+        stock_quantity: variant.inventory[0].stock_quantity,
+        in_stock: variant.inventory[0].in_stock,
+        location_id: variant.inventory[0].location_id
+      } : undefined
+    }));
+
+    return transformedData;
   }, 3, 1000, `getVariantsByType:${sizeType}`);
 }
+
+export async function getDefaultLocation() {
+  return retryOperation(async () => {
+    const { data, error } = await supabase
+      .from('locations')
+      .select('*')
+      .eq('is_active', true)
+      .order('created_at', { ascending: true })
+      .limit(1)
+      .single();
+
+    if (error) {
+      console.error('Error fetching default location:', error);
+      throw error;
+    }
+
+    return data;
+  }, 3, 1000, 'getDefaultLocation');
+}
+
 export async function getBestSellers(): Promise<Product[]> {
   return retryOperation(async () => {
     const { data, error } = await supabase
