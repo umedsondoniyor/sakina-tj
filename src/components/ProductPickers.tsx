@@ -31,16 +31,16 @@ const ProductPickers = () => {
         </div>
 
         {/* Bed Picker */}
-        <div className="bg-gray-50 rounded-lg p-8 flex flex-col md:flex-row items-center">
+        <div 
+          className="bg-gray-50 rounded-lg p-8 flex flex-col md:flex-row items-center cursor-pointer hover:bg-gray-100 transition-colors"
+          onClick={() => setIsQuizOpen(true)}
+        >
           <div className="flex-1 mb-6 md:mb-0 text-brand-navy">
             <h3 className="text-2xl font-bold mb-2">Подборщик кроватей</h3>
             <p className="mb-4">
               более 100 моделей для детей и взрослых
             </p>
-            <button
-              onClick={() => setIsQuizOpen(true)}
-              className="inline-block bg-brand-turquoise text-white px-6 py-2 rounded hover:bg-brand-navy transition-colors"
-            >
+            <button className="inline-block bg-brand-turquoise text-white px-6 py-2 rounded hover:bg-brand-navy transition-colors">
               Подобрать
             </button>
           </div>
@@ -54,16 +54,16 @@ const ProductPickers = () => {
         </div>
 
         {/* Pillow Picker */}
-        <div className="bg-gray-50 rounded-lg p-8 flex flex-col md:flex-row items-center">
+        <div 
+          className="bg-gray-50 rounded-lg p-8 flex flex-col md:flex-row items-center cursor-pointer hover:bg-gray-100 transition-colors"
+          onClick={() => setIsQuizOpen(true)}
+        >
           <div className="flex-1 mb-6 md:mb-0 text-brand-navy">
             <h3 className="text-2xl font-bold mb-2">Подборщик подушек</h3>
             <p className="mb-4">
               спальное место начинается с подушки
             </p>
-            <button
-              onClick={() => setIsQuizOpen(true)}
-              className="inline-block bg-brand-turquoise text-white px-6 py-2 rounded hover:bg-brand-navy transition-colors"
-            >
+            <button className="inline-block bg-brand-turquoise text-white px-6 py-2 rounded hover:bg-brand-navy transition-colors">
               Подобрать
             </button>
           </div>
@@ -77,16 +77,16 @@ const ProductPickers = () => {
         </div>
 
         {/* Massage Chair */}
-        <div className="bg-gray-50 rounded-lg p-8 flex flex-col md:flex-row items-center">
+        <div 
+          className="bg-gray-50 rounded-lg p-8 flex flex-col md:flex-row items-center cursor-pointer hover:bg-gray-100 transition-colors"
+          onClick={() => setIsQuizOpen(true)}
+        >
           <div className="flex-1 mb-6 md:mb-0 text-brand-navy">
             <h3 className="text-2xl font-bold mb-2">Подбор массажного кресло</h3>
             <p className="mb-4">
               поможем создать уют в вашем доме
             </p>
-            <button
-              onClick={() => setIsQuizOpen(true)}
-              className="inline-block bg-brand-turquoise text-white px-6 py-2 rounded hover:bg-brand-navy transition-colors"
-            >
+            <button className="inline-block bg-brand-turquoise text-white px-6 py-2 rounded hover:bg-brand-navy transition-colors">
               Подобрать
             </button>
           </div>
