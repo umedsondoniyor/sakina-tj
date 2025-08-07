@@ -21,7 +21,7 @@ const ManufacturingProcess = () => {
         <div className="absolute bottom-4 md:bottom-8 left-4 md:left-8 text-white">
           <h2 className="text-xl md:text-3xl font-bold mb-2 md:mb-4">Создание наших матрасов</h2>
           <p className="text-white/80 text-sm md:text-base max-w-xl">
-            Заглянем за кулисы производственных цехов компании Askona, чтобы узнать, откуда берется качество
+            Заглянем за кулисы производственных цехов компании Sakina, чтобы узнать, откуда берется качество
           </p>
         </div>
       </div>
