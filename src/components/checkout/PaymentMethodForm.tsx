@@ -32,7 +32,7 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
               className="mb-2"
             />
             <h3 className="font-medium">Оплата онлайн</h3>
-            <p className="text-sm text-gray-600">Visa, Mastercard, МИР</p>
+            <p className="text-sm text-gray-600">Visa, Mastercard</p>
           </div>
         </div>
 
