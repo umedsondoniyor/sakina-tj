@@ -125,20 +125,32 @@ const CheckoutPage = () => {
     // Remove all non-digits
     const digits = value.replace(/\D/g, '');
     
-    // Start with +992
+    // Handle different input scenarios
     let formatted = '+992';
+    let workingDigits = digits;
     
-    if (digits.length > 3) {
-      formatted += ` ${digits.slice(3, 5)}`;
+    // If user starts typing without +992, assume they're entering local number
+    if (digits.length > 0 && !digits.startsWith('992')) {
+      // For local numbers, prepend 992
+      workingDigits = '992' + digits;
     }
-    if (digits.length > 5) {
-      formatted += ` ${digits.slice(5, 8)}`;
+    
+    // If digits start with 992, use as is
+    if (digits.startsWith('992')) {
+      workingDigits = digits;
     }
-    if (digits.length > 8) {
-      formatted += ` ${digits.slice(8, 10)}`;
+    
+    if (workingDigits.length > 3) {
+      formatted += ` ${workingDigits.slice(3, 5)}`;
     }
-    if (digits.length > 10) {
-      formatted += ` ${digits.slice(10, 12)}`;
+    if (workingDigits.length > 5) {
+      formatted += ` ${workingDigits.slice(5, 8)}`;
+    }
+    if (workingDigits.length > 8) {
+      formatted += ` ${workingDigits.slice(8, 10)}`;
+    }
+    if (workingDigits.length > 10) {
+      formatted += ` ${workingDigits.slice(10, 12)}`;
     }
     
     return formatted;
