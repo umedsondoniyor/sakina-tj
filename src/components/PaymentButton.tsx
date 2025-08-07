@@ -222,7 +222,7 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
 
       <div className="mt-3 text-xs text-gray-500 text-center">
         <p>Безопасная оплата через Alif Bank</p>
-        <p>Поддерживаются карты Visa, Mastercard, МИР</p>
+        <p>Поддерживаются карты Visa, Mastercard</p>
       </div>
     </div>
   );
