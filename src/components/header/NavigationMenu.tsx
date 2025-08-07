@@ -75,7 +75,7 @@ const NavigationMenu = () => {
             ) : (
               <img
                 src="/icons/filledSmartChair.png"
-                alt="Клуб Askona"
+                alt="Клуб Sakina"
                 className="w-8 h-8 text-brand-turquoise"
               />
             )}
