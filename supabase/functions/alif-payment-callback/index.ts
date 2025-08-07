@@ -13,28 +13,27 @@ Deno.serve(async (req)=>{
   }
   try {
     const supabaseClient = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');
-    // Use test credentials from guide
     const alifMerchantId = Deno.env.get('ALIF_MERCHANT_ID') || '656374';
     const alifSecretKey = Deno.env.get('ALIF_SECRET_KEY') || 'QipCWXJGf39yJA77W5np';
-    // Parse callback data
     const callbackData = await req.json();
     console.log('Received Alif callback:', {
       ...callbackData,
       token: callbackData.token ? '[HIDDEN]' : undefined
     });
-    // Verify signature/token if provided
+    // ✅ Verify token if provided using 2-step HMAC
     if (callbackData.token) {
-      // Generate expected token using the same formula as in payment initialization
-      // Formula: HMAC256(key + order_id + amount.Fixed(2) + callback_url, password)
       const callbackUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/alif-payment-callback`;
       const amountFixed = parseFloat(callbackData.amount).toFixed(2);
       const tokenString = `${alifMerchantId}${callbackData.order_id}${amountFixed}${callbackUrl}`;
-      const expectedToken = createHmac('sha256', alifSecretKey).update(tokenString).digest('hex');
+      // Step 1: Generate first token using HMAC(ALIF_MERCHANT_ID, ALIF_SECRET_KEY)
+      const firstToken = createHmac('sha256', alifSecretKey).update(alifMerchantId).digest('hex');
+      // Step 2: Generate final token using HMAC(tokenString, firstToken)
+      const expectedToken = createHmac('sha256', firstToken).update(tokenString).digest('hex');
       if (callbackData.token !== expectedToken) {
         console.error('Invalid callback signature:', {
           received: callbackData.token,
           expected: expectedToken,
-          tokenString: tokenString
+          tokenString
         });
         return new Response(JSON.stringify({
           success: false,
@@ -49,48 +48,39 @@ Deno.serve(async (req)=>{
       }
       console.log('Callback signature verified successfully');
     } else {
-      console.warn('No token provided in callback - proceeding without signature verification');
+      console.warn('No token provided in callback - proceeding without verification');
     }
-    // Find payment record
+    // 🔍 Find payment
     const { data: payment, error: findError } = await supabaseClient.from('payments').select('*').eq('alif_order_id', callbackData.order_id).single();
     if (findError || !payment) {
       console.error('Payment not found:', callbackData.order_id, findError);
       throw new Error('Payment record not found');
     }
-    // Map Alif status to our status (following the guide mapping)
+    // 🏷 Map Alif status to internal status
     let paymentStatus = 'failed';
-    switch(callbackData.status?.toLowerCase()){
-      case 'success':
-      case 'completed':
-      case 'paid':
-      case 'approve':
-      case 'approved':
-        paymentStatus = 'completed';
-        break;
-      case 'pending':
-      case 'processing':
-      case 'wait':
-      case 'waiting':
-        paymentStatus = 'pending';
-        break;
-      case 'cancelled':
-      case 'canceled':
-      case 'cancel':
-        paymentStatus = 'cancelled';
-        break;
-      case 'failed':
-      case 'error':
-      case 'declined':
-      case 'decline':
-      case 'reject':
-      case 'rejected':
-        paymentStatus = 'failed';
-        break;
-      default:
-        console.warn('Unknown payment status:', callbackData.status);
-        paymentStatus = 'failed';
-    }
-    // Update payment record
+    const statusMap = {
+      success: 'completed',
+      completed: 'completed',
+      paid: 'completed',
+      approve: 'completed',
+      approved: 'completed',
+      pending: 'pending',
+      processing: 'pending',
+      wait: 'pending',
+      waiting: 'pending',
+      cancelled: 'cancelled',
+      canceled: 'cancelled',
+      cancel: 'cancelled',
+      failed: 'failed',
+      error: 'failed',
+      declined: 'failed',
+      decline: 'failed',
+      reject: 'failed',
+      rejected: 'failed'
+    };
+    const alifStatus = callbackData.status?.toLowerCase() || '';
+    paymentStatus = statusMap[alifStatus] || 'failed';
+    // 💾 Update payment record
     const { error: updateError } = await supabaseClient.from('payments').update({
       status: paymentStatus,
       alif_transaction_id: callbackData.transaction_id,
@@ -101,12 +91,9 @@ Deno.serve(async (req)=>{
       console.error('Failed to update payment:', updateError);
       throw new Error('Failed to update payment record');
     }
-    // Handle successful payment
+    // ✅ Optionally create order record
     if (paymentStatus === 'completed') {
-      console.log(`Payment completed successfully: ${callbackData.order_id}`);
-      // Business logic for successful payment
       try {
-        // Create order record (if orders table exists)
         const orderData = {
           payment_id: payment.id,
           customer_email: payment.order_data.customerInfo.email,
@@ -119,22 +106,21 @@ Deno.serve(async (req)=>{
           delivery_info: payment.order_data.deliveryInfo,
           created_at: new Date().toISOString()
         };
-        // Try to create order record (will fail silently if table doesn't exist)
         const { error: orderError } = await supabaseClient.from('orders').insert(orderData);
         if (orderError) {
-          console.warn('Could not create order record (table may not exist):', orderError.message);
+          console.warn('Order insert failed:', orderError.message);
         } else {
-          console.log('Order record created successfully');
+          console.log('Order record created');
         }
-      } catch (orderCreationError) {
-        console.warn('Order creation failed:', orderCreationError);
+      } catch (e) {
+        console.warn('Order creation error:', e);
       }
     } else if (paymentStatus === 'failed') {
       console.log(`Payment failed: ${callbackData.order_id} - ${callbackData.message || 'No message'}`);
     } else {
       console.log(`Payment status updated: ${callbackData.order_id} -> ${paymentStatus}`);
     }
-    // Return success response (Alif Bank expects this)
+    // ✅ Send success response to Alif
     return new Response(JSON.stringify({
       success: true,
       status: 'callback_processed',
