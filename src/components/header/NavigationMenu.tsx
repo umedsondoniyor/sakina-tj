@@ -66,13 +66,10 @@ const NavigationMenu = () => {
     <nav className="mt-4">
       <ul className="flex justify-between w-full">
         {menuItems.map((item) => (
-                  <button
-              onClick={(e) => handleCategoryClick(item.id, e)}
-              className="text-gray-700 hover:text-brand-turquoise transition-colors"
-            >
           <li
             key={item.id}
-            className="flex items-center space-x-2"
+            className="flex items-center space-x-2 cursor-pointer text-gray-700 hover:text-brand-turquoise transition-colors"
+            onClick={(e) => handleCategoryClick(item.id, e)}
           >
             {item.hasIcon ? (
               <item.icon size={32} className="text-brand-turquoise" />
@@ -84,8 +81,7 @@ const NavigationMenu = () => {
               />
             )}
 
-              {item.title}
-            </button>
+            {item.title}
           </li>
         ))}
         {regularMenuItems.map((item) => (
