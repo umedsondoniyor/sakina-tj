@@ -66,6 +66,10 @@ const NavigationMenu = () => {
     <nav className="mt-4">
       <ul className="flex justify-between w-full">
         {menuItems.map((item) => (
+                  <button
+              onClick={(e) => handleCategoryClick(item.id, e)}
+              className="text-gray-700 hover:text-brand-turquoise transition-colors"
+            >
           <li
             key={item.id}
             className="flex items-center space-x-2"
@@ -79,10 +83,7 @@ const NavigationMenu = () => {
                 className="w-8 h-8 text-brand-turquoise"
               />
             )}
-            <button
-              onClick={(e) => handleCategoryClick(item.id, e)}
-              className="text-gray-700 hover:text-brand-turquoise transition-colors"
-            >
+
               {item.title}
             </button>
           </li>
