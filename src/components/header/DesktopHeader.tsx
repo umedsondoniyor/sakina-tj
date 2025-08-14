@@ -37,9 +37,6 @@ const DesktopHeader: React.FC<DesktopHeaderProps> = ({ isCatalogOpen, onToggleCa
           <SearchBar />
 
           <div className="flex items-center space-x-6">
-            <button className="hover:text-brand-turquoise">
-              <Heart size={24} />
-            </button>
             <button 
               onClick={() => setIsOpen(true)}
               className="hover:text-brand-turquoise relative"
