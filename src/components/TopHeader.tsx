@@ -25,7 +25,7 @@ const TopHeader = () => {
             </button>
           </div>
           <a href="#" className="hover:text-teal-600">Статус заказа</a>
-          <a href="tel:88002004090" className="font-medium hover:text-teal-600">+992 90 533 9595</a>
+          <a href="tel:+992905339595" className="font-medium hover:text-teal-600">+992 90 533 9595</a>
         </div>
       </div>
     </div>
