@@ -44,20 +44,20 @@ const PaymentSuccessPage = () => {
     switch (paymentStatus) {
       case 'completed':
         return {
-          icon: <CheckCircle className="mx-auto text-green-500 mb-4" size={64} />,
+          icon: <div className="flex justify-center mb-4"><CheckCircle className="text-green-500" size={64} /></div>,
           title: 'Спасибо за заказ!',
           subtitle: 'Ваш платеж успешно обработан'
         };
       case 'failed':
       case 'cancelled':
         return {
-          icon: <div className="mx-auto text-red-500 mb-4"><svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg></div>,
+          icon: <div className="flex justify-center mb-4"><div className="text-red-500"><svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg></div></div>,
           title: 'Платеж не завершен',
           subtitle: 'Возникла проблема с обработкой платежа'
         };
       default: // pending, processing
         return {
-          icon: <div className="mx-auto text-yellow-500 mb-4"><svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg></div>,
+          icon: <div className="flex justify-center mb-4"><div className="text-yellow-500"><svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg></div></div>,
           title: 'Обработка платежа',
           subtitle: 'Ваш заказ принят и обрабатывается'
         };
