@@ -86,11 +86,11 @@ const NavigationMenu = () => {
         ))}
         {regularMenuItems.map((item) => (
           <li key={item.title} className="flex">
-            <Users size={24} className="text-brand-turquoise mr-1" />
             <a 
               href={item.link}
               className="text-gray-700 hover:text-brand-turquoise transition-colors"
             >
+              <Users size={24} className="text-brand-turquoise mr-1" />
               {item.title}
             </a>
           </li>
