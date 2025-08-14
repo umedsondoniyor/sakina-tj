@@ -79,10 +79,10 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
       <div className="mb-6">
         <div className="flex items-center justify-between mb-2">
           <div className="text-3xl font-bold">
-            {getCurrentPrice().toLocaleString()} ₽
+            {getCurrentPrice().toLocaleString()} с.
             {getCurrentOldPrice() && (
               <span className="ml-2 text-lg text-gray-500 line-through">
-                {getCurrentOldPrice()!.toLocaleString()} ₽
+                {getCurrentOldPrice()!.toLocaleString()} с.
               </span>
             )}
           </div>
@@ -130,7 +130,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
                     }
                   </div>
                   <div className="text-sm text-gray-600">
-                    {variant.price.toLocaleString()} ₽
+                    {variant.price.toLocaleString()} с.
                   </div>
                   <div className="text-xs">
                     {variant.inventory?.in_stock ? (
@@ -186,7 +186,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
               >
                 <div className="font-medium">{size}</div>
                 <div className="text-sm text-gray-600">
-                  {price.toLocaleString()} ₽
+                  {price.toLocaleString()} с.
                 </div>
                 <div className="text-xs text-teal-600">В наличии</div>
               </button>
@@ -232,7 +232,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
           <Truck className="w-5 h-5 text-gray-600" />
           <div>
             <div>Доставка на дом</div>
-            <div>1000 ₽</div>
+            <div>1000 с.</div>
           </div>
         </div>
         <div className="flex items-start space-x-2">
