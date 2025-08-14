@@ -10,6 +10,7 @@ const PaymentSuccessPage = () => {
   const navigate = useNavigate();
   const { clearCart } = useCart();
   const [orderCleared, setOrderCleared] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState<string>('pending');
 
   // Get order ID from URL params or session storage
   const orderId = searchParams.get('order_id') || sessionStorage.getItem('sakina_order_id');
@@ -28,6 +29,7 @@ const PaymentSuccessPage = () => {
   }, [orderId, navigate]);
 
   const handleStatusChange = (status: string) => {
+    setPaymentStatus(status);
     if (status === 'completed' && !orderCleared) {
       // Clear cart only when payment is confirmed as completed
       clearCart();
@@ -37,6 +39,32 @@ const PaymentSuccessPage = () => {
       toast.error('Платеж не был завершен');
     }
   };
+
+  const getHeaderContent = () => {
+    switch (paymentStatus) {
+      case 'completed':
+        return {
+          icon: <CheckCircle className="mx-auto text-green-500 mb-4" size={64} />,
+          title: 'Спасибо за заказ!',
+          subtitle: 'Ваш платеж успешно обработан'
+        };
+      case 'failed':
+      case 'cancelled':
+        return {
+          icon: <div className="mx-auto text-red-500 mb-4"><svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg></div>,
+          title: 'Платеж не завершен',
+          subtitle: 'Возникла проблема с обработкой платежа'
+        };
+      default: // pending, processing
+        return {
+          icon: <div className="mx-auto text-yellow-500 mb-4"><svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg></div>,
+          title: 'Обработка платежа',
+          subtitle: 'Ваш заказ принят и обрабатывается'
+        };
+    }
+  };
+
+  const headerContent = getHeaderContent();
 
   if (!orderId) {
     return null;
@@ -48,12 +76,12 @@ const PaymentSuccessPage = () => {
       <div className="bg-white shadow-sm">
         <div className="max-w-4xl mx-auto px-4 py-6">
           <div className="text-center">
-            <CheckCircle className="mx-auto text-green-500 mb-4" size={64} />
+            {headerContent.icon}
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Спасибо за заказ!
+              {headerContent.title}
             </h1>
             <p className="text-gray-600">
-              Ваш заказ принят и обрабатывается
+              {headerContent.subtitle}
             </p>
           </div>
         </div>
