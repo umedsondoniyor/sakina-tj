@@ -37,12 +37,6 @@ const menuItems: MenuItem[] = [
   { id: 'blankets', name: 'Одеяла', icon: Box },
   { id: 'bedding', name: 'Постельное белье', icon: Box },
   { id: 'kids', name: 'Для детей', icon: Baby },
-  { id: 'wardrobes', name: 'Шкафы и стеллажи', icon: BookOpen },
-  { id: 'drawers', name: 'Тумбы и комоды', icon: BookOpen },
-  { id: 'health', name: 'Для здоровья', icon: Heart },
-  { id: 'decor', name: 'Декор для дома', icon: Home },
-  { id: 'storage', name: 'Хранение вещей', icon: Package },
-  { id: 'outdoor', name: 'Мебель для дачи', icon: Palmtree },
 ];
 
 const categoryContent: Record<string, CategoryContent> = {
