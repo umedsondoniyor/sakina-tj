@@ -12,11 +12,11 @@ interface PaymentStatusCheckerProps {
 
 interface PaymentStatus {
   id: string;
-  order_id: string;
+  alif_order_id: string;
   amount: number;
   currency: string;
   status: string;
-  transaction_id?: string;
+  alif_transaction_id?: string;
   created_at: string;
   updated_at: string;
 }
@@ -25,7 +25,7 @@ const PaymentStatusChecker: React.FC<PaymentStatusCheckerProps> = ({
   orderId,
   onStatusChange,
   autoRefresh = true,
-  refreshInterval = 5000
+  refreshInterval = 3000
 }) => {
   const [payment, setPayment] = useState<PaymentStatus | null>(null);
   const [loading, setLoading] = useState(true);
@@ -37,34 +37,38 @@ const PaymentStatusChecker: React.FC<PaymentStatusCheckerProps> = ({
     setError(null);
 
     try {
-      const { data, error: functionError } = await supabase.functions.invoke(
-        'alif-payment-status',
-        {
-          body: { order_id: orderId }
-        }
-      );
+      // Query the payments table directly instead of using Edge Function
+      const { data, error: dbError } = await supabase
+        .from('payments')
+        .select('*')
+        .eq('alif_order_id', orderId)
+        .single();
 
-      if (functionError) {
-        throw new Error(functionError.message || 'Failed to check payment status');
+      if (dbError) {
+        throw new Error(dbError.message || 'Failed to fetch payment status');
       }
 
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to check payment status');
+      if (!data) {
+        throw new Error('Payment record not found');
       }
 
-      setPayment(data.payment);
+      setPayment(data);
       setLastChecked(new Date());
       
       // Call status change callback
-      if (onStatusChange && data.payment.status !== payment?.status) {
-        onStatusChange(data.payment.status);
+      if (onStatusChange && data.status !== payment?.status) {
+        onStatusChange(data.status);
       }
 
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to check payment status';
       console.error('Payment status check error:', err);
       setError(errorMessage);
-      toast.error(errorMessage);
+      
+      // Only show toast error on initial load, not on auto-refresh
+      if (showLoading) {
+        toast.error(errorMessage);
+      }
     } finally {
       if (showLoading) setLoading(false);
     }
@@ -183,7 +187,7 @@ const PaymentStatusChecker: React.FC<PaymentStatusCheckerProps> = ({
           <div className="ml-3">
             <h3 className="font-semibold">{getStatusText(payment.status)}</h3>
             <p className="text-sm opacity-75">
-              Заказ #{payment.order_id}
+              Заказ #{payment.alif_order_id}
             </p>
           </div>
         </div>
@@ -204,16 +208,21 @@ const PaymentStatusChecker: React.FC<PaymentStatusCheckerProps> = ({
           </span>
         </div>
         
-        {payment.transaction_id && (
+        {payment.alif_transaction_id && (
           <div className="flex justify-between">
             <span>ID транзакции:</span>
-            <span className="font-mono text-xs">{payment.transaction_id}</span>
+            <span className="font-mono text-xs">{payment.alif_transaction_id}</span>
           </div>
         )}
         
         <div className="flex justify-between">
           <span>Создан:</span>
           <span>{new Date(payment.created_at).toLocaleString('ru-RU')}</span>
+        </div>
+        
+        <div className="flex justify-between">
+          <span>Обновлен:</span>
+          <span>{new Date(payment.updated_at).toLocaleString('ru-RU')}</span>
         </div>
         
         {lastChecked && (
@@ -228,7 +237,7 @@ const PaymentStatusChecker: React.FC<PaymentStatusCheckerProps> = ({
         <div className="mt-3 text-xs opacity-75">
           <div className="flex items-center">
             <div className="w-2 h-2 bg-current rounded-full animate-pulse mr-2"></div>
-            Автоматическое обновление каждые {refreshInterval / 1000} сек.
+            Статус обновляется автоматически через callback от Alif Bank
           </div>
         </div>
       )}
