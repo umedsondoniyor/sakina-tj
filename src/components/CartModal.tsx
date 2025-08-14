@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Minus, Plus, Heart } from 'lucide-react';
+import { X, Minus, Plus } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -57,9 +57,6 @@ const CartModal: React.FC = () => {
                     </button>
                   </div>
                   <div className="flex items-center space-x-4">
-                    <button className="text-gray-400 hover:text-gray-600">
-                      <Heart size={20} />
-                    </button>
                     <button
                       onClick={() => removeItem(item.id)}
                       className="text-red-500 hover:text-red-600"
