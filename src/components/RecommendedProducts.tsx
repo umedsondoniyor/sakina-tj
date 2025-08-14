@@ -153,10 +153,10 @@ const RecommendedProducts = () => {
                 {product.name}
               </h3>
               <div className="flex items-center space-x-2">
-                <span className="text-lg font-bold">{product.price.toLocaleString()} ₽</span>
+                <span className="text-lg font-bold">{product.price.toLocaleString()} с.</span>
                 {product.old_price && (
                   <span className="text-sm text-gray-500 line-through">
-                    {product.old_price.toLocaleString()} ₽
+                    {product.old_price.toLocaleString()} с.
                   </span>
                 )}
               </div>
@@ -200,10 +200,10 @@ const RecommendedProducts = () => {
                     {product.name}
                   </h3>
                   <div className="flex items-center space-x-2 mb-3">
-                    <span className="text-base font-bold">{product.price.toLocaleString()} ₽</span>
+                    <span className="text-base font-bold">{product.price.toLocaleString()} с.</span>
                     {product.old_price && (
                       <span className="text-sm text-gray-500 line-through">
-                        {product.old_price.toLocaleString()} ₽
+                        {product.old_price.toLocaleString()} с.
                       </span>
                     )}
                   </div>
