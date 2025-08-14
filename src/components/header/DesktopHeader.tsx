@@ -1,5 +1,5 @@
 import React from 'react';
-import { Heart, ShoppingCart } from 'lucide-react';
+import { ShoppingCart } from 'lucide-react';
 import Logo from '../Logo';
 import SearchBar from './SearchBar';
 import NavigationMenu from './NavigationMenu';
