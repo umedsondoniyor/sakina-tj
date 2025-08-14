@@ -75,9 +75,9 @@ const categoryContent: Record<string, CategoryContent> = {
         image: 'https://ik.imagekit.io/3js0rb3pk/categ_matress.png'
       },
       {
-        title: 'Подборочный сертификат',
+        title: 'Матрас — ключ к вашему сну',
         description: 'доверьте будущий здоровый сон',
-        image: 'https://images.unsplash.com/photo-1585487000160-6ebcfceb0d03?auto=format&fit=crop&w=400&q=80'
+        image: 'https://ik.imagekit.io/3js0rb3pk/cover3.png'
       }
     ]
   },
