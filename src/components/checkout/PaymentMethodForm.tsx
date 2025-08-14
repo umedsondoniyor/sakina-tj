@@ -68,7 +68,7 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
               className="mb-2"
             />
             <h3 className="font-medium">Оплата частями</h3>
-            <p className="text-sm text-gray-600">4 платежа по 2735 ₽ без переплат</p>
+            <p className="text-sm text-gray-600">4 платежа по 2735 с. без переплат</p>
             <Info className="mx-auto mt-1 text-gray-400" size={16} />
           </div>
         </div>
