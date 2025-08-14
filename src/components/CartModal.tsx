@@ -68,7 +68,7 @@ const CartModal: React.FC = () => {
               </div>
               
               <div className="text-right">
-                <div className="font-bold">{item.price.toLocaleString()} ₽</div>
+                <div className="font-bold">{item.price.toLocaleString()} с.</div>
               </div>
             </div>
           ))}
@@ -77,7 +77,7 @@ const CartModal: React.FC = () => {
         <div className="border-t p-4 space-y-4">
           <div className="flex justify-between text-lg font-bold">
             <span>Итого</span>
-            <span>{total.toLocaleString()} ₽</span>
+            <span>{total.toLocaleString()} с.</span>
           </div>
           
           <button 
