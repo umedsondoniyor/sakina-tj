@@ -48,7 +48,7 @@ const DeliveryForm: React.FC<DeliveryFormProps> = ({
               />
               <div>
                 <h3 className="font-medium">Доставка на дом</h3>
-                <p className="text-sm text-gray-600">Сроки доставки уточнит менеджер при обработке заказа, 1 000 ₽</p>
+                <p className="text-sm text-gray-600">Сроки доставки уточнит менеджер при обработке заказа, 1 000 с.</p>
               </div>
             </div>
             <ChevronDown className={`transform transition-transform ${
