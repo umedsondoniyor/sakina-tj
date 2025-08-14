@@ -60,10 +60,10 @@ const PillowSizeModal: React.FC<PillowSizeModalProps> = ({
                     )}
                   </div>
                   <div className={`text-lg font-bold ${!variant.in_stock ? 'text-gray-400' : ''}`}>
-                    {variant.price.toLocaleString()} ₽
+                    {variant.price.toLocaleString()} с.
                     {variant.old_price && (
                       <div className="text-sm text-gray-500 line-through">
-                        {variant.old_price.toLocaleString()} ₽
+                        {variant.old_price.toLocaleString()} с.
                       </div>
                     )}
                   </div>
