@@ -52,7 +52,7 @@ const PillowConfirmationModal: React.FC<PillowConfirmationModalProps> = ({
             onClick={onAddToCart}
             className="w-full bg-teal-500 text-white py-3 rounded-lg hover:bg-teal-600 transition-colors font-medium"
           >
-            В корзину • {selectedVariant.price.toLocaleString()} ₽
+            В корзину • {selectedVariant.price.toLocaleString()} с.
           </button>
         </div>
       </div>
