@@ -72,7 +72,7 @@ const categoryContent: Record<string, CategoryContent> = {
       {
         title: 'Подборщик матрасов',
         description: 'создайте идеальное место для сна',
-        image: 'https://images.unsplash.com/photo-1631679706909-1844bbd07221?auto=format&fit=crop&w=400&q=80'
+        image: 'https://ik.imagekit.io/3js0rb3pk/categ_matress.png'
       },
       {
         title: 'Подборочный сертификат',
