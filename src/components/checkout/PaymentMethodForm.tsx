@@ -16,6 +16,20 @@ const paymentGateways = [
     icon: CreditCard,
     color: 'bg-blue-500'
   },
+    {
+    value: 'wallet',
+    label: 'Alif Wallet',
+    description: 'Электронный кошелек Alif',
+    icon: Wallet,
+    color: 'bg-green-500'
+  },
+  {
+    value: 'salom',
+    label: 'Alif Salom',
+    description: 'Купите сейчас, оплачивайте потом',
+    icon: Handshake,
+    color: 'bg-green-500'
+  },
   {
     value: 'vsa',
     label: 'Visa',
@@ -29,20 +43,6 @@ const paymentGateways = [
     description: 'Международные карты Mastercard',
     icon: CreditCard,
     color: 'bg-red-500'
-  },
-  {
-    value: 'wallet',
-    label: 'Alif Wallet',
-    description: 'Электронный кошелек Alif',
-    icon: Wallet,
-    color: 'bg-green-500'
-  },
-  {
-    value: 'salom',
-    label: 'Alif Salom',
-    description: 'Купите сейчас, оплачивайте потом',
-    icon: Handshake,
-    color: 'bg-green-500'
   },
   {
     value: 'tcell',
