@@ -2,8 +2,8 @@ import React from 'react';
 import { CreditCard, Home, Info, Smartphone, Wallet, Handshake } from 'lucide-react';
 
 interface PaymentMethodFormProps {
-  paymentMethod: 'online' | 'cash' | 'installment';
-  onPaymentMethodChange: (method: 'online' | 'cash' | 'installment') => void;
+  paymentMethod: 'online' | 'cash';
+  onPaymentMethodChange: (method: 'online' | 'cash') => void;
   selectedGateway?: string;
   onGatewayChange?: (gateway: string) => void;
 }
@@ -26,7 +26,7 @@ const paymentGateways = [
   {
     value: 'salom',
     label: 'Alif Salom',
-    description: 'Купите сейчас, оплачивайте потом',
+    description: 'Рассрочка: 4 платежа без переплат',
     icon: Handshake,
     color: 'bg-green-500'
   },
@@ -119,26 +119,6 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
             />
             <h3 className="font-medium">При получении</h3>
             <p className="text-sm text-gray-600">Наличными или картой курьеру</p>
-          </div>
-        </div>
-
-        {/* Installment */}
-        <div className={`border rounded-lg p-4 cursor-pointer transition-colors ${
-          paymentMethod === 'installment' ? 'border-teal-500 bg-teal-50' : 'border-gray-300'
-        }`} onClick={() => onPaymentMethodChange('installment')}>
-          <div className="text-center">
-            <div className="mx-auto mb-2 w-8 h-8 bg-teal-600 rounded-full flex items-center justify-center">
-              <span className="text-white text-sm font-bold">%</span>
-            </div>
-            <input
-              type="radio"
-              checked={paymentMethod === 'installment'}
-              onChange={() => onPaymentMethodChange('installment')}
-              className="mb-2"
-            />
-            <h3 className="font-medium">Оплата частями</h3>
-            <p className="text-sm text-gray-600">4 платежа по 2735 с. без переплат</p>
-            <Info className="mx-auto mt-1 text-gray-400" size={16} />
           </div>
         </div>
       </div>

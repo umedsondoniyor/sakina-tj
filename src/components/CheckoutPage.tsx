@@ -27,7 +27,7 @@ interface FormData {
   intercom: string;
   
   // Payment Information
-  paymentMethod: 'online' | 'cash' | 'installment';
+  paymentMethod: 'online' | 'cash';
   
   // Gateway Information
   selectedGateway: string;
@@ -284,7 +284,7 @@ const CheckoutPage = () => {
                 <h3 className="font-medium mb-2">Способ оплаты</h3>
                 <p className="text-sm text-gray-600">
                   {formData.paymentMethod === 'online' ? 'Оплата онлайн' : 
-                   formData.paymentMethod === 'cash' ? 'При получении' : 'Оплата частями'}
+                   'При получении'}
                   {formData.paymentMethod === 'online' && formData.selectedGateway && (
                     <span className="block text-xs text-teal-600">
                       через {formData.selectedGateway === 'korti_milli' ? 'Корти Милли' : 

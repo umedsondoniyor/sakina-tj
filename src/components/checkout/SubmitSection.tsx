@@ -4,7 +4,7 @@ import PaymentButton from '../PaymentButton';
 import type { CartItem } from '../../lib/types';
 
 interface SubmitSectionProps {
-  paymentMethod: 'online' | 'cash' | 'installment';
+  paymentMethod: 'online' | 'cash';
   items: CartItem[];
   formData: {
     name: string;
