@@ -39,17 +39,17 @@ const paymentGateways = [
   },
   {
     value: 'salom',
-    label: 'Salom Finance',
-    description: 'Мобильные платежи Salom',
+    label: 'Alif Salom',
+    description: 'Купите сейчас, оплачивайте потом',
     icon: Smartphone,
-    color: 'bg-purple-500'
+    color: 'bg-green-500'
   },
   {
     value: 'tcell',
     label: 'Tcell',
     description: 'Мобильные платежи Tcell',
     icon: Smartphone,
-    color: 'bg-red-600'
+    color: 'bg-purple-600'
   },
   {
     value: 'megafon',
