@@ -225,9 +225,13 @@ const AdminQuiz = () => {
                     <img
                       src={option.image_url}
                       alt={option.option_label}
-                      className="w-full h-20 object-cover rounded"
+                     className="w-full h-20 object-cover rounded"
+                     onError={(e) => {
+                       const target = e.target as HTMLImageElement;
+                       target.src = 'https://via.placeholder.com/150x80/e5e7eb/9ca3af?text=No+Image';
+                     }}
                     />
-                    <div className="absolute inset-0 bg-black bg-opacity-40 rounded flex items-end">
+                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent rounded flex items-end">
                       <p className="text-white text-xs p-2 truncate">
                         {option.option_label}
                       </p>
