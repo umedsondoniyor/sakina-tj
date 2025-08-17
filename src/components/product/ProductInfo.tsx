@@ -114,11 +114,13 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
                 <button
                   key={variant.id}
                   onClick={() => onVariantChange(variant)}
-                  disabled={!variant.in_stock}
+                  disabled={!variant.inventory?.in_stock}
                   className={`p-2 text-center border rounded-lg transition-colors ${
                     selectedVariant?.id === variant.id
                       ? 'border-teal-500 bg-teal-50'
-                      : 'border-gray-200 hover:border-teal-500'
+                      : variant.inventory?.in_stock 
+                        ? 'border-gray-200 hover:border-teal-500'
+                        : 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-50'
                   }`}
                 >
                   <div className="font-medium">
