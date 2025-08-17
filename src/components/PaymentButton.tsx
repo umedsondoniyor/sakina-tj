@@ -45,7 +45,7 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
   disabled = false,
   className = '',
   children,
-  gate = 'korti_milli'
+  gate = 'vsa'
 }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
