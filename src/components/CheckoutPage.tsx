@@ -29,6 +29,9 @@ interface FormData {
   // Payment Information
   paymentMethod: 'online' | 'cash' | 'installment';
   
+  // Gateway Information
+  selectedGateway: string;
+  
   // Additional
   comments: string;
   sameAsBilling: boolean;
@@ -57,6 +60,7 @@ const CheckoutPage = () => {
     floor: '',
     intercom: '',
     paymentMethod: 'online',
+    selectedGateway: 'korti_milli',
     comments: '',
     sameAsBilling: true
   });
@@ -248,6 +252,8 @@ const CheckoutPage = () => {
           <PaymentMethodForm
             paymentMethod={formData.paymentMethod}
             onPaymentMethodChange={(method) => handleInputChange('paymentMethod', method)}
+            selectedGateway={formData.selectedGateway}
+            onGatewayChange={(gateway) => handleInputChange('selectedGateway', gateway)}
           />
         );
       case 4:
@@ -279,6 +285,20 @@ const CheckoutPage = () => {
                 <p className="text-sm text-gray-600">
                   {formData.paymentMethod === 'online' ? 'Оплата онлайн' : 
                    formData.paymentMethod === 'cash' ? 'При получении' : 'Оплата частями'}
+                  {formData.paymentMethod === 'online' && formData.selectedGateway && (
+                    <span className="block text-xs text-teal-600">
+                      через {formData.selectedGateway === 'korti_milli' ? 'Корти Милли' : 
+                            formData.selectedGateway === 'vsa' ? 'Visa' :
+                            formData.selectedGateway === 'mcr' ? 'Mastercard' :
+                            formData.selectedGateway === 'wallet' ? 'Alif Wallet' :
+                            formData.selectedGateway === 'salom' ? 'Salom Finance' :
+                            formData.selectedGateway === 'tcell' ? 'Tcell' :
+                            formData.selectedGateway === 'megafon' ? 'Megafon' :
+                            formData.selectedGateway === 'babilon' ? 'Babilon' :
+                            formData.selectedGateway === 'zetmobile' ? 'Zet Mobile' :
+                            formData.selectedGateway}
+                    </span>
+                  )}
                 </p>
               </div>
             </div>
@@ -288,7 +308,7 @@ const CheckoutPage = () => {
               <PaymentButton
                 amount={calculateFinalTotal()}
                 currency="TJS"
-                gate="korti_milli"
+                gate={formData.selectedGateway}
                 orderData={{
                   items: items.map(item => ({
                     id: item.id,
