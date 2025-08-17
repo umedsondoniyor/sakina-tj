@@ -184,7 +184,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ open, onClose }) => {
   };
 
   const currentStep = getCurrentStep();
-  const totalSteps = selections.userType === 'child' ? 3 : 6; // 6 steps for adult flow
+  const totalSteps = selections.userType === 'child' ? 3 : 5; // 5 steps for adult flow
   const progress = ((activeStep + 1) / totalSteps) * 100;
 
   // Return early if no current step is found
