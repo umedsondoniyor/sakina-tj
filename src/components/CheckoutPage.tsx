@@ -288,7 +288,7 @@ const CheckoutPage = () => {
               <PaymentButton
                 amount={calculateFinalTotal()}
                 currency="TJS"
-                gate="vsa"
+                gate="korti_milli"
                 orderData={{
                   items: items.map(item => ({
                     id: item.id,
