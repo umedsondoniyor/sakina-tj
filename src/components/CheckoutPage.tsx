@@ -291,7 +291,7 @@ const CheckoutPage = () => {
                             formData.selectedGateway === 'vsa' ? 'Visa' :
                             formData.selectedGateway === 'mcr' ? 'Mastercard' :
                             formData.selectedGateway === 'wallet' ? 'Alif Wallet' :
-                            formData.selectedGateway === 'salom' ? 'Salom Finance' :
+                            formData.selectedGateway === 'salom' ? 'Alif Salom' :
                             formData.selectedGateway === 'tcell' ? 'Tcell' :
                             formData.selectedGateway === 'megafon' ? 'Megafon' :
                             formData.selectedGateway === 'babilon' ? 'Babilon' :
