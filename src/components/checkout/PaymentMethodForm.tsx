@@ -1,5 +1,5 @@
 import React from 'react';
-import { CreditCard, Home, Info, Smartphone, Wallet } from 'lucide-react';
+import { CreditCard, Home, Info, Smartphone, Wallet, Handshake } from 'lucide-react';
 
 interface PaymentMethodFormProps {
   paymentMethod: 'online' | 'cash' | 'installment';
@@ -41,7 +41,7 @@ const paymentGateways = [
     value: 'salom',
     label: 'Alif Salom',
     description: 'Купите сейчас, оплачивайте потом',
-    icon: Smartphone,
+    icon: Handshake,
     color: 'bg-green-500'
   },
   {
