@@ -30,6 +30,7 @@ import AdminReviews from './components/admin/AdminReviews';
 import AdminBlog from './components/admin/AdminBlog';
 import AdminCarousel from './components/admin/AdminCarousel';
 import AdminProductVariants from './components/admin/AdminProductVariants';
+import AdminQuiz from './components/admin/AdminQuiz';
 import AdminRoute from './components/admin/AdminRoute';
 import AdminLogin from './components/admin/AdminLogin';
 import Mattresses from './components/Mattresses';
@@ -56,6 +57,7 @@ function App() {
             <Route path="reviews" element={<AdminReviews />} />
             <Route path="blog" element={<AdminBlog />} />
             <Route path="carousel" element={<AdminCarousel />} />
+            <Route path="quiz" element={<AdminQuiz />} />
           </Route>
 
           {/* Public Routes */}

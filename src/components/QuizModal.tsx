@@ -1,129 +1,97 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { getQuizSteps } from '../lib/api';
+import type { QuizStep } from '../lib/types';
 
 interface QuizModalProps {
   open: boolean;
   onClose: () => void;
 }
 
-const steps = [
-  {
-    label: 'Для кого вы подбираете матрас?',
-    key: 'userType',
-    options: [
-      { value: 'self', label: 'Для себя', img: 'https://ik.imagekit.io/3js0rb3pk/picker_deatils/dlya_sebya.webp?format=webp&func=auto&fit=cover&width=480&height=303&dpr=1' },
-      { value: 'couple', label: 'Для двоих', img: 'https://ik.imagekit.io/3js0rb3pk/picker_deatils/dlya_dvoix.webp?format=webp&func=auto&fit=cover&width=480&height=303&dpr=1' },
-      { value: 'child', label: 'Для ребенка', img: 'https://ik.imagekit.io/3js0rb3pk/picker_deatils/dlya_rebyonka.webp?format=webp&func=auto&fit=cover&width=480&height=303&dpr=1' },
-      { value: 'elderly', label: 'Для пожилых', img: 'https://ik.imagekit.io/3js0rb3pk/picker_deatils/dlya_roditeley.webp?format=webp&func=auto&fit=cover&width=480&height=303&dpr=1' },
-    ],
-  },
-  {
-    label: 'Выберите пол ребенка',
-    key: 'kid_gender',
-    options: [
-      { value: 'boy', label: 'Мальчик', img: 'https://ik.imagekit.io/3js0rb3pk/picker_deatils/rebyonok/malchik.webp?format=webp&func=auto&fit=cover&width=480&height=303&dpr=1' },
-      { value: 'girl', label: 'Девочка', img: 'https://ik.imagekit.io/3js0rb3pk/picker_deatils/rebyonok/devochka.webp?format=webp&func=auto&fit=cover&width=480&height=303&dpr=1' },
-    ],
-  },
-  {
-    label: 'Выберите возраст мальчика',
-    key: 'boy_age',
-    options: [
-      { value: 'from0to3', label: 'от 0 до 3 лет', img: 'https://ik.imagekit.io/3js0rb3pk/picker_deatils/rebyonok/vozrast-mal/0-3.webp?format=webp&func=auto&fit=cover&width=480&height=303&dpr=1' },
-      { value: 'from3to7', label: 'от 3 до 7 лет', img: 'https://ik.imagekit.io/3js0rb3pk/picker_deatils/rebyonok/vozrast-mal/3-7.webp?format=webp&func=auto&fit=cover&width=480&height=303&dpr=1' },
-      { value: 'from7to14', label: 'от 7 до 14 лет', img: 'https://ik.imagekit.io/3js0rb3pk/picker_deatils/rebyonok/vozrast-mal/7-14.webp?format=webp&func=auto&fit=cover&width=480&height=303&dpr=1' },
-    ],
-  },
-  {
-    label: 'Выберите возраст девочки',
-    key: 'girl_age',
-    options: [
-      { value: 'from0to3', label: 'от 0 до 3 лет', img: 'https://ik.imagekit.io/3js0rb3pk/picker_deatils/rebyonok/vozrast-dev/0-3.webp?format=webp&func=auto&fit=cover&width=480&height=303&dpr=1' },
-      { value: 'from3to7', label: 'от 3 до 7 лет', img: 'https://ik.imagekit.io/3js0rb3pk/picker_deatils/rebyonok/vozrast-dev/3-7.webp?format=webp&func=auto&fit=cover&width=480&height=303&dpr=1' },
-      { value: 'from7to14', label: 'от 7 до 14 лет', img: 'https://ik.imagekit.io/3js0rb3pk/picker_deatils/rebyonok/vozrast-dev/7-14.webp?format=webp&func=auto&fit=cover&width=480&height=303&dpr=1' },
-    ],
-  },
-  {
-    label: 'Как вы обычно засыпаете?',
-    key: 'sleep_pose',
-    options: [
-      { value: 'back', label: 'На спине', img: 'https://ik.imagekit.io/3js0rb3pk/picker_deatils/sleep_pose/back.webp?format=webp&func=auto&fit=cover&width=480&height=303&dpr=1' },
-      { value: 'side', label: 'На боку', img: 'https://ik.imagekit.io/3js0rb3pk/picker_deatils/sleep_pose/side.webp?format=webp&func=auto&fit=cover&width=480&height=303&dpr=1' },
-      { value: 'tommy', label: 'На животе', img: 'https://ik.imagekit.io/3js0rb3pk/picker_deatils/sleep_pose/tommy.webp?format=webp&func=auto&fit=cover&width=480&height=303&dpr=1' },
-      { value: 'differentiates', label: 'По-разному', img: 'https://ik.imagekit.io/3js0rb3pk/picker_deatils/sleep_pose/changes.webp?format=webp&func=auto&fit=cover&width=480&height=303&dpr=1' },
-    ],
-  },
-  {
-    label: 'Что мешает вам выспаться?',
-    key: 'what_bothers',
-    options: [
-      { value: 'back', label: 'Боль в спине', img: 'https://ik.imagekit.io/3js0rb3pk/picker_deatils/chto%20meshayet/bol_v_spine.webp' },
-      { value: 'hot', label: 'Жарко', img: 'https://ik.imagekit.io/3js0rb3pk/picker_deatils/chto%20meshayet/jarko.webp?updatedAt=1748847687657' },
-      { value: 'week_support', label: 'Слабая поддержка', img: 'https://ik.imagekit.io/3js0rb3pk/picker_deatils/chto%20meshayet/slabaya_poderjka.webp' },
-      { value: 'do_not_sleep_on_mattress', label: 'Сплю не на матрасе', img: 'https://ik.imagekit.io/3js0rb3pk/picker_deatils/chto%20meshayet/splyu_ne_na_matrase.webp' },
-      { value: 'all_good', label: 'Ничего не мешает', img: 'https://ik.imagekit.io/3js0rb3pk/picker_deatils/chto%20meshayet/nichego_ne_meshayet.webp' },
-    ],
-  },
-  {
-    label: 'Выберите размер матраса для двоих',
-    key: 'self_size',
-    options: [
-      { value: '90_200', label: '90×200', img: 'https://ik.imagekit.io/3js0rb3pk/picker_deatils/razmeri/90x200.webp' },
-      { value: '120_200', label: '120×200', img: 'https://ik.imagekit.io/3js0rb3pk/picker_deatils/razmeri/120x200.webp' },
-      { value: '140_200', label: '140×200', img: 'https://ik.imagekit.io/3js0rb3pk/picker_deatils/razmeri/140x200.webp' },
-      { value: '160_200', label: '160×200', img: 'https://ik.imagekit.io/3js0rb3pk/picker_deatils/razmeri/160x200.webp' },
-      { value: '180_200', label: '180×200', img: 'https://ik.imagekit.io/3js0rb3pk/picker_deatils/razmeri/180x200.webp' },
-      { value: '200_200', label: '200×200', img: 'https://ik.imagekit.io/3js0rb3pk/picker_deatils/razmeri/200x200.webp' },
-    ],
-  },
-  {
-    label: 'Какую жесткость матраса вы предпочитаете?',
-    key: 'hardness',
-    options: [
-      { value: 'soft', label: 'Мягкий', img: 'https://ik.imagekit.io/3js0rb3pk/picker_deatils/jyostkost%20matrasa/myagkiy.webp' },
-      { value: 'middle', label: 'Средний', img: 'https://ik.imagekit.io/3js0rb3pk/picker_deatils/jyostkost%20matrasa/sredniy.webp' },
-      { value: 'hard', label: 'Жесткий', img: 'https://ik.imagekit.io/3js0rb3pk/picker_deatils/jyostkost%20matrasa/jyostkiy.webp' },
-    ],
-  },
-];
 
 const QuizModal: React.FC<QuizModalProps> = ({ open, onClose }) => {
   const navigate = useNavigate();
   const [activeStep, setActiveStep] = useState(0);
   const [selections, setSelections] = useState<Record<string, string>>({});
+  const [steps, setSteps] = useState<QuizStep[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (open) {
+      loadQuizSteps();
+    }
+  }, [open]);
+
+  const loadQuizSteps = async () => {
+    try {
+      setLoading(true);
+      const data = await getQuizSteps();
+      setSteps(data);
+    } catch (err) {
+      setError('Failed to load quiz steps');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (!open) return null;
 
+  if (loading) {
+    return (
+      <div 
+        className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+        onClick={onClose}
+      >
+        <div 
+          className="bg-white rounded-lg w-full max-w-md p-8 text-center"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+          <p>Загрузка опросника...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || steps.length === 0) {
+    return (
+      <div 
+        className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+        onClick={onClose}
+      >
+        <div 
+          className="bg-white rounded-lg w-full max-w-md p-8 text-center"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <p className="text-red-600 mb-4">{error || 'Опросник не настроен'}</p>
+          <button
+            onClick={onClose}
+            className="bg-teal-500 text-white px-4 py-2 rounded-lg"
+          >
+            Закрыть
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // Get the appropriate step based on user type and current progress
   const getCurrentStep = () => {
-    // If user selected child path
-    if (selections.userType === 'child') {
-      switch (activeStep) {
-        case 0: return steps[0]; // userType
-        case 1: return steps[1]; // kid_gender
-        case 2: return selections.kid_gender === 'boy' ? steps[2] : steps[3]; // age based on gender
-        default: return undefined;
+    // Filter steps based on current selections and conditional logic
+    const availableSteps = steps.filter(step => {
+      // If step has no parent, it's always available
+      if (!step.parent_step_key || !step.parent_value) {
+        return true;
       }
-    }
-    
-    // For non-child paths (self, couple, elderly)
-    if (selections.userType && activeStep > 0) {
-      // Skip child-specific steps (kid_gender, boy_age, girl_age)
-      // and continue with adult questions
-      const adultSteps = [
-        steps[0], // userType
-        steps[4], // sleep_pose
-        steps[5], // what_bothers
-        steps[6], // self_size
-        steps[7], // hardness
-        steps[8], // price_option
-      ];
-      return activeStep < adultSteps.length ? adultSteps[activeStep] : undefined;
-    }
+      
+      // Check if parent condition is met
+      return selections[step.parent_step_key] === step.parent_value;
+    });
 
-    // First step or no selection yet
-    return steps[0];
+    return availableSteps[activeStep] || null;
   };
 
   const handleSelect = (option: string) => {
@@ -132,13 +100,20 @@ const QuizModal: React.FC<QuizModalProps> = ({ open, onClose }) => {
 
     const newSelections = {
       ...selections,
-      [currentStep.key]: option,
+      [currentStep.step_key]: option,
     };
     setSelections(newSelections);
 
-    // If child flow and we've selected age, go to products
-    if (newSelections.userType === 'child' && 
-       (currentStep.key === 'boy_age' || currentStep.key === 'girl_age')) {
+    // Check if this is the last step for current flow
+    const nextAvailableSteps = steps.filter(step => {
+      if (!step.parent_step_key || !step.parent_value) {
+        return true;
+      }
+      return newSelections[step.parent_step_key] === step.parent_value;
+    });
+
+    // If we've reached the end of available steps, submit
+    if (activeStep >= nextAvailableSteps.length - 1) {
       handleSubmit(newSelections);
       return;
     }
@@ -147,16 +122,23 @@ const QuizModal: React.FC<QuizModalProps> = ({ open, onClose }) => {
   };
 
   const handleNext = () => {
-    const nextStep = activeStep + 1;
-    const currentStep = getCurrentStep();
+    // Get available steps for current selections
+    const availableSteps = steps.filter(step => {
+      if (!step.parent_step_key || !step.parent_value) {
+        return true;
+      }
+      return selections[step.parent_step_key] === step.parent_value;
+    });
+
+    const nextStepIndex = activeStep + 1;
     
-    // If no current step or next step would be undefined, submit
-    if (!currentStep || !getCurrentStep()) {
+    // If we've reached the end of available steps, submit
+    if (nextStepIndex >= availableSteps.length) {
       handleSubmit();
       return;
     }
 
-    setActiveStep(nextStep);
+    setActiveStep(nextStepIndex);
   };
 
   const handleBack = () => {
@@ -170,7 +152,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ open, onClose }) => {
       hardness: finalSelections.hardness ? [finalSelections.hardness] : [],
       width: finalSelections.self_size ? [parseInt(finalSelections.self_size.split('_')[0])] : [],
       length: finalSelections.self_size ? [parseInt(finalSelections.self_size.split('_')[1])] : [],
-      price: finalSelections.price_option === '20_50' ? [20000, 50000] : finalSelections.price_option === '50_more' ? [50000] : [],
+      price: [],
       inStock: true
     };
 
@@ -184,7 +166,16 @@ const QuizModal: React.FC<QuizModalProps> = ({ open, onClose }) => {
   };
 
   const currentStep = getCurrentStep();
-  const totalSteps = selections.userType === 'child' ? 3 : 5; // 5 steps for adult flow
+  
+  // Calculate total steps based on current selections
+  const availableSteps = steps.filter(step => {
+    if (!step.parent_step_key || !step.parent_value) {
+      return true;
+    }
+    return selections[step.parent_step_key] === step.parent_value;
+  });
+  
+  const totalSteps = availableSteps.length;
   const progress = ((activeStep + 1) / totalSteps) * 100;
 
   // Return early if no current step is found
@@ -226,25 +217,25 @@ const QuizModal: React.FC<QuizModalProps> = ({ open, onClose }) => {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
             {currentStep.options.map((option) => (
               <button
-                key={option.value}
-                onClick={() => handleSelect(option.value)}
+                key={option.option_value}
+                onClick={() => handleSelect(option.option_value)}
                 className={`relative rounded-lg overflow-hidden transition-all ${
-                  selections[currentStep.key] === option.value
+                  selections[currentStep.step_key] === option.option_value
                     ? 'ring-2 ring-teal-500'
                     : 'hover:shadow-lg'
                 }`}
               >
                 <div className="aspect-square">
                   <img
-                    src={option.img}
-                    alt={option.label}
+                    src={option.image_url}
+                    alt={option.option_label}
                     className="w-full h-full object-cover"
                   />
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-3">
                   <p className="text-white text-center font-medium">
-                    {option.label}
+                    {option.option_label}
                   </p>
                 </div>
               </button>

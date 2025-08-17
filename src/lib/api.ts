@@ -296,6 +296,34 @@ export async function isAuthenticated(): Promise<boolean> {
   }
 }
 
+export async function getQuizSteps(): Promise<QuizStep[]> {
+  return retryOperation(async () => {
+    const { data, error } = await supabase
+      .from('quiz_steps')
+      .select(`
+        *,
+        options:quiz_step_options(*)
+      `)
+      .eq('is_active', true)
+      .order('order_index', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching quiz steps:', error);
+      throw error;
+    }
+
+    // Transform data to include sorted options
+    const transformedData = (data || []).map(step => ({
+      ...step,
+      options: (step.options || [])
+        .filter((option: any) => option.is_active)
+        .sort((a: any, b: any) => a.order_index - b.order_index)
+    }));
+
+    return transformedData;
+  }, 3, 1000, 'getQuizSteps');
+}
+
 export async function getCurrentUser() {
   try {
     const { data: { user }, error } = await supabase.auth.getUser();

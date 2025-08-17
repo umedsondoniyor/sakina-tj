@@ -138,3 +138,28 @@ export interface CartContextType {
   setIsOpen: (isOpen: boolean) => void;
   total: number;
 }
+
+export interface QuizStep {
+  id: string;
+  label: string;
+  step_key: string;
+  order_index: number;
+  is_active: boolean;
+  parent_step_key?: string;
+  parent_value?: string;
+  created_at: string;
+  updated_at: string;
+  options: QuizStepOption[];
+}
+
+export interface QuizStepOption {
+  id: string;
+  step_id: string;
+  option_value: string;
+  option_label: string;
+  image_url: string;
+  order_index: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}

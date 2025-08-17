@@ -5,6 +5,7 @@ import {
   Star, 
   Package,
   Layers,
+  HelpCircle,
   LogOut,
   Home
 } from 'lucide-react';
@@ -94,6 +95,20 @@ const AdminDashboard = () => {
               >
                 <Layers size={20} />
                 <span>Размеры товаров</span>
+              </NavLink>
+
+              <NavLink
+                to="/admin/quiz"
+                className={({ isActive }) =>
+                  `flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                    isActive
+                      ? 'bg-teal-500 text-white'
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`
+                }
+              >
+                <HelpCircle size={20} />
+                <span>Опросник</span>
               </NavLink>
 
               <a
