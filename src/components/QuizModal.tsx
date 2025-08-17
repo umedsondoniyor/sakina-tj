@@ -86,14 +86,6 @@ const steps = [
       { value: 'hard', label: 'Жесткий', img: 'https://ik.imagekit.io/3js0rb3pk/picker_deatils/jyostkost%20matrasa/jyostkiy.webp' },
     ],
   },
-  {
-    label: 'Выберите ценовой диапазон будущего матраса',
-    key: 'price_option',
-    options: [
-      { value: '20_50', label: '20 000 — 50 000 Somoni', img: 'https://images.unsplash.com/photo-1631679706909-1844bbd07221?auto=format&fit=crop&w=300&q=80' },
-      { value: '50_more', label: 'свыше 50 000 Somoni', img: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=300&q=80' }
-    ],
-  },
 ];
 
 const QuizModal: React.FC<QuizModalProps> = ({ open, onClose }) => {
