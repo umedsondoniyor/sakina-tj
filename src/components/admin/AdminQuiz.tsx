@@ -232,7 +232,7 @@ const AdminQuiz = () => {
                      }}
                     />
                    <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-transparent rounded flex items-end">
-                      <p className="text-green-600 text-xs p-2 truncate font-medium">
+                      <p className="text-green-700 text-xs p-2 truncate font-medium">
                         {option.option_label}
                       </p>
                     </div>
