@@ -87,7 +87,7 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
         Способ оплаты
       </h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         {/* Online Payment */}
         <div className={`border rounded-lg p-4 cursor-pointer transition-colors ${
           paymentMethod === 'online' ? 'border-teal-500 bg-teal-50' : 'border-gray-300'
