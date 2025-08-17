@@ -38,7 +38,7 @@ const SubmitSection: React.FC<SubmitSectionProps> = ({
         <PaymentButton
           amount={calculateFinalTotal()}
           currency="TJS"
-          gate="korti_milli"
+          gate="vsa"
           orderData={{
             items: items.map(item => ({
               id: item.id,
