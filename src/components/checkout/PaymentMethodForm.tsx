@@ -50,27 +50,6 @@ const paymentGateways = [
     description: 'Мобильные платежи Tcell',
     icon: Smartphone,
     color: 'bg-purple-600'
-  },
-  {
-    value: 'megafon',
-    label: 'Megafon',
-    description: 'Мобильные платежи Megafon',
-    icon: Smartphone,
-    color: 'bg-green-600'
-  },
-  {
-    value: 'babilon',
-    label: 'Babilon',
-    description: 'Платежная система Babilon',
-    icon: CreditCard,
-    color: 'bg-orange-500'
-  },
-  {
-    value: 'zetmobile',
-    label: 'Zet Mobile',
-    description: 'Мобильные платежи Zet',
-    icon: Smartphone,
-    color: 'bg-indigo-500'
   }
 ];
 const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
