@@ -69,7 +69,7 @@ const DeliveryForm: React.FC<DeliveryFormProps> = ({
               className="mr-3"
             />
             <div>
-              <h3 className="font-medium">Самовывоз со склада или из магазина Аскона</h3>
+              <h3 className="font-medium">Самовывоз со склада или из магазина Sakina</h3>
               <p className="text-sm text-gray-600">Бесплатно</p>
             </div>
           </div>
