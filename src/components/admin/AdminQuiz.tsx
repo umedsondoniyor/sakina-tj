@@ -231,7 +231,7 @@ const AdminQuiz = () => {
                        target.src = 'https://via.placeholder.com/150x80/e5e7eb/9ca3af?text=No+Image';
                      }}
                     />
-                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent rounded flex items-end">
+                   <div className="absolute inset-0 bg-gradienb-to-t from-black/60 via-transparent to-transparent rounded flex items-end">
                       <p className="text-green-600 text-xs p-2 truncate font-medium">
                         {option.option_label}
                       </p>
