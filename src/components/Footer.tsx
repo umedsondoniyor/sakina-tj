@@ -2,7 +2,6 @@ import React from 'react';
 import FooterSection from './footer/FooterSection';
 import MobileFooterAccordion from './footer/MobileFooterAccordion';
 import SocialMediaSection from './footer/SocialMediaSection';
-import AppStoreLinks from './footer/AppStoreLinks';
 
 const footerLinks = {
   catalog: {
@@ -104,8 +103,6 @@ const Footer = () => {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-6 md:space-y-0">
             <div className="space-y-6 md:space-y-4">
               <SocialMediaSection />
-
-              <AppStoreLinks />
             </div>
 
             {/* Payment Methods and Copyright */}
