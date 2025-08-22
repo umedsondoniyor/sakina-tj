@@ -92,7 +92,7 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
       {paymentMethod === 'online' && (
         <div className="mb-6">
           <h3 className="text-lg font-semibold mb-4">Выберите способ онлайн оплаты</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {paymentGateways.map((gateway) => (
               <button
                 key={gateway.value}
