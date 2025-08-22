@@ -37,13 +37,6 @@ const paymentGateways = [
     icon: CreditCard,
     color: 'bg-red-500'
   },
-  {
-    value: 'tcell',
-    label: 'Tcell',
-    description: 'Мобильные платежи Tcell',
-    icon: Smartphone,
-    color: 'bg-purple-600'
-  }
 ];
 const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
   paymentMethod,
