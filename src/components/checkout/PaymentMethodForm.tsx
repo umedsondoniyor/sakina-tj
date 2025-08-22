@@ -10,17 +10,10 @@ interface PaymentMethodFormProps {
 
 const paymentGateways = [
   {
-    value: 'korti_milli',
-    label: 'Корти Милли',
-    description: 'Национальная платежная система',
+    value: 'alif_bank',
+    label: 'Alif Bank',
+    description: 'Корти Милли или Alif Mobi',
     icon: CreditCard,
-    color: 'bg-blue-500'
-  },
-    {
-    value: 'wallet',
-    label: 'Alif Wallet',
-    description: 'Электронный кошелек Alif',
-    icon: Wallet,
     color: 'bg-green-500'
   },
   {
@@ -55,7 +48,7 @@ const paymentGateways = [
 const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
   paymentMethod,
   onPaymentMethodChange,
-  selectedGateway = 'korti_milli',
+  selectedGateway = 'alif_bank',
   onGatewayChange
 }) => {
 

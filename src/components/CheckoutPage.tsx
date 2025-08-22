@@ -30,7 +30,7 @@ interface FormData {
   paymentMethod: 'online' | 'cash';
   
   // Gateway Information
-  selectedGateway: string;
+  selectedGateway: 'alif_bank',
   
   // Additional
   comments: string;
