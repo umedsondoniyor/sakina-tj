@@ -293,6 +293,14 @@ const ProductPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Product Characteristics Modal */}
+      <ProductCharacteristicsModal
+        isOpen={showCharacteristicsModal}
+        onClose={() => setShowCharacteristicsModal(false)}
+        product={product}
+        selectedVariant={selectedVariant}
+      />
     </div>
   );
 };
