@@ -10,6 +10,7 @@ import ProductImageGallery from './product/ProductImageGallery';
 import ProductInfo from './product/ProductInfo';
 import ProductLoadingState from './product/ProductLoadingState';
 import ProductNotFound from './product/ProductNotFound';
+import ProductCharacteristicsModal from './product/ProductCharacteristicsModal';
 
 const ProductPage = () => {
   const { id } = useParams();
