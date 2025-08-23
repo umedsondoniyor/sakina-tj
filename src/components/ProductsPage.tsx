@@ -25,6 +25,7 @@ interface FilterState {
   mattressType: string[];
   preferences: string[];
   functions: string[];
+  weightCategory: string[];
 }
 
 interface LocationState {
@@ -54,7 +55,8 @@ const ProductsPage = () => {
     productType: [searchParams.get('category') || 'mattress'],
     mattressType: initialFilters?.mattressType || [],
     preferences: initialFilters?.preferences || [],
-    functions: initialFilters?.functions || []
+    functions: initialFilters?.functions || [],
+    weightCategory: initialFilters?.weightCategory || []
   });
 
   const [sortBy, setSortBy] = useState('popularity');
@@ -242,7 +244,8 @@ const ProductsPage = () => {
       productType: [],
       mattressType: [],
       preferences: [],
-      functions: []
+      functions: [],
+      weightCategory: []
     });
     navigate('/products', { replace: true });
   };

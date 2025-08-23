@@ -170,6 +170,11 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) =
               <h3 className="font-medium mb-2 group-hover:text-teal-600 line-clamp-2">
                 {product.name}
               </h3>
+              {product.weight_category && (
+                <p className="text-sm text-gray-600 mb-2">
+                  Рекомендуемый вес: {product.weight_category}
+                </p>
+              )}
               <div className="flex items-center space-x-2">
                 <span className="text-lg font-bold">{product.price.toLocaleString()} c.</span>
                 {product.old_price && (

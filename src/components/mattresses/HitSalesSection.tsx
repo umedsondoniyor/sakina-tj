@@ -135,6 +135,11 @@ const HitSalesSection = () => {
             <h3 className="font-medium mb-2 group-hover:text-teal-600 transition-colors">
               {product.name}
             </h3>
+            {product.weight_category && (
+              <p className="text-sm text-gray-600 mb-2">
+                {product.weight_category}
+              </p>
+            )}
             <div className="flex items-center space-x-2 mb-4">
               <span className="text-lg font-bold">{product.price.toLocaleString()} с.</span>
               {product.old_price && (

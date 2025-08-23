@@ -45,7 +45,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onClose, initialDa
     filler_material: initialData?.filler_material || '',
     warranty_years: initialData?.warranty_years || 8,
     recommended_mattress_pad: initialData?.recommended_mattress_pad || '',
-    country_of_origin: initialData?.country_of_origin || 'Таджикистан'
+    country_of_origin: initialData?.country_of_origin || 'Таджикистан',
+    weight_category: initialData?.weight_category || ''
   });
   const [submitting, setSubmitting] = useState(false);
 
@@ -347,6 +348,23 @@ const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onClose, initialDa
                     <option value="Средняя">Средняя</option>
                     <option value="Жесткая">Жесткая</option>
                     <option value="Разная жесткость сторон">Разная жесткость сторон</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Весовая категория
+                  </label>
+                  <select
+                    name="weight_category"
+                    value={formData.weight_category}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  >
+                    <option value="">Выберите весовую категорию</option>
+                    <option value="50-85 kg (Soft)">50-85 kg (Мягкая)</option>
+                    <option value="85-100 kg (Medium)">85-100 kg (Средняя)</option>
+                    <option value="100+ kg (Hard)">100+ kg (Жесткая)</option>
                   </select>
                 </div>
 

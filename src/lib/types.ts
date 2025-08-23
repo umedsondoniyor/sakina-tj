@@ -24,6 +24,7 @@ export interface Product {
   warranty_years?: number;
   recommended_mattress_pad?: string;
   country_of_origin?: string;
+  weight_category?: string;
 }
 
 export interface ProductVariant {

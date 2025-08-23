@@ -13,6 +13,7 @@ interface FilterState {
   mattressType: string[];
   preferences: string[];
   functions: string[];
+  weightCategory: string[];
 }
 
 interface ProductFiltersProps {
@@ -120,6 +121,31 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
             ))}
           </div>
         </div>
+
+        {/* Weight Category - Only for Mattresses */}
+        {selectedCategories.includes('mattresses') && (
+          <div>
+            <h3 className="font-medium mb-3">Весовая категория</h3>
+            <div className="space-y-2">
+              {['50-85 kg (Soft)', '85-100 kg (Medium)', '100+ kg (Hard)'].map((option) => (
+                <label key={option} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={filters.weightCategory.includes(option)}
+                    onChange={(e) => {
+                      const newWeightCategory = e.target.checked
+                        ? [...filters.weightCategory, option]
+                        : filters.weightCategory.filter(w => w !== option);
+                      setFilters({ ...filters, weightCategory: newWeightCategory });
+                    }}
+                    className="rounded text-teal-600 focus:ring-teal-500"
+                  />
+                  <span>{option}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Width */}
         <div>

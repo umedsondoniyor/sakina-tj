@@ -58,6 +58,17 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
         Анатомический матрас {product.name}
       </h1>
       
+      {product.weight_category && (
+        <div className="bg-teal-50 border border-teal-200 rounded-lg p-3 mb-4">
+          <div className="flex items-center">
+            <div className="w-2 h-2 bg-teal-500 rounded-full mr-2"></div>
+            <span className="text-sm font-medium text-teal-700">
+              Рекомендуемый вес: {product.weight_category}
+            </span>
+          </div>
+        </div>
+      )}
+      
       <div className="flex items-center mb-4">
         <div className="flex">
           {[...Array(5)].map((_, i) => (

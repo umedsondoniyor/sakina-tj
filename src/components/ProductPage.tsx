@@ -111,6 +111,18 @@ const ProductPage = () => {
                 Одна сторона обеспечивает мягкую поддержку для расслабления, а другая — более упругую для активного восстановления. 
                 Независимые пружины адаптируются под контуры тела, обеспечивая правильное положение позвоночника во время сна.
               </p>
+              {product.weight_category && (
+                <div className="flex justify-between py-4 px-6">
+                  <span className="text-gray-600">Весовая категория:</span>
+                  <span className="font-medium">{product.weight_category}</span>
+                </div>
+              )}
+              {product.category === 'mattresses' && product.weight_category && (
+                <div className="flex justify-between py-4 px-6">
+                  <span className="text-gray-600">Рекомендуемый вес:</span>
+                  <span className="font-medium">{product.weight_category}</span>
+                </div>
+              )}
             </div>
           )}
         </div>
