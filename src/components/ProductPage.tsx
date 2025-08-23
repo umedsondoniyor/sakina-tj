@@ -17,6 +17,7 @@ const ProductPage = () => {
   const [product, setProduct] = React.useState<Product | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [selectedVariant, setSelectedVariant] = React.useState<ProductVariant | null>(null);
+  const [showCharacteristicsModal, setShowCharacteristicsModal] = React.useState(false);
   const { addItem } = useCart();
   
   React.useEffect(() => {
@@ -263,7 +264,10 @@ const ProductPage = () => {
           
           {/* Show more link */}
           <div className="mt-4">
-            <button className="text-teal-600 hover:text-teal-700 text-sm font-medium">
+            <button 
+              onClick={() => setShowCharacteristicsModal(true)}
+              className="text-teal-600 hover:text-teal-700 text-sm font-medium"
+            >
               Смотреть все характеристики →
             </button>
           </div>
