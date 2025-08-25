@@ -114,7 +114,7 @@ const ProductCharacteristicsModal: React.FC<ProductCharacteristicsModalProps> = 
             <div className="mt-8 pt-8 border-t">
               <h4 className="text-lg font-semibold text-brand-navy mb-4">Описание товара</h4>
               <div className="prose prose-gray max-w-none">
-                <p className="text-gray-700 leading-relaxed">
+                <p className="text-gray-700 leading-relaxed whitespace-pre-line">
                   {product.description}
                 </p>
               </div>

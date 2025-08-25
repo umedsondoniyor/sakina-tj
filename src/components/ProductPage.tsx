@@ -102,13 +102,13 @@ const ProductPage = () => {
           
           {product.description ? (
             <div className="prose prose-gray max-w-none">
-              <p className="text-gray-700 leading-relaxed text-base">
+              <p className="text-gray-700 leading-relaxed text-base whitespace-pre-line">
                 {product.description}
               </p>
             </div>
           ) : (
             <div className="prose prose-gray max-w-none">
-              <p className="text-gray-700 leading-relaxed text-base">
+              <p className="text-gray-700 leading-relaxed text-base whitespace-pre-line">
                 Инновационный двусторонний матрас {product.name} создан для тех, кто ценит простоту и комфорт. 
                 Одна сторона обеспечивает мягкую поддержку для расслабления, а другая — более упругую для активного восстановления. 
                 Независимые пружины адаптируются под контуры тела, обеспечивая правильное положение позвоночника во время сна.
