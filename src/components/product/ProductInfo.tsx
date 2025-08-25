@@ -55,7 +55,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
   return (
     <div>
       <h1 className="text-2xl font-bold mb-2">
-        Анатомический матрас {product.name}
+         {product.name}
       </h1>
       
       {product.weight_category && (
