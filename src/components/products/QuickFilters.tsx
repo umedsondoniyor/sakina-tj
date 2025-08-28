@@ -1,6 +1,15 @@
 import React from 'react';
 
-const QuickFilters = () => {
+interface QuickFiltersProps {
+  selectedCategories: string[];
+}
+
+const QuickFilters: React.FC<QuickFiltersProps> = ({ selectedCategories }) => {
+  // Only show quick filters when mattresses category is selected
+  if (!selectedCategories.includes('mattresses')) {
+    return null;
+  }
+
   return (
     <div className="relative mb-6">
       <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">

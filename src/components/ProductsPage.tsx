@@ -281,7 +281,7 @@ const ProductsPage = () => {
         />
 
         {/* Quick Filters */}
-        <QuickFilters />
+        <QuickFilters selectedCategories={selectedCategories} />
 
         {/* Mobile Filter Bar */}
         <MobileFilterBar
