@@ -11,25 +11,25 @@ import {
 const menuItems = [
   {
     id: 'mattresses',
-    title: 'Матрасы',
+    title: ' Матрасы',
     icon: BedDouble,
     hasIcon: true,
   },
   {
     id: 'beds',
-    title: 'Кровать',
+    title: ' Кровать',
     icon: Sofa,
     hasIcon: true,
   },
   {
     id: 'smartchair',
-    title: 'Массажное кресло',
+    title: ' Массажное кресло',
     icon: RockingChair,
     hasIcon: false,
   },
   {
     id: 'map',
-    title: 'Карта',
+    title: ' Карта',
     icon: Earth,
     hasIcon: true,
   },
