@@ -45,17 +45,13 @@ const NavigationMenu = () => {
   const handleCategoryClick = (categoryId: string, e: React.MouseEvent) => {
     e.preventDefault();
     
-    if (categoryId === 'mattresses') {
-      navigate('/mattresses');
-    } else {
-      // Navigate to products page with specific category selected
-      navigate('/products', { 
-        state: { 
-          selectedCategories: [categoryId],
-          clearOtherFilters: true 
-        } 
-      });
-    }
+    // Navigate to products page with specific category selected for all categories
+    navigate('/products', { 
+      state: { 
+        selectedCategories: [categoryId],
+        clearOtherFilters: true 
+      } 
+    });
   };
 
   return (
