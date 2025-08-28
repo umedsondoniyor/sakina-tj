@@ -72,7 +72,7 @@ const NavigationMenu = () => {
             onClick={(e) => handleCategoryClick(item.id, e)}
           >
             {item.hasIcon ? (
-              <item.icon size={32} className="text-brand-turquoise mr-1" />
+              <item.icon size={32} className="text-brand-turquoise mr-2" />
             ) : (
               <img
                 src="/icons/filledSmartChair.png"
