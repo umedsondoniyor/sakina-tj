@@ -60,7 +60,6 @@ const NavigationMenu = () => {
           clearOtherFilters: true 
         } 
       });
-    } else {
     }
   };
 
