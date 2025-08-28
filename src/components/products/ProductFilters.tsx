@@ -33,11 +33,21 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
   onClearFilters,
   categoryDisplayNames
 }) => {
+  // Ensure filters reflect selected categories immediately
+  React.useEffect(() => {
+    if (selectedCategories.length > 0) {
+      setFilters(prev => ({
+        ...prev,
+        productType: selectedCategories
+      }));
+    }
+  }, [selectedCategories, setFilters]);
+
   return (
     <div className="hidden md:block bg-gray-50 p-4 rounded-lg border-2 w-64 flex-shrink-0 border-gray-200 pr-8">
       <div className="space-y-6">
         {/* Category Selection */}
-        <div className="bg-gray-50 border-gray-200">
+        <div className="bg-white border border-gray-200 rounded-lg p-4">
           <h3 className="font-semibold text-lg mb-3 text-gray-900">Выберите категорию</h3>
           <div className="space-y-2">
             {Object.entries(categoryDisplayNames).map(([value, label]) => (
@@ -46,9 +56,9 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
                   type="checkbox"
                   checked={selectedCategories.includes(value)}
                   onChange={(e) => onCategoryChange(value, e.target.checked)}
-                  className="rounded text-teal-600 focus:ring-teal-500"
+                  className="rounded text-teal-600 focus:ring-teal-500 w-4 h-4"
                 />
-                <span className={selectedCategories.includes(value) ? 'font-medium text-teal-600' : ''}>
+                <span className={`text-sm ${selectedCategories.includes(value) ? 'font-semibold text-teal-600' : 'text-gray-700'}`}>
                   {label}
                 </span>
               </label>
@@ -57,7 +67,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
         </div>
 
         {/* Age Filter - Only for Mattresses */}
-        {selectedCategories.includes('mattresses') && (
+        {(selectedCategories.includes('mattresses') || selectedCategories.length === 0) && (
           <div>
             <h3 className="font-medium mb-3">Возраст</h3>
             <div className="space-y-2">
@@ -123,7 +133,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
         </div>
 
         {/* Weight Category - Only for Mattresses */}
-        {selectedCategories.includes('mattresses') && (
+        {(selectedCategories.includes('mattresses') || selectedCategories.length === 0) && (
           <div>
             <h3 className="font-medium mb-3">Весовая категория</h3>
             <div className="space-y-2">

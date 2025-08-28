@@ -147,12 +147,23 @@ const CategoryGrid = () => {
 
   const handleCategoryClick = (category: typeof categories[0], e: React.MouseEvent) => {
     e.preventDefault();
+    
+    // Clear any existing navigation state immediately
+    window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    
     if (category.slug === 'mattresses') {
       navigate('/mattresses');
     } else if (category.link) {
       navigate(category.link);
     } else {
-      navigate(`/products?category=${category.slug}`);
+      // Navigate with immediate state to prevent glitches
+      navigate(`/products?category=${category.slug}`, {
+        replace: true,
+        state: {
+          selectedCategories: [category.slug],
+          immediate: true
+        }
+      });
     }
   };
 
