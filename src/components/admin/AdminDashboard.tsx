@@ -154,7 +154,7 @@ const AdminDashboard = () => {
           </nav>
 
           {/* Main Content */}
-          <main className="flex-1 bg-white rounded-lg shadow p-6">
+          <main className="w-3/4 flex-1 bg-white rounded-lg shadow p-6">
             <Outlet />
           </main>
         </div>
