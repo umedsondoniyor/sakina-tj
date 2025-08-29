@@ -33,7 +33,7 @@ const OneClickModal: React.FC<OneClickModalProps> = ({
     
     // If user starts typing without +992, assume they're entering local number
     if (digits.length > 0 && !digits.startsWith('992')) {
-      // For local numbers, prepend 7
+      // For local numbers, prepend 992
       workingDigits = '992' + digits;
     }
     
@@ -42,17 +42,14 @@ const OneClickModal: React.FC<OneClickModalProps> = ({
       workingDigits = digits;
     }
     
-    if (workingDigits.length > 1) {
-      formatted += ` (${workingDigits.slice(1, 3)}`;
-    }
     if (workingDigits.length > 3) {
-      formatted += `) ${workingDigits.slice(3, 7)}`;
+      formatted += ` ${workingDigits.slice(3, 6)}`;
     }
-    if (workingDigits.length > 7) {
-      formatted += `-${workingDigits.slice(7, 8)}`;
+    if (workingDigits.length > 6) {
+      formatted += ` ${workingDigits.slice(6, 8)}`;
     }
     if (workingDigits.length > 8) {
-      formatted += `-${workingDigits.slice(8, 9)}`;
+      formatted += ` ${workingDigits.slice(8, 12)}`;
     }
     
     return formatted;
@@ -68,13 +65,13 @@ const OneClickModal: React.FC<OneClickModalProps> = ({
     // Remove formatting to get just digits
     const digits = phone.replace(/\D/g, '');
     
-    // Should be 11 digits total (7 + 10 digits)
-    if (digits.length !== 11) {
-      return 'Номер телефона должен содержать 11 цифр';
+    // Should be 12 digits total (992 + 9 digits)
+    if (digits.length !== 12) {
+      return 'Номер телефона должен содержать 12 цифр';
     }
     
-    if (!digits.startsWith('7')) {
-      return 'Номер должен начинаться с +7';
+    if (!digits.startsWith('992')) {
+      return 'Номер должен начинаться с +992';
     }
     
     return '';
@@ -178,7 +175,7 @@ const OneClickModal: React.FC<OneClickModalProps> = ({
                   type="tel"
                   value={phoneNumber}
                   onChange={(e) => handlePhoneChange(e.target.value)}
-                  placeholder="+7 (___) ___-__-__"
+                  placeholder="+992 ___ __ ____"
                   className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 ${
                     error ? 'border-red-500' : 'border-gray-300'
                   }`}
