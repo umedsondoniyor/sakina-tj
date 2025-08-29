@@ -144,7 +144,7 @@ const OneClickConfirmationPage = () => {
             onClick={() => navigate('/products')}
             className="w-full bg-teal-500 text-white py-3 rounded-lg hover:bg-teal-600 transition-colors flex items-center justify-center"
           >
-            В корзину
+            Продолжить покупки
             <ArrowRight size={20} className="ml-2" />
           </button>
           
