@@ -28,31 +28,31 @@ const OneClickModal: React.FC<OneClickModalProps> = ({
     const digits = value.replace(/\D/g, '');
     
     // Handle different input scenarios
-    let formatted = '+7';
+    let formatted = '+992';
     let workingDigits = digits;
     
-    // If user starts typing without +7, assume they're entering local number
-    if (digits.length > 0 && !digits.startsWith('7')) {
+    // If user starts typing without +992, assume they're entering local number
+    if (digits.length > 0 && !digits.startsWith('992')) {
       // For local numbers, prepend 7
-      workingDigits = '7' + digits;
+      workingDigits = '992' + digits;
     }
     
-    // If digits start with 7, use as is
-    if (digits.startsWith('7')) {
+    // If digits start with 992, use as is
+    if (digits.startsWith('992')) {
       workingDigits = digits;
     }
     
     if (workingDigits.length > 1) {
-      formatted += ` (${workingDigits.slice(1, 4)}`;
+      formatted += ` (${workingDigits.slice(1, 3)}`;
     }
-    if (workingDigits.length > 4) {
-      formatted += `) ${workingDigits.slice(4, 7)}`;
+    if (workingDigits.length > 3) {
+      formatted += `) ${workingDigits.slice(3, 7)}`;
     }
     if (workingDigits.length > 7) {
-      formatted += `-${workingDigits.slice(7, 9)}`;
+      formatted += `-${workingDigits.slice(7, 8)}`;
     }
-    if (workingDigits.length > 9) {
-      formatted += `-${workingDigits.slice(9, 11)}`;
+    if (workingDigits.length > 8) {
+      formatted += `-${workingDigits.slice(8, 9)}`;
     }
     
     return formatted;
