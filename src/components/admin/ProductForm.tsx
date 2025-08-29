@@ -130,6 +130,11 @@ const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onClose, initialDa
         updated_at: new Date().toISOString()
       };
 
+      // Only include weight_category for mattresses
+      if (formData.category !== 'mattresses') {
+        productData.weight_category = null;
+      }
+
       let error;
       
       if (initialData?.id) {
