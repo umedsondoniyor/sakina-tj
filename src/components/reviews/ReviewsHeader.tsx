@@ -29,7 +29,7 @@ const ReviewsHeader: React.FC<ReviewsHeaderProps> = ({
           className={`${baseBtn} ${
             canScrollLeft
               ? 'hover:bg-gray-100 text-gray-700 cursor-pointer'
-              : 'text-gray-300'
+              : 'hover:bg-gray-100 text-gray-700 cursor-pointer'
           }`}
         >
           <ChevronLeft size={24} />
@@ -43,7 +43,7 @@ const ReviewsHeader: React.FC<ReviewsHeaderProps> = ({
           className={`${baseBtn} ${
             canScrollRight
               ? 'hover:bg-gray-100 text-gray-700 cursor-pointer'
-              : 'text-gray-300'
+              : 'hover:bg-gray-100 text-gray-700 cursor-pointer'
           }`}
         >
           <ChevronRight size={24} />
