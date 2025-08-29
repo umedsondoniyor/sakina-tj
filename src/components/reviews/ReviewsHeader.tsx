@@ -17,8 +17,9 @@ const ReviewsHeader: React.FC<ReviewsHeaderProps> = ({
       <h2 className="text-xl md:text-2xl font-bold text-brand-navy">Отзывы и фото покупателей</h2>
       <div className="hidden md:flex space-x-2">
         <button
+          type="button"
           onClick={() => onScrollTo('left')}
-          className={`p-2 rounded-full transition-colors ${
+          className={`p-2 rounded-full transition-colors relative z-10 pointer-events-auto ${
             canScrollLeft ? 'hover:bg-gray-100 text-gray-700' : 'text-gray-300 cursor-not-allowed'
           }`}
           disabled={!canScrollLeft}
