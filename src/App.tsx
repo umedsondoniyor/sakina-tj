@@ -33,6 +33,7 @@ import AdminProductVariants from './components/admin/AdminProductVariants';
 import AdminQuiz from './components/admin/AdminQuiz';
 import AdminNavigation from './components/admin/AdminNavigation';
 import AdminOneClickOrders from './components/admin/AdminOneClickOrders';
+import AdminUsers from './components/admin/AdminUsers';
 import AdminRoute from './components/admin/AdminRoute';
 import AdminLogin from './components/admin/AdminLogin';
 import Mattresses from './components/Mattresses';
@@ -63,6 +64,7 @@ function App() {
             <Route path="quiz" element={<AdminQuiz />} />
             <Route path="navigation" element={<AdminNavigation />} />
             <Route path="one-click-orders" element={<AdminOneClickOrders />} />
+            <Route path="users" element={<AdminUsers />} />
           </Route>
 
           {/* Public Routes */}
