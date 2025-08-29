@@ -38,6 +38,8 @@ const BestSellers = () => {
       const maxScroll = scrollWidth - clientWidth;
       const progress = maxScroll > 0 ? (scrollLeft / maxScroll) * 100 : 0;
       setScrollProgress(progress);
+      setCanScrollLeft(scrollLeft > 0);
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 1);
     }
   };
 
@@ -49,6 +51,9 @@ const BestSellers = () => {
       return () => container.removeEventListener('scroll', updateScrollProgress);
     }
   }, []);
+
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
 
   const goToPrev = () => {
     if (scrollContainerRef.current) {
@@ -68,23 +73,12 @@ const BestSellers = () => {
     }
   };
 
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(true);
-
-  const updateScrollButtons = () => {
-    if (scrollContainerRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
-      setCanScrollLeft(scrollLeft > 0);
-      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 1);
-    }
-  };
-
+  // Initialize scroll state after products load
   useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (container) {
-      container.addEventListener('scroll', updateScrollButtons);
-      updateScrollButtons();
-      return () => container.removeEventListener('scroll', updateScrollButtons);
+    if (products.length > 0) {
+      setTimeout(() => {
+        updateScrollProgress();
+      }, 100);
     }
   }, [products]);
 
