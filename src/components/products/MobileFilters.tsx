@@ -101,20 +101,24 @@ const MobileFilters: React.FC<MobileFiltersProps> = ({
             <div>
               <h3 className="font-medium mb-3">Весовая категория</h3>
               <div className="space-y-2">
-                {['50-85 kg (Soft)', '85-100 kg (Medium)', '100+ kg (Hard)'].map((option) => (
-                  <label key={option} className="flex items-center space-x-2">
+                {[
+                  { value: '50-85 kg (Soft)', label: '50-85 kg (Мягкая)' },
+                  { value: '85-100 kg (Medium)', label: '85-100 kg (Средняя)' },
+                  { value: '100+ kg (Hard)', label: '100+ kg (Жесткая)' }
+                ].map((option) => (
+                  <label key={option.value} className="flex items-center space-x-2">
                     <input
                       type="checkbox"
-                      checked={filters.weightCategory.includes(option)}
+                      checked={filters.weightCategory.includes(option.value)}
                       onChange={(e) => {
                         const newWeightCategory = e.target.checked
-                          ? [...filters.weightCategory, option]
-                          : filters.weightCategory.filter(w => w !== option);
+                          ? [...filters.weightCategory, option.value]
+                          : filters.weightCategory.filter(w => w !== option.value);
                         setFilters({ ...filters, weightCategory: newWeightCategory });
                       }}
                       className="rounded text-teal-600 focus:ring-teal-500"
                     />
-                    <span>{option}</span>
+                    <span>{option.label}</span>
                   </label>
                 ))}
               </div>

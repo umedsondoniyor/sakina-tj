@@ -362,9 +362,9 @@ const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onClose, initialDa
                     className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
                   >
                     <option value="">Выберите весовую категорию</option>
-                    <option value="50-85 kg (Soft)">50-85 kg (Мягкая)</option>
-                    <option value="85-100 kg (Medium)">85-100 kg (Средняя)</option>
-                    <option value="100+ kg (Hard)">100+ kg (Жесткая)</option>
+                    <option value="50-85 kg (Soft)">50-85 kg (Soft)</option>
+                    <option value="85-100 kg (Medium)">85-100 kg (Medium)</option>
+                    <option value="100+ kg (Hard)">100+ kg (Hard)</option>
                   </select>
                 </div>
 
