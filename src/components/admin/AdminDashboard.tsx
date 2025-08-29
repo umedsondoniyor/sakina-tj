@@ -8,7 +8,8 @@ import {
   HelpCircle,
   LogOut,
   Home,
-  Navigation
+  Navigation,
+  MousePointer
 } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import Logo from '../Logo';
@@ -124,6 +125,20 @@ const AdminDashboard = () => {
               >
                 <Navigation size={20} />
                 <span>Навигация</span>
+              </NavLink>
+
+              <NavLink
+                to="/admin/one-click-orders"
+                className={({ isActive }) =>
+                  `flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                    isActive
+                      ? 'bg-teal-500 text-white'
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`
+                }
+              >
+                <MousePointer size={20} />
+                <span>Заказы в 1 клик</span>
               </NavLink>
 
               <a

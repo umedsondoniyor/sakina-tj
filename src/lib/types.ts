@@ -176,3 +176,16 @@ export interface NavigationItem {
   created_at: string;
   updated_at: string;
 }
+
+export interface OneClickOrder {
+  id: string;
+  product_id: string;
+  product_name: string;
+  product_price: number;
+  selected_variant_id?: string;
+  selected_size?: string;
+  phone_number: string;
+  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+  created_at: string;
+  updated_at: string;
+}

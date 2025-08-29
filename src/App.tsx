@@ -32,11 +32,13 @@ import AdminCarousel from './components/admin/AdminCarousel';
 import AdminProductVariants from './components/admin/AdminProductVariants';
 import AdminQuiz from './components/admin/AdminQuiz';
 import AdminNavigation from './components/admin/AdminNavigation';
+import AdminOneClickOrders from './components/admin/AdminOneClickOrders';
 import AdminRoute from './components/admin/AdminRoute';
 import AdminLogin from './components/admin/AdminLogin';
 import Mattresses from './components/Mattresses';
 import CheckoutPage from './components/CheckoutPage';
 import OrderConfirmationPage from './components/OrderConfirmationPage';
+import OneClickConfirmationPage from './components/OneClickConfirmationPage';
 import PaymentSuccessPage from './components/PaymentSuccessPage';
 import PaymentCancelPage from './components/PaymentCancelPage';
 import AboutUsPage from './components/AboutUsPage';
@@ -60,6 +62,7 @@ function App() {
             <Route path="carousel" element={<AdminCarousel />} />
             <Route path="quiz" element={<AdminQuiz />} />
             <Route path="navigation" element={<AdminNavigation />} />
+            <Route path="one-click-orders" element={<AdminOneClickOrders />} />
           </Route>
 
           {/* Public Routes */}
@@ -134,6 +137,10 @@ function App() {
           <Route
             path="/order-confirmation"
             element={<OrderConfirmationPage />}
+          />
+          <Route
+            path="/one-click-confirmation/:orderId"
+            element={<OneClickConfirmationPage />}
           />
           <Route
             path="/payment/success"

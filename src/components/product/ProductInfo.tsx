@@ -1,8 +1,10 @@
 import React from 'react';
-import { Star, Heart, Eye, Truck, Box, ArrowLeftRight } from 'lucide-react';
+import { Star, Eye, Truck, Box, ArrowLeftRight, ShoppingBag } from 'lucide-react';
 import type { Product, ProductVariant } from '../../lib/types';
 import { getProductVariants } from '../../lib/api';
 import { useCart } from '../../contexts/CartContext';
+import OneClickModal from '../OneClickModal';
+import { useNavigate } from 'react-router-dom';
 
 interface ProductInfoProps {
   product: Product;
@@ -19,6 +21,8 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
 }) => {
   const [variants, setVariants] = React.useState<ProductVariant[]>([]);
   const [loadingVariants, setLoadingVariants] = React.useState(false);
+  const [showOneClickModal, setShowOneClickModal] = React.useState(false);
+  const navigate = useNavigate();
 
   React.useEffect(() => {
     if (product.id) {
@@ -50,6 +54,10 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
 
   const getCurrentOldPrice = () => {
     return selectedVariant ? selectedVariant.old_price : product.old_price;
+  };
+
+  const handleOneClickSuccess = (orderId: string) => {
+    navigate(`/one-click-confirmation/${orderId}`);
   };
 
   return (
@@ -228,7 +236,9 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
           В корзину
         </button>
         <button className="p-3 border border-gray-200 rounded-lg hover:border-teal-500 transition-colors">
-          <Heart className="w-6 h-6" />
+          onClick={() => setShowOneClickModal(true)}
+          <ShoppingBag className="w-5 h-5 mr-2" />
+          <span className="text-sm font-medium">Купить в 1 клик</span>
         </button>
       </div>
 
@@ -270,6 +280,15 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
           Дополнительные услуги
         </a>
       </div>
+
+      {/* One Click Modal */}
+      <OneClickModal
+        isOpen={showOneClickModal}
+        onClose={() => setShowOneClickModal(false)}
+        product={product}
+        selectedVariant={selectedVariant}
+        onSuccess={handleOneClickSuccess}
+      />
     </div>
   );
 };
