@@ -18,9 +18,72 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({ isOpen, onClose }
 
   if (!isOpen) return null;
 
+  const formatPhoneNumber = (value: string) => {
+    // Remove all non-digits
+    const digits = value.replace(/\D/g, '');
+    
+    // Handle different input scenarios
+    let formatted = '+992';
+    let workingDigits = digits;
+    
+    // If user starts typing without +992, assume they're entering local number
+    if (digits.length > 0 && !digits.startsWith('992')) {
+      // For local numbers, prepend 992
+      workingDigits = '992' + digits;
+    }
+    
+    // If digits start with 992, use as is
+    if (digits.startsWith('992')) {
+      workingDigits = digits;
+    }
+    
+    if (workingDigits.length > 3) {
+      formatted += ` ${workingDigits.slice(3, 5)}`;
+    }
+    if (workingDigits.length > 5) {
+      formatted += ` ${workingDigits.slice(5, 8)}`;
+    }
+    if (workingDigits.length > 8) {
+      formatted += ` ${workingDigits.slice(8, 10)}`;
+    }
+    if (workingDigits.length > 10) {
+      formatted += ` ${workingDigits.slice(10, 12)}`;
+    }
+    
+    return formatted;
+  };
+
+  const handlePhoneChange = (value: string) => {
+    const formatted = formatPhoneNumber(value);
+    setPhone(formatted);
+  };
+
+  const validatePhone = (phone: string) => {
+    // Remove formatting to get just digits
+    const digits = phone.replace(/\D/g, '');
+    
+    // Should be 12 digits total (992 + 9 digits)
+    if (digits.length !== 12) {
+      return 'Номер телефона должен содержать 12 цифр';
+    }
+    
+    if (!digits.startsWith('992')) {
+      return 'Номер должен начинаться с +992';
+    }
+    
+    return '';
+  };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    
+    // Validate phone number
+    const phoneError = validatePhone(phone);
+    if (phoneError) {
+      setError(phoneError);
+      return;
+    }
+    
     setLoading(true);
 
     try {
@@ -110,7 +173,8 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({ isOpen, onClose }
                 type="tel"
                 required
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                onChange={(e) => handlePhoneChange(e.target.value)}
+                placeholder="+992 (__) ___-__-__"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
               />
             </div>
