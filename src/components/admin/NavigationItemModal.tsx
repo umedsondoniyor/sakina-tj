@@ -246,4 +246,4 @@ const NavigationItemModal: React.FC<NavigationItemModalProps> = ({
   );
 };
 
-export default AdminNavigation;
+export default NavigationItemModal;
