@@ -164,3 +164,15 @@ export interface QuizStepOption {
   created_at: string;
   updated_at: string;
 }
+
+export interface NavigationItem {
+  id: string;
+  title: string;
+  category_slug: string;
+  icon_name?: string;
+  icon_image_url?: string;
+  order_index: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}

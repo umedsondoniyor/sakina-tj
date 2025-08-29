@@ -7,7 +7,8 @@ import {
   Layers,
   HelpCircle,
   LogOut,
-  Home
+  Home,
+  Navigation
 } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import Logo from '../Logo';
@@ -109,6 +110,20 @@ const AdminDashboard = () => {
               >
                 <HelpCircle size={20} />
                 <span>Опросник</span>
+              </NavLink>
+
+              <NavLink
+                to="/admin/navigation"
+                className={({ isActive }) =>
+                  `flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                    isActive
+                      ? 'bg-teal-500 text-white'
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`
+                }
+              >
+                <Navigation size={20} />
+                <span>Навигация</span>
               </NavLink>
 
               <a

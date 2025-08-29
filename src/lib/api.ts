@@ -337,3 +337,20 @@ export async function getCurrentUser() {
     return null;
   }
 }
+
+export async function getNavigationItems(): Promise<NavigationItem[]> {
+  return retryOperation(async () => {
+    const { data, error } = await supabase
+      .from('navigation_items')
+      .select('*')
+      .eq('is_active', true)
+      .order('order_index', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching navigation items:', error);
+      throw error;
+    }
+
+    return data || [];
+  }, 3, 1000, 'getNavigationItems');
+}
