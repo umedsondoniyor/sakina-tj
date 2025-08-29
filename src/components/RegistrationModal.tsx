@@ -8,8 +8,6 @@ interface RegistrationModalProps {
 }
 
 const RegistrationModal: React.FC<RegistrationModalProps> = ({ isOpen, onClose }) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
   const [fullName, setFullName] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');
@@ -84,34 +82,40 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({ isOpen, onClose }
       return;
     }
     
+    // Validate name
+    if (!fullName.trim()) {
+      setError('Имя и фамилия обязательны');
+      return;
+    }
+    
+    // Validate date of birth
+    if (!dateOfBirth) {
+      setError('Дата рождения обязательна');
+      return;
+    }
+    
     setLoading(true);
 
     try {
-      // 1. Sign up the user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-      });
+      // Create user profile without authentication
+      const { error: profileError } = await supabase
+        .from('user_profiles')
+        .insert([
+          {
+            phone,
+            full_name: fullName,
+            date_of_birth: dateOfBirth,
+            role: 'user'
+          }
+        ]);
 
-      if (authError) throw authError;
+      if (profileError) throw profileError;
 
-      if (authData.user) {
-        // 2. Create user profile
-        const { error: profileError } = await supabase
-          .from('user_profiles')
-          .insert([
-            {
-              id: authData.user.id,
-              phone,
-              full_name: fullName,
-              date_of_birth: dateOfBirth,
-            }
-          ]);
-
-        if (profileError) throw profileError;
-
-        onClose();
-      }
+      setError('');
+      setPhone('');
+      setFullName('');
+      setDateOfBirth('');
+      onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -141,32 +145,6 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({ isOpen, onClose }
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Email
-              </label>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Пароль
-              </label>
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Телефон
               </label>
               <input
@@ -181,7 +159,7 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({ isOpen, onClose }
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                ФИО
+                Имя и фамилия
               </label>
               <input
                 type="text"
@@ -207,12 +185,21 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({ isOpen, onClose }
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !phone || !fullName || !dateOfBirth}
               className="w-full bg-teal-500 text-white py-2 rounded-lg hover:bg-teal-600 transition-colors disabled:bg-gray-400"
             >
               {loading ? 'Регистрация...' : 'Зарегистрироваться'}
             </button>
           </form>
+          
+          <div className="mt-4 text-xs text-gray-500 text-center">
+            <p>
+              Регистрируясь, вы соглашаетесь с{' '}
+              <a href="#" className="text-teal-600 hover:text-teal-700">
+                условиями обработки персональных данных
+              </a>.
+            </p>
+          </div>
         </div>
       </div>
     </div>
