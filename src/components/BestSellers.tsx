@@ -51,12 +51,42 @@ const BestSellers = () => {
   }, []);
 
   const goToPrev = () => {
-    setCurrentIndex((prev) => (prev === 0 ? products.length - 1 : prev - 1));
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({
+        left: -300,
+        behavior: 'smooth'
+      });
+    }
   };
 
   const goToNext = () => {
-    setCurrentIndex((prev) => (prev === products.length - 1 ? 0 : prev + 1));
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({
+        left: 300,
+        behavior: 'smooth'
+      });
+    }
   };
+
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+
+  const updateScrollButtons = () => {
+    if (scrollContainerRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
+      setCanScrollLeft(scrollLeft > 0);
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 1);
+    }
+  };
+
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (container) {
+      container.addEventListener('scroll', updateScrollButtons);
+      updateScrollButtons();
+      return () => container.removeEventListener('scroll', updateScrollButtons);
+    }
+  }, [products]);
 
   if (loading) {
     return (
@@ -114,13 +144,23 @@ const BestSellers = () => {
         <div className="hidden md:flex space-x-2">
           <button
             onClick={goToPrev}
-            className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+            disabled={!canScrollLeft}
+            className={`p-2 rounded-full transition-colors ${
+              canScrollLeft 
+                ? 'hover:bg-gray-100 text-gray-700' 
+                : 'text-gray-300 cursor-not-allowed'
+            }`}
           >
             <ChevronLeft size={24} />
           </button>
           <button
             onClick={goToNext}
-            className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+            disabled={!canScrollRight}
+            className={`p-2 rounded-full transition-colors ${
+              canScrollRight 
+                ? 'hover:bg-gray-100 text-gray-700' 
+                : 'text-gray-300 cursor-not-allowed'
+            }`}
           >
             <ChevronRight size={24} />
           </button>
