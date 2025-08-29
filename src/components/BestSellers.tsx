@@ -38,8 +38,8 @@ const BestSellers = () => {
       const maxScroll = scrollWidth - clientWidth;
       const progress = maxScroll > 0 ? (scrollLeft / maxScroll) * 100 : 0;
       setScrollProgress(progress);
-      setCanScrollLeft(scrollLeft > 0);
-      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 1);
+      setCanScrollLeft(scrollLeft > 5); // Add small threshold
+      setCanScrollRight(scrollLeft < maxScroll - 5); // Add small threshold
     }
   };
 
@@ -61,6 +61,8 @@ const BestSellers = () => {
         left: -300,
         behavior: 'smooth'
       });
+      // Update state after scroll
+      setTimeout(updateScrollProgress, 100);
     }
   };
 
@@ -70,6 +72,8 @@ const BestSellers = () => {
         left: 300,
         behavior: 'smooth'
       });
+      // Update state after scroll
+      setTimeout(updateScrollProgress, 100);
     }
   };
 
@@ -78,6 +82,12 @@ const BestSellers = () => {
     if (products.length > 0) {
       setTimeout(() => {
         updateScrollProgress();
+        // Force initial state - assume we can scroll right if there are products
+        if (scrollContainerRef.current) {
+          const { scrollWidth, clientWidth } = scrollContainerRef.current;
+          setCanScrollRight(scrollWidth > clientWidth);
+          setCanScrollLeft(false);
+        }
       }, 100);
     }
   }, [products]);
