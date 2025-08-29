@@ -235,10 +235,12 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
         >
           В корзину
         </button>
-        <button className="p-3 border border-gray-200 rounded-lg hover:border-teal-500 transition-colors">
+        <button 
           onClick={() => setShowOneClickModal(true)}
+          className="flex-1 bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center"
+        >
           <ShoppingBag className="w-5 h-5 mr-2" />
-          <span className="text-sm font-medium">Купить в 1 клик</span>
+          <span className="font-medium">Купить в 1 клик</span>
         </button>
       </div>
 
