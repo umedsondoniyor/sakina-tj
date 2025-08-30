@@ -5,193 +5,124 @@ import CategoryScrollControls from './category/CategoryScrollControls';
 import SwipeHint from './category/SwipeHint';
 
 const categories = [
-  {
-    id: 1,
-    name: 'Матрасы',
-    image: 'https://ik.imagekit.io/3js0rb3pk/categ_matress.png',
-    slug: 'mattresses'
-  },
-  {
-    id: 2,
-    name: 'Кровати',
-    image: 'https://ik.imagekit.io/3js0rb3pk/categ_bed.png',
-    slug: 'beds',
-    link: '/products?category=beds'
-  },
-  {
-    id: 3,
-    name: 'Одеяло',
-    image: 'https://ik.imagekit.io/3js0rb3pk/categ_blanket.png'
-  },
-
-  {
-    id: 4,
-    name: 'Массажное кресло',
-    image: '/images/smart-chair-b.png',
-    slug: 'massage-chairs'
-  },
-  {
-    id: 5,
-    name: 'Подушки',
-    image: 'https://ik.imagekit.io/3js0rb3pk/categ_pillow.png',
-    slug: 'pillows',
-    link: '/products?category=pillows'
-  },
-  {
-    id: 6,
-    name: 'Карта мира',
-    image: 'https://ik.imagekit.io/3js0rb3pk/categ_map.png',
-    slug: 'world-maps',
-    link: '/products?category=map'
-  },
-  // {
-  //   id: 7,
-  //   name: 'Декорация',
-  //   image: '/images/decor-table.webp'
-  // },
+  { id: 1, name: 'Матрасы', image: 'https://ik.imagekit.io/3js0rb3pk/categ_matress.png', slug: 'mattresses' },
+  { id: 2, name: 'Кровати', image: 'https://ik.imagekit.io/3js0rb3pk/categ_bed.png', slug: 'beds', link: '/products?category=beds' },
+  { id: 3, name: 'Одеяло', image: 'https://ik.imagekit.io/3js0rb3pk/categ_blanket.png' },
+  { id: 4, name: 'Массажное кресло', image: '/images/smart-chair-b.png', slug: 'massage-chairs' },
+  { id: 5, name: 'Подушки', image: 'https://ik.imagekit.io/3js0rb3pk/categ_pillow.png', slug: 'pillows', link: '/products?category=pillows' },
+  { id: 6, name: 'Карта мира', image: 'https://ik.imagekit.io/3js0rb3pk/categ_map.png', slug: 'world-maps', link: '/products?category=map' },
 ];
 
-const CategoryGrid = () => {
+const CategoryGrid: React.FC = () => {
   const navigate = useNavigate();
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
   const [showSwipeHint, setShowSwipeHint] = useState(true);
-  const [isDragging, setIsDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
 
+  // Hide hint after a moment
   useEffect(() => {
-    if (showSwipeHint) {
-      const timer = setTimeout(() => {
-        setShowSwipeHint(false);
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
+    if (!showSwipeHint) return;
+    const t = setTimeout(() => setShowSwipeHint(false), 3000);
+    return () => clearTimeout(t);
   }, [showSwipeHint]);
 
-  const updateScrollProgress = () => {
-    if (scrollContainerRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
-      const maxScroll = scrollWidth - clientWidth;
-      const progress = maxScroll > 0 ? (scrollLeft / maxScroll) * 100 : 0;
-      setScrollProgress(progress);
-      setCanScrollLeft(scrollLeft > 0);
-      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 1);
-    }
+  // Progress + canScroll calc
+  const updateScroll = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const { scrollLeft, scrollWidth, clientWidth } = el;
+    const max = Math.max(0, scrollWidth - clientWidth);
+    setScrollProgress(max ? (scrollLeft / max) * 100 : 0);
+    setCanScrollLeft(scrollLeft > 0);
+    setCanScrollRight(scrollLeft < max - 1);
   };
 
   useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (container) {
-      container.addEventListener('scroll', updateScrollProgress);
-      // Initial check
-      updateScrollProgress();
-      return () => container.removeEventListener('scroll', updateScrollProgress);
-    }
+    const el = scrollRef.current;
+    if (!el) return;
+    el.addEventListener('scroll', updateScroll, { passive: true });
+    updateScroll();
+    return () => el.removeEventListener('scroll', updateScroll);
   }, []);
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true);
-    setStartX(e.pageX - (scrollContainerRef.current?.offsetLeft || 0));
-  };
+  // Mouse/touch drag (optional; enhances rail UX)
+  const [dragging, setDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
 
-  const handleMouseUp = () => {
-    setIsDragging(false);
+  const startDrag = (clientX: number) => {
+    setDragging(true);
+    const left = scrollRef.current?.getBoundingClientRect().left ?? 0;
+    setStartX(clientX - left);
   };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging || !scrollContainerRef.current) return;
-    e.preventDefault();
-    const x = e.pageX - (scrollContainerRef.current.offsetLeft || 0);
+  const doDrag = (clientX: number) => {
+    if (!dragging || !scrollRef.current) return;
+    const left = scrollRef.current.getBoundingClientRect().left;
+    const x = clientX - left;
     const walk = (x - startX) * 2;
-    scrollContainerRef.current.scrollLeft = scrollContainerRef.current.scrollLeft - walk;
+    scrollRef.current.scrollLeft -= walk;
     setStartX(x);
   };
+  const endDrag = () => setDragging(false);
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    setShowSwipeHint(false);
-    setIsDragging(true);
-    setStartX(e.touches[0].pageX - (scrollContainerRef.current?.offsetLeft || 0));
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging || !scrollContainerRef.current) return;
-    const x = e.touches[0].pageX - (scrollContainerRef.current.offsetLeft || 0);
-    const walk = (x - startX) * 2;
-    scrollContainerRef.current.scrollLeft = scrollContainerRef.current.scrollLeft - walk;
-    setStartX(x);
-  };
-
-  const handleTouchEnd = () => {
-    setIsDragging(false);
-  };
-
-  const handleScrollLeft = () => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollBy({
-        left: -200,
-        behavior: 'smooth'
-      });
-    }
-  };
-
-  const handleScrollRight = () => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollBy({
-        left: 200,
-        behavior: 'smooth'
-      });
-    }
-  };
-
-  const handleCategoryClick = (category: typeof categories[0], e: React.MouseEvent) => {
+  const handleCategoryClick = (category: typeof categories[number], e: React.MouseEvent) => {
     e.preventDefault();
-    
-    // Clear any existing navigation state immediately
     window.history.replaceState(null, '', window.location.pathname + window.location.search);
-    
+
     if (category.slug === 'mattresses') {
       navigate('/mattresses');
     } else if (category.link) {
       navigate(category.link);
     } else {
-      // Navigate with immediate state to prevent glitches
       navigate(`/products?category=${category.slug}`, {
         replace: true,
-        state: {
-          selectedCategories: [category.slug],
-          immediate: true
-        }
+        state: { selectedCategories: [category.slug], immediate: true },
       });
     }
   };
 
-  return (
-    <div className="relative max-w-7xl mx-auto px-4 py-4">
-      <div className="relative">
-        <CategoryScrollControls
-          canScrollLeft={canScrollLeft}
-          canScrollRight={canScrollRight}
-          onScrollLeft={handleScrollLeft}
-          onScrollRight={handleScrollRight}
-        />
+  const scrollBy = (left: number) => scrollRef.current?.scrollBy({ left, behavior: 'smooth' });
 
+  return (
+    <section aria-label="Категории" className="relative max-w-7xl mx-auto px-4 py-4">
+      <div className="relative">
+        {/* Controls visible only on mobile (rail) */}
+        <div className="md:hidden">
+          <CategoryScrollControls
+            canScrollLeft={canScrollLeft}
+            canScrollRight={canScrollRight}
+            onScrollLeft={() => scrollBy(-220)}
+            onScrollRight={() => scrollBy(220)}
+          />
+        </div>
+
+        {/* SCROLLER */}
         <div
-          ref={scrollContainerRef}
-          className="overflow-x-auto scrollbar-hide relative"
-          onMouseDown={handleMouseDown}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
-          onMouseMove={handleMouseMove}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
+          ref={scrollRef}
+          className="
+            relative
+            md:overflow-visible
+            overflow-x-auto
+            scrollbar-hide
+            -mx-4 px-4  /* edge-to-edge on mobile */
+          "
+          onMouseDown={(e) => startDrag(e.pageX)}
+          onMouseMove={(e) => doDrag(e.pageX)}
+          onMouseUp={endDrag}
+          onMouseLeave={endDrag}
+          onTouchStart={(e) => {
+            setShowSwipeHint(false);
+            startDrag(e.touches[0].pageX);
+          }}
+          onTouchMove={(e) => doDrag(e.touches[0].pageX)}
+          onTouchEnd={endDrag}
         >
           <SwipeHint showSwipeHint={showSwipeHint} />
 
-          {/* Desktop View */}
-          <div className="hidden md:flex justify-between w-full">
+          {/* Desktop grid */}
+          <div className="hidden md:grid gap-4 grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
             {categories.map((category) => (
               <CategoryItem
                 key={category.id}
@@ -201,27 +132,37 @@ const CategoryGrid = () => {
             ))}
           </div>
 
-          {/* Mobile View */}
-          <div className="md:hidden grid grid-rows-2 grid-flow-col gap-x-4 gap-y-4 auto-cols-[110px] min-w-max">
+          {/* Mobile rail (two rows, horizontal scroll, snap) */}
+          <div
+            className="
+              md:hidden
+              grid grid-rows-2 grid-flow-col gap-x-4 gap-y-4
+              auto-cols-[130px] sm:auto-cols-[150px]
+              min-w-max
+              snap-x snap-mandatory
+              py-1
+            "
+          >
             {categories.map((category) => (
-              <CategoryItem
-                key={category.id}
-                category={category}
-                onCategoryClick={handleCategoryClick}
-              />
+              <div key={category.id} className="snap-start">
+                <CategoryItem
+                  category={category}
+                  onCategoryClick={handleCategoryClick}
+                />
+              </div>
             ))}
           </div>
         </div>
 
         {/* Progress Bar - Mobile Only */}
         <div className="md:hidden h-0.5 bg-gray-100 mt-4 rounded-full overflow-hidden">
-          <div 
+          <div
             className="h-full bg-brand-turquoise transition-all duration-300 ease-out"
             style={{ width: `${scrollProgress}%` }}
           />
         </div>
       </div>
-    </div>
+    </section>
   );
 };
 
