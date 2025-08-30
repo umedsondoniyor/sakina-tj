@@ -4,17 +4,21 @@ import { ChevronDown, MapPin } from 'lucide-react';
 
 const TopHeader: React.FC = () => {
   const [open, setOpen] = useState(false);
-  const rowRef = useRef<HTMLDivElement>(null);     // the whole left row that contains the button
-  const [panelRect, setPanelRect] = useState<{left:number; top:number; width:number} | null>(null);
+  const rowRef = useRef<HTMLDivElement>(null);
+  const [panelRect, setPanelRect] = useState<{ left: number; top: number; width: number } | null>(null);
 
-  // measure where to place the fixed dropdown
+  const address = 'Душанбе, Пулоди 4';
+  const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+  const twoGisUrl = `https://2gis.com/search/${encodeURIComponent(address)}`;
+  const appleMapsUrl = `maps://?q=${encodeURIComponent(address)}`;
+
   const measure = () => {
     const el = rowRef.current;
     if (!el) return;
     const r = el.getBoundingClientRect();
     setPanelRect({
       left: Math.round(r.left),
-      top: Math.round(r.bottom),         // dropdown sits right under the row
+      top: Math.round(r.bottom),
       width: Math.round(r.width),
     });
   };
@@ -32,14 +36,11 @@ const TopHeader: React.FC = () => {
     };
   }, [open]);
 
-  // close on outside click / Esc
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => {
-      // clicks on the fixed panel are handled by its own container; allow
       const panel = document.getElementById('showrooms-panel');
       if (panel && panel.contains(e.target as Node)) return;
-      // clicks on the trigger row should not close immediately; allow the button handler to toggle
       if (rowRef.current && rowRef.current.contains(e.target as Node)) return;
       setOpen(false);
     };
@@ -59,7 +60,7 @@ const TopHeader: React.FC = () => {
           style={{
             position: 'fixed',
             left: panelRect.left,
-            top: panelRect.top + 8, // little gap under the row
+            top: panelRect.top + 8,
             zIndex: 1000,
           }}
         >
@@ -68,14 +69,19 @@ const TopHeader: React.FC = () => {
               <button
                 type="button"
                 onClick={() => {
-                  // Hook up map navigation if needed:
-                  // window.open('https://maps.google.com/?q=Душанбе, Пулоди 4', '_blank');
+                  // open Google Maps by default
+                  window.open(googleMapsUrl, '_blank');
+
+                  // optional: try 2GIS or Apple Maps
+                  // window.open(twoGisUrl, '_blank');
+                  // window.open(appleMapsUrl, '_blank');
+
                   setOpen(false);
                 }}
                 className="flex items-start gap-2 text-left text-gray-700 hover:text-teal-600"
               >
                 <MapPin size={18} className="mt-0.5 shrink-0" />
-                <span>Душанбе, Пулоди 4</span>
+                <span>{address}</span>
               </button>
             </div>
           </div>
@@ -87,7 +93,6 @@ const TopHeader: React.FC = () => {
   return (
     <div className="hidden md:block bg-gray-100 py-2 px-4 text-sm">
       <div className="max-w-7xl mx-auto flex justify-between items-center">
-        {/* Left row (used for measuring width/left) */}
         <div ref={rowRef} className="flex items-center space-x-4 relative">
           <button
             type="button"
@@ -97,10 +102,7 @@ const TopHeader: React.FC = () => {
             className="flex items-center hover:text-teal-600"
           >
             Шоурумы
-            <ChevronDown
-              size={16}
-              className={`ml-1 transition-transform ${open ? 'rotate-180' : ''}`}
-            />
+            <ChevronDown size={16} className={`ml-1 transition-transform ${open ? 'rotate-180' : ''}`} />
           </button>
           <a href="#" className="hover:text-teal-600">Услуги</a>
         </div>
