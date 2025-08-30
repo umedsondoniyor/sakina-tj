@@ -12,12 +12,6 @@ const TopHeader = () => {
         <div className="flex items-center space-x-6">
           <div className="group relative">
             <button className="flex items-center hover:text-teal-600">
-              Покупателям
-              <ChevronDown size={16} className="ml-1" />
-            </button>
-          </div>
-          <div className="group relative">
-            <button className="flex items-center hover:text-teal-600">
               Доставка и оплата
               <ChevronDown size={16} className="ml-1" />
             </button>
