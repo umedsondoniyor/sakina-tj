@@ -12,7 +12,6 @@ const TopHeader = () => {
               <ChevronDown size={16} className="ml-1" />
             </button>
           </div>
-          <a href="#" className="hover:text-teal-600">Душанбе</a>
           <a href="#" className="hover:text-teal-600">Услуги</a>
         </div>
         <div className="flex items-center space-x-6">
