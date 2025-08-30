@@ -15,21 +15,20 @@ const categories = [
 
 const CategoryGrid: React.FC = () => {
   const navigate = useNavigate();
-  const scrollRef = useRef<HTMLDivElement>(null);
 
+  // MOBILE rail refs/state
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [showSwipeHint, setShowSwipeHint] = useState(true);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
 
-  // Hide hint after a moment
   useEffect(() => {
     if (!showSwipeHint) return;
     const t = setTimeout(() => setShowSwipeHint(false), 3000);
     return () => clearTimeout(t);
   }, [showSwipeHint]);
 
-  // Progress + canScroll calc
   const updateScroll = () => {
     const el = scrollRef.current;
     if (!el) return;
@@ -48,7 +47,7 @@ const CategoryGrid: React.FC = () => {
     return () => el.removeEventListener('scroll', updateScroll);
   }, []);
 
-  // Mouse/touch drag (optional; enhances rail UX)
+  // drag scrolling (mobile)
   const [dragging, setDragging] = useState(false);
   const [startX, setStartX] = useState(0);
 
@@ -87,26 +86,21 @@ const CategoryGrid: React.FC = () => {
 
   return (
     <section aria-label="Категории" className="relative max-w-7xl mx-auto px-4 py-4">
-      <div className="relative">
-        {/* Controls visible only on mobile (rail) */}
-        <div className="md:hidden">
-          <CategoryScrollControls
-            canScrollLeft={canScrollLeft}
-            canScrollRight={canScrollRight}
-            onScrollLeft={() => scrollBy(-220)}
-            onScrollRight={() => scrollBy(220)}
-          />
-        </div>
+      {/* MOBILE: two-row horizontal rail with controls and progress */}
+      <div className="md:hidden relative">
+        <CategoryScrollControls
+          canScrollLeft={canScrollLeft}
+          canScrollRight={canScrollRight}
+          onScrollLeft={() => scrollBy(-220)}
+          onScrollRight={() => scrollBy(220)}
+        />
 
-        {/* SCROLLER */}
         <div
           ref={scrollRef}
           className="
             relative
-            md:overflow-visible
-            overflow-x-auto
-            scrollbar-hide
-            -mx-4 px-4  /* edge-to-edge on mobile */
+            overflow-x-auto scrollbar-hide
+            -mx-4 px-4  /* edge-to-edge on mobile only */
           "
           onMouseDown={(e) => startDrag(e.pageX)}
           onMouseMove={(e) => doDrag(e.pageX)}
@@ -121,21 +115,8 @@ const CategoryGrid: React.FC = () => {
         >
           <SwipeHint showSwipeHint={showSwipeHint} />
 
-          {/* Desktop grid */}
-          <div className="hidden md:grid gap-4 grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
-            {categories.map((category) => (
-              <CategoryItem
-                key={category.id}
-                category={category}
-                onCategoryClick={handleCategoryClick}
-              />
-            ))}
-          </div>
-
-          {/* Mobile rail (two rows, horizontal scroll, snap) */}
           <div
             className="
-              md:hidden
               grid grid-rows-2 grid-flow-col gap-x-4 gap-y-4
               auto-cols-[130px] sm:auto-cols-[150px]
               min-w-max
@@ -145,21 +126,30 @@ const CategoryGrid: React.FC = () => {
           >
             {categories.map((category) => (
               <div key={category.id} className="snap-start">
-                <CategoryItem
-                  category={category}
-                  onCategoryClick={handleCategoryClick}
-                />
+                <CategoryItem category={category} onCategoryClick={handleCategoryClick} />
               </div>
             ))}
           </div>
         </div>
 
-        {/* Progress Bar - Mobile Only */}
-        <div className="md:hidden h-0.5 bg-gray-100 mt-4 rounded-full overflow-hidden">
+        <div className="h-0.5 bg-gray-100 mt-4 rounded-full overflow-hidden">
           <div
             className="h-full bg-brand-turquoise transition-all duration-300 ease-out"
             style={{ width: `${scrollProgress}%` }}
           />
+        </div>
+      </div>
+
+      {/* DESKTOP/TABLET: full-width wrapping grid (no scroller wrapper) */}
+      <div className="hidden md:block">
+        <div className="grid gap-6 md:gap-8 grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+          {categories.map((category) => (
+            <CategoryItem
+              key={category.id}
+              category={category}
+              onCategoryClick={handleCategoryClick}
+            />
+          ))}
         </div>
       </div>
     </section>
