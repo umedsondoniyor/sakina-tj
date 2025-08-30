@@ -66,7 +66,6 @@ const TopHeader: React.FC = () => {
         >
           <div className="rounded-xl bg-white shadow-xl border border-gray-100">
             <div className="p-5">
-              <h3 className="text-base font-semibold mb-3">Адрес шоурума</h3>
               <button
                 type="button"
                 onClick={() => {
