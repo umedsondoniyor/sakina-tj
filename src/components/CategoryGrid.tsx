@@ -117,7 +117,7 @@ const CategoryGrid: React.FC = () => {
 
           <div
             className="justify-center
-              grid grid-rows-2 grid-flow-col gap-x-8 md:gap-x-4 gap-y-4
+              grid grid-rows-2 grid-flow-col gap-x-10 md:gap-x-4 gap-y-4
               auto-cols-[130px] sm:auto-cols-[150px]
               min-w-max
               snap-x snap-mandatory
