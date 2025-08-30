@@ -16,7 +16,6 @@ const TopHeader = () => {
               <ChevronDown size={16} className="ml-1" />
             </button>
           </div>
-          <a href="#" className="hover:text-teal-600">Статус заказа</a>
           <a href="tel:+992905339595" className="font-medium hover:text-teal-600">+992 90 533 9595</a>
         </div>
       </div>
