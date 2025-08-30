@@ -72,8 +72,8 @@ const Footer = () => {
               />
               <div className="text-sm text-gray-500">
                 <p>Политика конфиденциальности</p>
-                <p>© 1990–2025</p>
-                <p>Компания ООО «Sakina»</p>
+                <p>© 2023–2025</p>
+                <p>Компания «Sakina»</p>
               </div>
             </div>
           </div>
