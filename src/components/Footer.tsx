@@ -71,7 +71,6 @@ const Footer = () => {
                 className="h-6 inline-block mb-4"
               />
               <div className="text-sm text-gray-500">
-                <p>Политика конфиденциальности</p>
                 <p>© 2023–2025</p>
                 <p>Компания «Sakina»</p>
               </div>
