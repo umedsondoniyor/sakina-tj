@@ -8,7 +8,7 @@ const TopHeader = () => {
         <div className="flex items-center space-x-4">
                     <div className="group relative">
             <button className="flex items-center hover:text-teal-600">
-              Доставка и оплата
+              Душанбе
               <ChevronDown size={16} className="ml-1" />
             </button>
           </div>
