@@ -10,7 +10,7 @@ const categories = [
   { id: 3, name: 'Одеяло', image: 'https://ik.imagekit.io/3js0rb3pk/categ_blanket.png' },
   { id: 4, name: 'Массажное кресло', image: '/images/smart-chair-b.png', slug: 'massage-chairs' },
   { id: 5, name: 'Подушки', image: 'https://ik.imagekit.io/3js0rb3pk/categ_pillow.png', slug: 'pillows', link: '/products?category=pillows' },
-  { id: 6, name: 'Карта мира', image: 'https://ik.imagekit.io/3js0rb3pk/categ_map.png', slug: 'world-maps', link: '/products?category=map' },
+  { id: 6, name: 'Деревянные 3D-карты', image: 'https://ik.imagekit.io/3js0rb3pk/categ_map.png', slug: 'world-maps', link: '/products?category=map' },
 ];
 
 const CategoryGrid: React.FC = () => {
