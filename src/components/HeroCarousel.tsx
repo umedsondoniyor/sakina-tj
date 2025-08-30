@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { getCarouselSlides } from '../lib/api';
 import type { CarouselSlide } from '../lib/types';
-import { PackageOpen } from 'lucide-react';
+import { PackageOpen, ChevronLeft, ChevronRight } from 'lucide-react';
 import HeroSlide from './hero/HeroSlide';
 import SlideIndicators from './hero/SlideIndicators';
 
@@ -54,6 +54,20 @@ const HeroCarousel = () => {
     }, 5000);
   };
 
+  const goPrev = () => {
+    if (!slides.length) return;
+    if (autoPlayRef.current) clearInterval(autoPlayRef.current);
+    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
+    startAutoPlay();
+  };
+
+  const goNext = () => {
+    if (!slides.length) return;
+    if (autoPlayRef.current) clearInterval(autoPlayRef.current);
+    setCurrentSlide((prev) => (prev + 1) % slides.length);
+    startAutoPlay();
+  };
+
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchStart(e.touches[0].clientX);
     setIsDragging(true);
@@ -77,12 +91,8 @@ const HeroCarousel = () => {
     const isLeftSwipe = distance > minSwipeDistance;
     const isRightSwipe = distance < -minSwipeDistance;
 
-    if (isLeftSwipe) {
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }
-    if (isRightSwipe) {
-      setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
-    }
+    if (isLeftSwipe) setCurrentSlide((prev) => (prev + 1) % slides.length);
+    if (isRightSwipe) setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
 
     setTouchStart(0);
     setTouchEnd(0);
@@ -106,9 +116,7 @@ const HeroCarousel = () => {
   };
 
   const handleMouseLeave = () => {
-    if (isDragging) {
-      handleTouchEnd();
-    }
+    if (isDragging) handleTouchEnd();
   };
 
   if (loading) {
@@ -145,7 +153,8 @@ const HeroCarousel = () => {
 
   return (
     <div className="flex flex-col">
-      <div className="relative w-full overflow-hidden">
+      {/* group enables hover-based reveal */}
+      <div className="relative w-full overflow-hidden group">
         <div
           className="relative w-full overflow-hidden after:clear-both after:block after:content-['']"
           onTouchStart={handleTouchStart}
@@ -164,13 +173,48 @@ const HeroCarousel = () => {
             />
           ))}
         </div>
+
+        {/* Left/Right controls (hidden on mobile; show on hover/focus on desktop) */}
+        <button
+          type="button"
+          onClick={goPrev}
+          aria-label="Предыдущий слайд"
+          className="
+            hidden sm:flex items-center justify-center
+            absolute left-2 top-1/2 -translate-y-1/2 z-10
+            p-2 rounded-full bg-white/80 backdrop-blur shadow
+            hover:bg-white transition
+            opacity-0 group-hover:opacity-100 focus:opacity-100
+          "
+        >
+          <ChevronLeft size={22} />
+        </button>
+
+        <button
+          type="button"
+          onClick={goNext}
+          aria-label="Следующий слайд"
+          className="
+            hidden sm:flex items-center justify-center
+            absolute right-2 top-1/2 -translate-y-1/2 z-10
+            p-2 rounded-full bg-white/80 backdrop-blur shadow
+            hover:bg-white transition
+            opacity-0 group-hover:opacity-100 focus:opacity-100
+          "
+        >
+          <ChevronRight size={22} />
+        </button>
       </div>
 
       {/* Slide Indicators */}
       <SlideIndicators
         totalSlides={slides.length}
         currentSlide={currentSlide}
-        onSlideChange={setCurrentSlide}
+        onSlideChange={(i) => {
+          if (autoPlayRef.current) clearInterval(autoPlayRef.current);
+          setCurrentSlide(i);
+          startAutoPlay();
+        }}
         onStartAutoPlay={startAutoPlay}
       />
     </div>
