@@ -2,9 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown, Search } from 'lucide-react';
 
 const POPULAR_CITIES = [
-  'Москва','Санкт-Петербург','Волгоград','Воронеж','Екатеринбург',
-  'Казань','Киров','Красноярск','Нижний Новгород','Новосибирск',
-  'Омск','Пермь','Ростов-на-Дону','Самара','Уфа'
+  'г. Душанбе, Пулоди 4'
 ];
 
 const TopHeader: React.FC = () => {
