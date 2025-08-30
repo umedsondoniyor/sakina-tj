@@ -60,7 +60,6 @@ const TopHeader: React.FC = () => {
             position: 'fixed',
             left: panelRect.left,
             top: panelRect.top + 8, // little gap under the row
-            width: panelRect.width,
             zIndex: 1000,
           }}
         >
