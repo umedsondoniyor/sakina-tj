@@ -7,8 +7,6 @@ const TopHeader = () => {
       <div className="max-w-7xl mx-auto flex justify-between items-center">
         <div className="flex items-center space-x-4">
           <a href="#" className="hover:text-teal-600">Душанбе</a>
-          <a href="#" className="hover:text-teal-600">Салоны</a>
-          <a href="#" className="hover:text-teal-600">Акции</a>
           <a href="#" className="hover:text-teal-600">Услуги</a>
         </div>
         <div className="flex items-center space-x-6">
