@@ -6,6 +6,12 @@ const TopHeader = () => {
     <div className="hidden md:block bg-gray-100 py-2 px-4 text-sm">
       <div className="max-w-7xl mx-auto flex justify-between items-center">
         <div className="flex items-center space-x-4">
+                    <div className="group relative">
+            <button className="flex items-center hover:text-teal-600">
+              Доставка и оплата
+              <ChevronDown size={16} className="ml-1" />
+            </button>
+          </div>
           <a href="#" className="hover:text-teal-600">Душанбе</a>
           <a href="#" className="hover:text-teal-600">Услуги</a>
         </div>
