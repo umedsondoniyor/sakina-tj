@@ -211,4 +211,72 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({ isOpen, onClose }
                 autoComplete="tel"
                 required
                 value={phoneDisplay}
-                onChange={(e) => handlePhoneChange(e.target.val
+                onChange={(e) => handlePhoneChange(e.target.value)}
+                placeholder="+992 90 123-45-67"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                aria-invalid={!!error && !e164Phone}
+              />
+              <p className="mt-1 text-xs text-gray-500">Формат: +992 XX XXX-XX-XX</p>
+            </div>
+
+            {/* Name */}
+            <div>
+              <label htmlFor="fullname" className="block text-sm font-medium text-gray-700 mb-1">
+                Имя и фамилия
+              </label>
+              <input
+                id="fullname"
+                type="text"
+                autoComplete="name"
+                required
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="Иван Петров"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+              />
+            </div>
+
+            {/* DOB */}
+            <div>
+              <label htmlFor="dob" className="block text-sm font-medium text-gray-700 mb-1">
+                Дата рождения
+              </label>
+              <input
+                id="dob"
+                type="date"
+                required
+                value={dateOfBirth}
+                onChange={(e) => setDateOfBirth(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                max={new Date().toISOString().slice(0, 10)} // no future dates
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading || !e164Phone || !fullName.trim() || !dateOfBirth}
+              aria-busy={loading}
+              className="
+                w-full bg-teal-500 text-white py-2.5 rounded-lg
+                hover:bg-teal-600 transition-colors
+                disabled:bg-gray-300 disabled:cursor-not-allowed
+              "
+            >
+              {loading ? 'Регистрация…' : 'Зарегистрироваться'}
+            </button>
+          </form>
+
+          <div className="mt-4 text-xs text-gray-500 text-center pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+            Регистрируясь, вы соглашаетесь с{' '}
+            <a href="#" className="text-teal-600 hover:text-teal-700 underline underline-offset-2">
+              условиями обработки персональных данных
+            </a>.
+          </div>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+};
+
+export default RegistrationModal;
