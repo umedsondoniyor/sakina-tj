@@ -1,76 +1,78 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, PackageOpen } from 'lucide-react';
 import { getProducts } from '../lib/api';
 import type { Product } from '../lib/types';
 
-const RecommendedProducts = () => {
+const CARD_WIDTH_MOBILE = 280; // px
+const SCROLL_STEP = 320;       // px per click (approx one card + gap)
+
+const RecommendedProducts: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    loadRecommendedProducts();
-  }, []);
-
-  const loadRecommendedProducts = async () => {
-    try {
-      setLoading(true);
-      const allProducts = await getProducts();
-      // For now, just get the first 4 products
-      // TODO: Add recommendation logic based on user preferences/history
-      setProducts(allProducts.slice(0, 4));
-    } catch (err) {
-      if (err instanceof Error && err.message.includes('No products available')) {
-        setError('No products available at the moment');
-      } else {
-        setError('Failed to load recommended products');
+    (async () => {
+      try {
+        setLoading(true);
+        const all = await getProducts();
+        // TODO: replace with real recommendations logic
+        setProducts(all.slice(0, 10));
+        setError(null);
+      } catch (err: any) {
+        if (err?.message?.includes('No products available')) {
+          setError('No products available at the moment');
+        } else {
+          setError('Failed to load recommended products');
+        }
+      } finally {
+        setLoading(false);
       }
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateScrollProgress = () => {
-    if (scrollContainerRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
-      const maxScroll = scrollWidth - clientWidth;
-      const progress = maxScroll > 0 ? (scrollLeft / maxScroll) * 100 : 0;
-      setScrollProgress(progress);
-    }
-  };
-
-  useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (container) {
-      container.addEventListener('scroll', updateScrollProgress);
-      updateScrollProgress();
-      return () => container.removeEventListener('scroll', updateScrollProgress);
-    }
+    })();
   }, []);
 
-  const goToPrev = () => {
-    setCurrentIndex((prev) => (prev === 0 ? products.length - 1 : prev - 1));
+  const updateScrollState = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const { scrollLeft, scrollWidth, clientWidth } = el;
+    const max = Math.max(0, scrollWidth - clientWidth);
+    setScrollProgress(max ? (scrollLeft / max) * 100 : 0);
+    setCanScrollLeft(scrollLeft > 0);
+    setCanScrollRight(scrollLeft < max - 1);
+  }, []);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.addEventListener('scroll', updateScrollState, { passive: true });
+    updateScrollState();
+    return () => el.removeEventListener('scroll', updateScrollState);
+  }, [updateScrollState, products.length]);
+
+  const scrollBy = (delta: number) => {
+    scrollRef.current?.scrollBy({ left: delta, behavior: 'smooth' });
   };
 
-  const goToNext = () => {
-    setCurrentIndex((prev) => (prev === products.length - 1 ? 0 : prev + 1));
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowLeft') scrollBy(-SCROLL_STEP);
+    if (e.key === 'ArrowRight') scrollBy(SCROLL_STEP);
   };
 
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8 md:py-12">
         <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-48 mb-8"></div>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="h-8 bg-gray-200 rounded w-48 mb-8" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
             {[...Array(4)].map((_, i) => (
               <div key={i} className="space-y-4">
-                <div className="h-64 bg-gray-200 rounded-lg"></div>
-                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                <div className="w-full aspect-square bg-gray-200 rounded-lg" />
+                <div className="h-4 bg-gray-200 rounded w-3/4" />
+                <div className="h-4 bg-gray-200 rounded w-1/2" />
               </div>
             ))}
           </div>
@@ -87,7 +89,7 @@ const RecommendedProducts = () => {
           <h3 className="mt-2 text-sm font-semibold text-gray-900">{error}</h3>
           <p className="mt-1 text-sm text-gray-500">Check back later for new products.</p>
           <button
-            onClick={loadRecommendedProducts}
+            onClick={() => location.reload()}
             className="mt-4 px-4 py-2 bg-teal-500 text-white rounded hover:bg-teal-600"
           >
             Retry
@@ -97,7 +99,7 @@ const RecommendedProducts = () => {
     );
   }
 
-  if (products.length === 0) {
+  if (!products.length) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8 md:py-12">
         <div className="text-center">
@@ -110,98 +112,118 @@ const RecommendedProducts = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 md:py-12">
+    <section aria-label="Рекомендованные товары" className="max-w-7xl mx-auto px-4 py-8 md:py-12">
       <div className="flex items-center justify-between mb-6 md:mb-8">
         <h2 className="text-xl md:text-2xl font-bold">Вас может заинтересовать</h2>
-        <div className="hidden md:flex space-x-2">
+
+        {/* Desktop controls (show on hover/focus) */}
+        <div className="hidden md:flex items-center gap-2">
           <button
-            onClick={goToPrev}
-            className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+            onClick={() => scrollBy(-SCROLL_STEP)}
+            disabled={!canScrollLeft}
+            className={`
+              p-2 rounded-full transition
+              ${canScrollLeft ? 'hover:bg-gray-100 text-gray-700' : 'text-gray-300 cursor-not-allowed'}
+            `}
+            aria-label="Предыдущие"
           >
             <ChevronLeft size={24} />
           </button>
           <button
-            onClick={goToNext}
-            className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+            onClick={() => scrollBy(SCROLL_STEP)}
+            disabled={!canScrollRight}
+            className={`
+              p-2 rounded-full transition
+              ${canScrollRight ? 'hover:bg-gray-100 text-gray-700' : 'text-gray-300 cursor-not-allowed'}
+            `}
+            aria-label="Следующие"
           >
             <ChevronRight size={24} />
           </button>
         </div>
       </div>
 
-      {/* Desktop View */}
-      <div className="hidden md:grid grid-cols-4 gap-6">
-        {products.map((product) => (
-          <div key={product.id} className="group">
-            <div className="relative mb-4">
-              <img
-                src={product.image_url}
-                alt={product.name}
-                className="w-full h-64 object-cover rounded-lg"
-              />
-              {product.sale_percentage && (
-                <span className="absolute top-4 left-4 bg-red-500 text-white px-2 py-1 rounded text-sm">
-                  -{product.sale_percentage}%
-                </span>
-              )}
-            </div>
-            <div>
-              <div className="text-sm text-gray-500 mb-2">
-                {product.review_count} оценок
-              </div>
-              <h3 className="font-medium mb-2 group-hover:text-teal-600 line-clamp-2">
-                {product.name}
-              </h3>
-              {product.weight_category && (
-                <p className="text-sm text-gray-600 mb-2">
-                  {product.weight_category}
-                </p>
-              )}
-              <div className="flex items-center space-x-2">
-                <span className="text-lg font-bold">{product.price.toLocaleString()} с.</span>
-                {product.old_price && (
-                  <span className="text-sm text-gray-500 line-through">
-                    {product.old_price.toLocaleString()} с.
-                  </span>
-                )}
-              </div>
-              <button className="w-full mt-4 bg-teal-500 text-white py-2 rounded hover:bg-teal-600 transition-colors">
-                Подробнее
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Mobile View */}
-      <div className="md:hidden">
-        <div
-          ref={scrollContainerRef}
-          className="overflow-x-auto scrollbar-hide -mx-4 px-4"
+      {/* One scroller for all sizes */}
+      <div
+        className="group relative"
+        onKeyDown={onKeyDown}
+        tabIndex={0}
+        aria-roledescription="carousel"
+      >
+        {/* hover-reveal overlay controls for md+ */}
+        <button
+          type="button"
+          onClick={() => scrollBy(-SCROLL_STEP)}
+          disabled={!canScrollLeft}
+          aria-label="Предыдущие товары"
+          className="
+            hidden md:flex items-center justify-center
+            absolute left-2 top-1/2 -translate-y-1/2 z-10
+            p-2 rounded-full bg-white/80 backdrop-blur shadow
+            hover:bg-white transition
+            opacity-0 group-hover:opacity-100 focus:opacity-100
+            disabled:opacity-50 disabled:cursor-not-allowed
+          "
         >
-          <div className="flex space-x-4">
+          <ChevronLeft size={22} />
+        </button>
+
+        <button
+          type="button"
+          onClick={() => scrollBy(SCROLL_STEP)}
+          disabled={!canScrollRight}
+          aria-label="Следующие товары"
+          className="
+            hidden md:flex items-center justify-center
+            absolute right-2 top-1/2 -translate-y-1/2 z-10
+            p-2 rounded-full bg-white/80 backdrop-blur shadow
+            hover:bg-white transition
+            opacity-0 group-hover:opacity-100 focus:opacity-100
+            disabled:opacity-50 disabled:cursor-not-allowed
+          "
+        >
+          <ChevronRight size={22} />
+        </button>
+
+        {/* Horizontal track (snap on mobile, free scroll on desktop) */}
+        <div
+          ref={scrollRef}
+          className="
+            overflow-x-auto scrollbar-hide -mx-4 px-4
+            snap-x snap-mandatory md:snap-none
+          "
+        >
+          <div className="flex gap-4 md:gap-6">
             {products.map((product) => (
               <div
                 key={product.id}
-                className="flex-none w-[280px]"
+                className="
+                  flex-none w-[280px] sm:w-[300px] md:w-[320px] lg:w-[340px]
+                  snap-start
+                "
               >
-                <div className="relative mb-3">
-                  <img
-                    src={product.image_url}
-                    alt={product.name}
-                    className="w-full h-48 object-cover rounded-lg"
-                  />
+                <div className="relative mb-3 md:mb-4">
+                  <div className="w-full aspect-square rounded-lg overflow-hidden bg-gray-100">
+                    <img
+                      src={product.image_url}
+                      alt={product.name}
+                      loading="lazy"
+                      className="w-full h-full object-cover"
+                      decoding="async"
+                    />
+                  </div>
                   {product.sale_percentage && (
-                    <span className="absolute top-3 left-3 bg-red-500 text-white px-2 py-1 rounded text-sm">
+                    <span className="absolute top-3 left-3 bg-red-500 text-white px-2 py-1 rounded text-xs md:text-sm">
                       -{product.sale_percentage}%
                     </span>
                   )}
                 </div>
+
                 <div>
-                  <div className="text-sm text-gray-500 mb-2">
+                  <div className="text-xs md:text-sm text-gray-500 mb-1.5 md:mb-2">
                     {product.review_count} оценок
                   </div>
-                  <h3 className="text-sm font-medium mb-2 line-clamp-2">
+                  <h3 className="text-sm md:text-base font-medium mb-1.5 md:mb-2 line-clamp-2">
                     {product.name}
                   </h3>
                   {product.weight_category && (
@@ -209,8 +231,10 @@ const RecommendedProducts = () => {
                       {product.weight_category}
                     </p>
                   )}
-                  <div className="flex items-center space-x-2 mb-3">
-                    <span className="text-base font-bold">{product.price.toLocaleString()} с.</span>
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-base md:text-lg font-bold">
+                      {product.price.toLocaleString()} с.
+                    </span>
                     {product.old_price && (
                       <span className="text-sm text-gray-500 line-through">
                         {product.old_price.toLocaleString()} с.
@@ -225,15 +249,16 @@ const RecommendedProducts = () => {
             ))}
           </div>
         </div>
-        {/* Mobile Progress Bar */}
-        <div className="h-0.5 bg-gray-100 mt-4 rounded-full overflow-hidden">
+
+        {/* Mobile progress bar */}
+        <div className="md:hidden h-0.5 bg-gray-100 mt-4 rounded-full overflow-hidden">
           <div
             className="h-full bg-teal-500 transition-all duration-300 ease-out"
             style={{ width: `${scrollProgress}%` }}
           />
         </div>
       </div>
-    </div>
+    </section>
   );
 };
 
