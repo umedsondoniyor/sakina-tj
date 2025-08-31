@@ -294,9 +294,6 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
           </div>
         </div>
 
-        {/* Functions */}
-
-
         <button
           onClick={onClearFilters}
           className="text-teal-600 hover:text-teal-700"
