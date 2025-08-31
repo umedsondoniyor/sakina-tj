@@ -90,19 +90,6 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
           </div>
         )}
 
-        {/* Availability */}
-        <div>
-          <h3 className="font-medium mb-3">Наличие</h3>
-          <label className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              checked={filters.inStock}
-              onChange={(e) => setFilters(prev => ({ ...prev, inStock: e.target.checked }))}
-              className="rounded text-teal-600 focus:ring-teал-500"
-            />
-            <span>Только в наличии</span>
-          </label>
-        </div>
 
         {/* Hardness */}
         <div>
