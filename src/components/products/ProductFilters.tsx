@@ -173,31 +173,6 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
           </div>
         </div>
 
-        {/* Mattress Type */}
-        <div>
-          <h3 className="font-medium mb-3">Вид матраса</h3>
-          <div className="space-y-2">
-            {['Беспружинный', 'Независимый пружинный блок', 'В скрутке'].map((option) => (
-              <label key={option} className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={filters.mattressType.includes(option)}
-                  onChange={(e) =>
-                    setFilters(prev => ({
-                      ...prev,
-                      mattressType: e.target.checked
-                        ? [...prev.mattressType, option]
-                        : prev.mattressType.filter(t => t !== option)
-                    }))
-                  }
-                  className="rounded text-teal-600 focus:ring-teал-500"
-                />
-                <span>{option}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-
         <button
           onClick={onClearFilters}
           className="text-teal-600 hover:text-teal-700"
