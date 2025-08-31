@@ -3,6 +3,7 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { PackageOpen } from 'lucide-react';
 import { getProducts } from '../lib/api';
 import type { Product } from '../lib/types';
+
 import ProductGrid from './products/ProductGrid';
 import ProductFilters from './products/ProductFilters';
 import MobileFilters from './products/MobileFilters';
@@ -14,12 +15,12 @@ import CategoryAlert from './products/CategoryAlert';
 interface FilterState {
   age: string[];
   hardness: string[];
-  width: number[];      // expect [min,max] when used
-  length: number[];     // expect [min,max] when used
-  height: number[];     // expect [min,max] when used
-  price: number[];      // expect [min,max] when used
+  width: number[];      // [min,max] (optional)
+  length: number[];     // [min,max] (optional)
+  height: number[];     // [min,max] (optional)
+  price: number[];      // [min,max] (optional)
   inStock: boolean;
-  productType: string[];
+  productType: string[]; // selected categories
   mattressType: string[];
   preferences: string[];
   functions: string[];
@@ -36,7 +37,6 @@ const categoryDisplayNames: Record<string, string> = {
   furniture: 'Мебель',
 };
 
-// tiny helpers
 const inRange = (val: number | undefined, range?: number[]) => {
   if (val == null) return false;
   if (!range || range.length < 2) return true;
@@ -53,23 +53,28 @@ const ProductsPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  // read initial categories from nav state or URL
-  const getInitialCategories = useCallback(() => {
+  // --- Derive "URL categories" EXACTLY from URL/state. Changes only when URL/state change.
+  const urlSelectedCategories = useMemo<string[]>(() => {
     const st = location.state as any;
     if (st?.selectedCategories) return st.selectedCategories as string[];
+
     const categoryParam = searchParams.get('category');
     if (categoryParam) return [categoryParam];
+
     return [];
-  }, [location.state, searchParams]);
+    // Depend on URL identity; location.key changes on navigation, and search string change too.
+  }, [location.key, searchParams.toString()]);
 
   const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading]  = useState(true);
-  const [error, setError]      = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error,   setError]   = useState<string | null>(null);
 
-  const [selectedCategories, setSelectedCategories] = useState<string[]>(getInitialCategories());
+  // This is the "live" category selection (from URL or from sidebar).
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(urlSelectedCategories);
+
   const [showFilters, setShowFilters]     = useState(false);
   const [showSortModal, setShowSortModal] = useState(false);
-  const [sortBy, setSortBy]               = useState((location.state as any)?.sortBy || 'popularity');
+  const [sortBy, setSortBy]               = useState<string>((location.state as any)?.sortBy || 'popularity');
 
   const [filters, setFilters] = useState<FilterState>({
     age: [],
@@ -79,14 +84,14 @@ const ProductsPage: React.FC = () => {
     height: [],
     price: [],
     inStock: false,
-    productType: getInitialCategories(),
+    productType: urlSelectedCategories,
     mattressType: [],
     preferences: [],
     functions: [],
     weightCategory: [],
   });
 
-  // load products once
+  // Load products once
   useEffect(() => {
     (async () => {
       try {
@@ -101,47 +106,42 @@ const ProductsPage: React.FC = () => {
         setLoading(false);
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // react to URL/state category changes
+  // ONE-WAY sync: when URL categories change, adopt them.
   useEffect(() => {
-    const newCats = getInitialCategories();
-    if (JSON.stringify(newCats) !== JSON.stringify(selectedCategories)) {
-      setSelectedCategories(newCats);
-      setFilters(prev => ({ ...prev, productType: newCats }));
-    }
-  }, [getInitialCategories, selectedCategories]);
+    setSelectedCategories(urlSelectedCategories);
+    setFilters(prev => ({ ...prev, productType: urlSelectedCategories }));
+  }, [urlSelectedCategories]);
 
-  // compute filtered/sorted list
+  // Filtering + sorting
   const filteredProducts = useMemo(() => {
     if (!products.length) return [];
 
     let list = products.slice();
 
-    // --- CATEGORY ---
+    // Categories
     if (hasAny(selectedCategories)) {
       list = list.filter(p => selectedCategories.includes(p.category));
     }
 
-    // --- AGE (string exact match) ---
+    // Age (string)
     if (hasAny(filters.age)) {
-      list = list.filter(p => p.age && filters.age.includes(p.age as any));
+      list = list.filter(p => (p as any).age && filters.age.includes((p as any).age));
     }
 
-    // --- HARDNESS (string exact match) ---
+    // Hardness (string)
     if (hasAny(filters.hardness)) {
-      list = list.filter(p => p.hardness && filters.hardness.includes(p.hardness as any));
+      list = list.filter(p => p.hardness && filters.hardness.includes(p.hardness));
     }
 
-    // --- WEIGHT CATEGORY (string exact match) ---
+    // Weight category (string)
     if (hasAny(filters.weightCategory)) {
-      list = list.filter(p => p.weight_category && filters.weightCategory.includes(p.weight_category as any));
+      list = list.filter(p => p.weight_category && filters.weightCategory.includes(p.weight_category));
     }
 
-    // --- MATTRESS TYPE (string exact) ---
+    // Mattress type (string)
     if (hasAny(filters.mattressType)) {
-      // adjust to your Product type key if different
       const key = (p: Product) => (p as any).mattress_type || (p as any).mattressType;
       list = list.filter(p => {
         const mt = key(p);
@@ -149,15 +149,13 @@ const ProductsPage: React.FC = () => {
       });
     }
 
-    // --- PREFERENCES (array overlap) ---
+    // Preferences/functions (arrays)
     if (hasAny(filters.preferences)) {
       list = list.filter(p =>
         Array.isArray((p as any).preferences) &&
         (p as any).preferences.some((x: string) => filters.preferences.includes(x))
       );
     }
-
-    // --- FUNCTIONS (array overlap) ---
     if (hasAny(filters.functions)) {
       list = list.filter(p =>
         Array.isArray((p as any).functions) &&
@@ -165,28 +163,18 @@ const ProductsPage: React.FC = () => {
       );
     }
 
-    // --- IN STOCK ---
+    // In stock
     if (filters.inStock) {
       list = list.filter(p => p.variants?.some(v => v.inventory?.in_stock));
     }
 
-    // --- WIDTH/LENGTH/HEIGHT (numeric ranges, if you start setting them) ---
-    if (filters.width.length === 2) {
-      list = list.filter(p => inRange((p as any).width, filters.width));
-    }
-    if (filters.length.length === 2) {
-      list = list.filter(p => inRange((p as any).length, filters.length));
-    }
-    if (filters.height.length === 2) {
-      list = list.filter(p => inRange((p as any).height, filters.height));
-    }
+    // Numeric ranges (apply only if [min,max] is set)
+    if (filters.width.length === 2)  list = list.filter(p => inRange((p as any).width,  filters.width));
+    if (filters.length.length === 2) list = list.filter(p => inRange((p as any).length, filters.length));
+    if (filters.height.length === 2) list = list.filter(p => inRange((p as any).height, filters.height));
+    if (filters.price.length === 2)  list = list.filter(p => inRange(p.price,                     filters.price));
 
-    // --- PRICE (numeric range, if you start setting it) ---
-    if (filters.price.length === 2) {
-      list = list.filter(p => inRange(p.price, filters.price));
-    }
-
-    // --- SORT ---
+    // Sort
     const discountValue = (p: Product) => {
       if (p.old_price && p.price) return p.old_price - p.price;
       if ((p as any).sale_percentage) return (p as any).sale_percentage;
@@ -211,9 +199,9 @@ const ProductsPage: React.FC = () => {
         break;
       case 'in-stock':
         list.sort((a, b) => {
-          const aS = a.variants?.some(v => v.inventory?.in_stock) ? 1 : 0;
-          const bS = b.variants?.some(v => v.inventory?.in_stock) ? 1 : 0;
-          if (bS !== aS) return bS - aS;
+          const av = a.variants?.some(v => v.inventory?.in_stock) ? 1 : 0;
+          const bv = b.variants?.some(v => v.inventory?.in_stock) ? 1 : 0;
+          if (bv !== av) return bv - av;
           const ap = (a.review_count ?? 0) * (a.rating ?? 0);
           const bp = (b.review_count ?? 0) * (b.rating ?? 0);
           return bp - ap;
@@ -233,7 +221,7 @@ const ProductsPage: React.FC = () => {
     return list;
   }, [products, selectedCategories, filters, sortBy]);
 
-  // handlers
+  // Sidebar toggles (state only; URL unchanged)
   const handleCategoryChange = useCallback((categoryValue: string, isChecked: boolean) => {
     const newCategories = isChecked
       ? [...selectedCategories, categoryValue]
@@ -357,13 +345,14 @@ const ProductsPage: React.FC = () => {
           sortBy={sortBy}
         />
 
-        {/* Layout: sidebar + content on md+, single column on mobile */}
+        {/* Layout */}
         <div className="grid gap-8 grid-cols-1 md:grid-cols-[280px_1fr]">
+          {/* Desktop Filters */}
           <aside className="hidden md:block">
             <div className="md:sticky md:top-4">
               <ProductFilters
                 filters={filters}
-                setFilters={setFilters as any /* supports fn updater */}
+                setFilters={setFilters}
                 selectedCategories={selectedCategories}
                 onCategoryChange={handleCategoryChange}
                 onClearFilters={clearFilters}
@@ -372,8 +361,8 @@ const ProductsPage: React.FC = () => {
             </div>
           </aside>
 
+          {/* Products + Desktop Sort */}
           <section className="flex-1" aria-label="Список товаров">
-            {/* Desktop sort */}
             <div className="hidden md:flex justify-between items-center mb-6">
               <span className="text-gray-600">
                 Показано {filteredProducts.length} из {products.length} товаров
@@ -394,7 +383,10 @@ const ProductsPage: React.FC = () => {
               </select>
             </div>
 
-            <ProductGrid products={filteredProducts} onProductClick={handleProductClick} />
+            <ProductGrid
+              products={filteredProducts}
+              onProductClick={(id) => navigate(`/products/${id}`)}
+            />
           </section>
         </div>
 
@@ -403,7 +395,7 @@ const ProductsPage: React.FC = () => {
           showFilters={showFilters}
           onClose={() => setShowFilters(false)}
           filters={filters}
-          setFilters={setFilters as any}
+          setFilters={setFilters}
           productsCount={filteredProducts.length}
         />
         <SortModal
