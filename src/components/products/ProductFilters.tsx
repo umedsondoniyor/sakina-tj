@@ -269,31 +269,6 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
           </div>
         </div>
 
-        {/* Preferences */}
-        <div>
-          <h3 className="font-medium mb-3">Предпочтения</h3>
-          <div className="space-y-2">
-            {['Для искривления Ergomotion', 'Для детей и подростков', 'Натуральные материалы'].map((option) => (
-              <label key={option} className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={filters.preferences.includes(option)}
-                  onChange={(e) =>
-                    setFilters(prev => ({
-                      ...prev,
-                      preferences: e.target.checked
-                        ? [...prev.preferences, option]
-                        : prev.preferences.filter(p => p !== option)
-                    }))
-                  }
-                  className="rounded text-teal-600 focus:ring-teал-500"
-                />
-                <span>{option}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-
         <button
           onClick={onClearFilters}
           className="text-teal-600 hover:text-teal-700"
