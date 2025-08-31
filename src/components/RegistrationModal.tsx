@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
@@ -7,203 +8,207 @@ interface RegistrationModalProps {
   onClose: () => void;
 }
 
+const TAJ_CODE = '992'; // Tajikistan
+const E164_PREFIX = `+${TAJ_CODE}`;
+
 const RegistrationModal: React.FC<RegistrationModalProps> = ({ isOpen, onClose }) => {
-  const [phone, setPhone] = useState('');
-  const [fullName, setFullName] = useState('');
-  const [dateOfBirth, setDateOfBirth] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const firstFieldRef = useRef<HTMLInputElement>(null);
+
+  const [phoneDisplay, setPhoneDisplay] = useState('');     // formatted +992 xx xxx-xx-xx
+  const [phoneDigits, setPhoneDigits]   = useState('');     // digits only, starts with 992...
+  const [fullName, setFullName]         = useState('');
+  const [dateOfBirth, setDateOfBirth]   = useState('');
+  const [error, setError]               = useState('');
+  const [loading, setLoading]           = useState(false);
+
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (!isOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, [isOpen]);
+
+  // Focus first input when opened
+  useEffect(() => {
+    if (isOpen) {
+      setTimeout(() => firstFieldRef.current?.focus(), 0);
+    }
+  }, [isOpen]);
+
+  // Close on ESC
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+      // very light focus trap:
+      if (e.key === 'Tab' && dialogRef.current) {
+        const focusables = dialogRef.current.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusables.length === 0) return;
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          last.focus(); e.preventDefault();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          first.focus(); e.preventDefault();
+        }
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
-  const formatPhoneNumber = (value: string) => {
-    // Remove all non-digits
+  // Formatting helpers
+  const formatDisplay = useCallback((digitsOnly: string) => {
+    // ensure starts with 992; if user types local number, prepend 992
+    let d = digitsOnly.replace(/\D/g, '');
+    if (!d.startsWith(TAJ_CODE)) d = TAJ_CODE + d;
+
+    // Limit to country(3) + 9 = 12 total
+    d = d.slice(0, 12);
+
+    // Build formatted string: +992 xx xxx-xx-xx
+    const cc = d.slice(0, 3);
+    const p1 = d.slice(3, 5);
+    const p2 = d.slice(5, 8);
+    const p3 = d.slice(8, 10);
+    const p4 = d.slice(10, 12);
+
+    let out = `+${cc}`;
+    if (p1) out += ` ${p1}`;
+    if (p2) out += ` ${p2}`;
+    if (p3) out += `-${p3}`;
+    if (p4) out += `-${p4}`;
+    return { display: out, digits: d };
+  }, []);
+
+  const handlePhoneChange = useCallback((value: string) => {
+    // user might paste '+992...' or local 'xx...'—normalize both
     const digits = value.replace(/\D/g, '');
-    
-    // Handle different input scenarios
-    let formatted = '+992';
-    let workingDigits = digits;
-    
-    // If user starts typing without +992, assume they're entering local number
-    if (digits.length > 0 && !digits.startsWith('992')) {
-      // For local numbers, prepend 992
-      workingDigits = '992' + digits;
-    }
-    
-    // If digits start with 992, use as is
-    if (digits.startsWith('992')) {
-      workingDigits = digits;
-    }
-    
-    if (workingDigits.length > 3) {
-      formatted += ` ${workingDigits.slice(3, 5)}`;
-    }
-    if (workingDigits.length > 5) {
-      formatted += ` ${workingDigits.slice(5, 8)}`;
-    }
-    if (workingDigits.length > 8) {
-      formatted += ` ${workingDigits.slice(8, 10)}`;
-    }
-    if (workingDigits.length > 10) {
-      formatted += ` ${workingDigits.slice(10, 12)}`;
-    }
-    
-    return formatted;
-  };
+    const { display, digits: normalized } = formatDisplay(digits);
+    setPhoneDisplay(display);
+    setPhoneDigits(normalized);
+  }, [formatDisplay]);
 
-  const handlePhoneChange = (value: string) => {
-    const formatted = formatPhoneNumber(value);
-    setPhone(formatted);
-  };
+  const e164Phone = useMemo(() => {
+    // expect '992' + 9 digits (total 12)
+    return phoneDigits.length === 12 ? `+${phoneDigits}` : '';
+  }, [phoneDigits]);
 
-  const validatePhone = (phone: string) => {
-    // Remove formatting to get just digits
-    const digits = phone.replace(/\D/g, '');
-    
-    // Should be 12 digits total (992 + 9 digits)
-    if (digits.length !== 12) {
-      return 'Номер телефона должен содержать 12 цифр';
-    }
-    
-    if (!digits.startsWith('992')) {
-      return 'Номер должен начинаться с +992';
-    }
-    
+  const validatePhone = useCallback((): string => {
+    if (phoneDigits.length !== 12) return 'Номер телефона должен содержать 12 цифр (+992 и 9 цифр).';
+    if (!phoneDigits.startsWith(TAJ_CODE)) return 'Номер должен начинаться с +992.';
     return '';
-  };
+  }, [phoneDigits]);
+
+  const validateDOB = useCallback((): string => {
+    if (!dateOfBirth) return 'Дата рождения обязательна.';
+    const today = new Date();
+    const dob = new Date(dateOfBirth);
+    if (dob > today) return 'Дата рождения не может быть в будущем.';
+    return '';
+  }, [dateOfBirth]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    
-    // Validate phone number
-    const phoneError = validatePhone(phone);
-    if (phoneError) {
-      setError(phoneError);
-      return;
-    }
-    
-    // Validate name
-    if (!fullName.trim()) {
-      setError('Имя и фамилия обязательны');
-      return;
-    }
-    
-    // Validate date of birth
-    if (!dateOfBirth) {
-      setError('Дата рождения обязательна');
-      return;
-    }
-    
-    setLoading(true);
 
+    const phoneErr = validatePhone();
+    if (phoneErr) return setError(phoneErr);
+
+    if (!fullName.trim()) return setError('Имя и фамилия обязательны.');
+
+    const dobErr = validateDOB();
+    if (dobErr) return setError(dobErr);
+
+    setLoading(true);
     try {
-      // Create user profile without authentication
+      // store normalized phone (E.164), plus unformatted label if you want
       const { error: profileError } = await supabase
         .from('user_profiles')
-        .insert([
-          {
-            phone,
-            full_name: fullName,
-            date_of_birth: dateOfBirth,
-            role: 'user'
-          }
-        ]);
+        .insert([{
+          phone: e164Phone || phoneDisplay,  // prefer normalized
+          phone_raw: phoneDigits,            // optional raw storage
+          full_name: fullName.trim(),
+          date_of_birth: dateOfBirth,
+          role: 'user',
+        }]);
 
       if (profileError) throw profileError;
 
-      setError('');
-      setPhone('');
-      setFullName('');
-      setDateOfBirth('');
+      // reset form
+      setPhoneDisplay(''); setPhoneDigits('');
+      setFullName(''); setDateOfBirth('');
       onClose();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+    } catch (err: any) {
+      setError(err?.message || 'Произошла ошибка. Попробуйте позже.');
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg w-full max-w-md relative">
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
-        >
-          <X size={24} />
-        </button>
+  // Render via portal (safest for stacking + sticky parents)
+  return createPortal(
+    <div
+      className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/50 p-0 md:p-4"
+      onMouseDown={(e) => {
+        // close on backdrop click only (not when clicking inside dialog)
+        if (e.target === e.currentTarget) onClose();
+      }}
+      aria-labelledby="registration-title"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div
+        ref={dialogRef}
+        className="
+          w-full md:max-w-md
+          bg-white
+          rounded-t-2xl md:rounded-2xl
+          shadow-lg
+          pt-[max(1rem,env(safe-area-inset-top))]
+        "
+      >
+        {/* Header */}
+        <div className="relative px-5 pt-4 pb-2 md:px-6 md:pt-5 md:pb-3 border-b">
+          <h2 id="registration-title" className="text-xl md:text-2xl font-bold">
+            Регистрация
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute right-3 top-3 p-2 -m-2 text-gray-500 hover:text-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+            aria-label="Закрыть"
+          >
+            <X size={22} />
+          </button>
+        </div>
 
-        <div className="p-6">
-          <h2 className="text-2xl font-bold mb-6">Регистрация</h2>
-
+        {/* Content */}
+        <div className="px-5 py-4 md:px-6 md:py-6">
           {error && (
-            <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-4">
+            <div className="mb-4 rounded-lg bg-red-50 text-red-700 px-3 py-2 text-sm">
               {error}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Phone */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
                 Телефон
               </label>
               <input
+                id="phone"
+                ref={firstFieldRef}
                 type="tel"
+                inputMode="tel"
+                autoComplete="tel"
                 required
-                value={phone}
-                onChange={(e) => handlePhoneChange(e.target.value)}
-                placeholder="+992 (__) ___-__-__"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Имя и фамилия
-              </label>
-              <input
-                type="text"
-                required
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Дата рождения
-              </label>
-              <input
-                type="date"
-                required
-                value={dateOfBirth}
-                onChange={(e) => setDateOfBirth(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading || !phone || !fullName || !dateOfBirth}
-              className="w-full bg-teal-500 text-white py-2 rounded-lg hover:bg-teal-600 transition-colors disabled:bg-gray-400"
-            >
-              {loading ? 'Регистрация...' : 'Зарегистрироваться'}
-            </button>
-          </form>
-          
-          <div className="mt-4 text-xs text-gray-500 text-center">
-            <p>
-              Регистрируясь, вы соглашаетесь с{' '}
-              <a href="#" className="text-teal-600 hover:text-teal-700">
-                условиями обработки персональных данных
-              </a>.
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default RegistrationModal;
+                value={phoneDisplay}
+                onChange={(e) => handlePhoneChange(e.target.val
