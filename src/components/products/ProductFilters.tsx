@@ -1,5 +1,4 @@
 import React from 'react';
-import { SlidersHorizontal } from 'lucide-react';
 
 interface FilterState {
   age: string[];
@@ -18,7 +17,8 @@ interface FilterState {
 
 interface ProductFiltersProps {
   filters: FilterState;
-  setFilters: (filters: FilterState) => void;
+  // IMPORTANT: allow functional updates
+  setFilters: React.Dispatch<React.SetStateAction<FilterState>>;
   selectedCategories: string[];
   onCategoryChange: (categoryValue: string, isChecked: boolean) => void;
   onClearFilters: () => void;
@@ -33,18 +33,11 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
   onClearFilters,
   categoryDisplayNames
 }) => {
-  // Ensure filters reflect selected categories immediately
-  React.useEffect(() => {
-    if (selectedCategories.length > 0) {
-      setFilters(prev => ({
-        ...prev,
-        productType: selectedCategories
-      }));
-    }
-  }, [selectedCategories, setFilters]);
+  // ⚠️ Remove the effect that mirrors categories back to parent.
+  // Parent already syncs productType when selectedCategories change.
 
   return (
-    <div className="hidden md:block bg-gray-50 p-4 rounded-lg border-2 w-64 flex-shrink-0 border-gray-200 pr-8">
+    <div className="bg-gray-50 p-4 rounded-lg border-2 w-64 flex-shrink-0 border-gray-200 pr-8">
       <div className="space-y-6">
         {/* Category Selection */}
         <div className="bg-white border border-gray-200 rounded-lg p-4">
@@ -56,7 +49,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
                   type="checkbox"
                   checked={selectedCategories.includes(value)}
                   onChange={(e) => onCategoryChange(value, e.target.checked)}
-                  className="rounded text-teal-600 focus:ring-teal-500 w-4 h-4"
+                  className="rounded text-teal-600 focus:ring-teал-500 w-4 h-4"
                 />
                 <span className={`text-sm ${selectedCategories.includes(value) ? 'font-semibold text-teal-600' : 'text-gray-700'}`}>
                   {label}
@@ -66,7 +59,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
           </div>
         </div>
 
-        {/* Age Filter - Only for Mattresses */}
+        {/* Age (for mattresses / or when none selected) */}
         {(selectedCategories.includes('mattresses') || selectedCategories.length === 0) && (
           <div>
             <h3 className="font-medium mb-3">Возраст</h3>
@@ -81,12 +74,14 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
                     type="checkbox"
                     checked={filters.age.includes(option.value)}
                     onChange={(e) => {
-                      const newAges = e.target.checked
-                        ? [...filters.age, option.value]
-                        : filters.age.filter(a => a !== option.value);
-                      setFilters({ ...filters, age: newAges });
+                      setFilters(prev => ({
+                        ...prev,
+                        age: e.target.checked
+                          ? [...prev.age, option.value]
+                          : prev.age.filter(a => a !== option.value)
+                      }));
                     }}
-                    className="rounded text-teal-600 focus:ring-teal-500"
+                    className="rounded text-teal-600 focus:ring-teал-500"
                   />
                   <span>{option.label}</span>
                 </label>
@@ -102,8 +97,8 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
             <input
               type="checkbox"
               checked={filters.inStock}
-              onChange={(e) => setFilters({ ...filters, inStock: e.target.checked })}
-              className="rounded text-teal-600 focus:ring-teal-500"
+              onChange={(e) => setFilters(prev => ({ ...prev, inStock: e.target.checked }))}
+              className="rounded text-teal-600 focus:ring-teал-500"
             />
             <span>Только в наличии</span>
           </label>
@@ -118,13 +113,15 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
                 <input
                   type="checkbox"
                   checked={filters.hardness.includes(option)}
-                  onChange={(e) => {
-                    const newHardness = e.target.checked
-                      ? [...filters.hardness, option]
-                      : filters.hardness.filter(h => h !== option);
-                    setFilters({ ...filters, hardness: newHardness });
-                  }}
-                  className="rounded text-teal-600 focus:ring-teal-500"
+                  onChange={(e) =>
+                    setFilters(prev => ({
+                      ...prev,
+                      hardness: e.target.checked
+                        ? [...prev.hardness, option]
+                        : prev.hardness.filter(h => h !== option)
+                    }))
+                  }
+                  className="rounded text-teal-600 focus:ring-teал-500"
                 />
                 <span>{option}</span>
               </label>
@@ -132,7 +129,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
           </div>
         </div>
 
-        {/* Weight Category - Only for Mattresses */}
+        {/* Weight Category (mattresses) */}
         {(selectedCategories.includes('mattresses') || selectedCategories.length === 0) && (
           <div>
             <h3 className="font-medium mb-3">Весовая категория</h3>
@@ -146,13 +143,15 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
                   <input
                     type="checkbox"
                     checked={filters.weightCategory.includes(option.value)}
-                    onChange={(e) => {
-                      const newWeightCategory = e.target.checked
-                        ? [...filters.weightCategory, option.value]
-                        : filters.weightCategory.filter(w => w !== option.value);
-                      setFilters({ ...filters, weightCategory: newWeightCategory });
-                    }}
-                    className="rounded text-teal-600 focus:ring-teal-500"
+                    onChange={(e) =>
+                      setFilters(prev => ({
+                        ...prev,
+                        weightCategory: e.target.checked
+                          ? [...prev.weightCategory, option.value]
+                          : prev.weightCategory.filter(w => w !== option.value)
+                      }))
+                    }
+                    className="rounded text-teal-600 focus:ring-teал-500"
                   />
                   <span>{option.label}</span>
                 </label>
@@ -161,7 +160,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
           </div>
         )}
 
-        {/* Width */}
+        {/* Width / Length / Height / Price – wire up when ready */}
         <div>
           <h3 className="font-medium mb-3">Ширина, см</h3>
           <div className="flex space-x-2">
@@ -169,16 +168,23 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
               type="number"
               placeholder="от"
               className="w-20 px-2 py-1 border rounded"
+              onChange={(e) => {
+                const v = Number(e.target.value) || 0;
+                setFilters(prev => ({ ...prev, width: [v, prev.width?.[1] ?? 10000] }));
+              }}
             />
             <input
               type="number"
               placeholder="до"
               className="w-20 px-2 py-1 border rounded"
+              onChange={(e) => {
+                const v = Number(e.target.value) || 10000;
+                setFilters(prev => ({ ...prev, width: [prev.width?.[0] ?? 0, v] }));
+              }}
             />
           </div>
         </div>
 
-        {/* Length */}
         <div>
           <h3 className="font-medium mb-3">Длина, см</h3>
           <div className="flex space-x-2">
@@ -186,16 +192,23 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
               type="number"
               placeholder="от"
               className="w-20 px-2 py-1 border rounded"
+              onChange={(e) => {
+                const v = Number(e.target.value) || 0;
+                setFilters(prev => ({ ...prev, length: [v, prev.length?.[1] ?? 10000] }));
+              }}
             />
             <input
               type="number"
               placeholder="до"
               className="w-20 px-2 py-1 border rounded"
+              onChange={(e) => {
+                const v = Number(e.target.value) || 10000;
+                setFilters(prev => ({ ...prev, length: [prev.length?.[0] ?? 0, v] }));
+              }}
             />
           </div>
         </div>
 
-        {/* Height */}
         <div>
           <h3 className="font-medium mb-3">Высота, см</h3>
           <div className="flex space-x-2">
@@ -203,28 +216,43 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
               type="number"
               placeholder="от"
               className="w-20 px-2 py-1 border rounded"
+              onChange={(e) => {
+                const v = Number(e.target.value) || 0;
+                setFilters(prev => ({ ...prev, height: [v, prev.height?.[1] ?? 10000] }));
+              }}
             />
             <input
               type="number"
               placeholder="до"
               className="w-20 px-2 py-1 border rounded"
+              onChange={(e) => {
+                const v = Number(e.target.value) || 10000;
+                setFilters(prev => ({ ...prev, height: [prev.height?.[0] ?? 0, v] }));
+              }}
             />
           </div>
         </div>
 
-        {/* Price */}
         <div>
           <h3 className="font-medium mb-3">Цена, c.</h3>
           <div className="flex space-x-2">
             <input
               type="number"
               placeholder="от"
-              className="w-20 px-2 py-1 border rounded"
+              className="w-24 px-2 py-1 border rounded"
+              onChange={(e) => {
+                const v = Number(e.target.value) || 0;
+                setFilters(prev => ({ ...prev, price: [v, prev.price?.[1] ?? Number.MAX_SAFE_INTEGER] }));
+              }}
             />
             <input
               type="number"
               placeholder="до"
-              className="w-20 px-2 py-1 border rounded"
+              className="w-24 px-2 py-1 border rounded"
+              onChange={(e) => {
+                const v = Number(e.target.value) || Number.MAX_SAFE_INTEGER;
+                setFilters(prev => ({ ...prev, price: [prev.price?.[0] ?? 0, v] }));
+              }}
             />
           </div>
         </div>
@@ -238,13 +266,15 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
                 <input
                   type="checkbox"
                   checked={filters.mattressType.includes(option)}
-                  onChange={(e) => {
-                    const newTypes = e.target.checked
-                      ? [...filters.mattressType, option]
-                      : filters.mattressType.filter(t => t !== option);
-                    setFilters({ ...filters, mattressType: newTypes });
-                  }}
-                  className="rounded text-teal-600 focus:ring-teal-500"
+                  onChange={(e) =>
+                    setFilters(prev => ({
+                      ...prev,
+                      mattressType: e.target.checked
+                        ? [...prev.mattressType, option]
+                        : prev.mattressType.filter(t => t !== option)
+                    }))
+                  }
+                  className="rounded text-teal-600 focus:ring-teал-500"
                 />
                 <span>{option}</span>
               </label>
@@ -261,13 +291,15 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
                 <input
                   type="checkbox"
                   checked={filters.preferences.includes(option)}
-                  onChange={(e) => {
-                    const newPrefs = e.target.checked
-                      ? [...filters.preferences, option]
-                      : filters.preferences.filter(p => p !== option);
-                    setFilters({ ...filters, preferences: newPrefs });
-                  }}
-                  className="rounded text-teal-600 focus:ring-teal-500"
+                  onChange={(e) =>
+                    setFilters(prev => ({
+                      ...prev,
+                      preferences: e.target.checked
+                        ? [...prev.preferences, option]
+                        : prev.preferences.filter(p => p !== option)
+                    }))
+                  }
+                  className="rounded text-teal-600 focus:ring-teал-500"
                 />
                 <span>{option}</span>
               </label>
@@ -284,13 +316,15 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
                 <input
                   type="checkbox"
                   checked={filters.functions.includes(option)}
-                  onChange={(e) => {
-                    const newFuncs = e.target.checked
-                      ? [...filters.functions, option]
-                      : filters.functions.filter(f => f !== option);
-                    setFilters({ ...filters, functions: newFuncs });
-                  }}
-                  className="rounded text-teal-600 focus:ring-teal-500"
+                  onChange={(e) =>
+                    setFilters(prev => ({
+                      ...prev,
+                      functions: e.target.checked
+                        ? [...prev.functions, option]
+                        : prev.functions.filter(f => f !== option)
+                    }))
+                  }
+                  className="rounded text-teal-600 focus:ring-teал-500"
                 />
                 <span>{option}</span>
               </label>
