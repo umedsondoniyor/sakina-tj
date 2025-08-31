@@ -1,265 +1,304 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { ChevronLeft, ChevronRight, PackageOpen } from 'lucide-react';
-import { getProducts } from '../lib/api';
-import type { Product } from '../lib/types';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { getQuizSteps } from '../lib/api';
+import type { QuizStep } from '../lib/types';
 
-const CARD_WIDTH_MOBILE = 280; // px
-const SCROLL_STEP = 320;       // px per click (approx one card + gap)
+interface QuizModalProps {
+  open: boolean;
+  onClose: () => void;
+}
 
-const RecommendedProducts: React.FC = () => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [scrollProgress, setScrollProgress] = useState(0);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
+const QuizModal: React.FC<QuizModalProps> = ({ open, onClose }) => {
+  const navigate = useNavigate();
+
+  const [activeStep, setActiveStep] = useState(0);
+  const [selections, setSelections] = useState<Record<string, string>>({});
+  const [steps, setSteps] = useState<QuizStep[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
 
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const firstFocusableRef = useRef<HTMLButtonElement>(null);
+
+  // Load steps when opening
   useEffect(() => {
-    (async () => {
+    let mounted = true;
+    const loadQuizSteps = async () => {
       try {
         setLoading(true);
-        const all = await getProducts();
-        // TODO: replace with real recommendations logic
-        setProducts(all.slice(0, 10));
+        const data = await getQuizSteps();
+        if (!mounted) return;
+        setSteps(data);
         setError(null);
-      } catch (err: any) {
-        if (err?.message?.includes('No products available')) {
-          setError('No products available at the moment');
-        } else {
-          setError('Failed to load recommended products');
-        }
+        setActiveStep(0); // reset flow on each open
+        setSelections({});
+      } catch (err) {
+        if (!mounted) return;
+        setError('Failed to load quiz steps');
+        console.error(err);
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
-    })();
-  }, []);
+    };
+    if (open) loadQuizSteps();
+    return () => {
+      mounted = false;
+    };
+  }, [open]);
 
-  const updateScrollState = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const { scrollLeft, scrollWidth, clientWidth } = el;
-    const max = Math.max(0, scrollWidth - clientWidth);
-    setScrollProgress(max ? (scrollLeft / max) * 100 : 0);
-    setCanScrollLeft(scrollLeft > 0);
-    setCanScrollRight(scrollLeft < max - 1);
-  }, []);
-
+  // Body scroll lock
   useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    el.addEventListener('scroll', updateScrollState, { passive: true });
-    updateScrollState();
-    return () => el.removeEventListener('scroll', updateScrollState);
-  }, [updateScrollState, products.length]);
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
 
-  const scrollBy = (delta: number) => {
-    scrollRef.current?.scrollBy({ left: delta, behavior: 'smooth' });
+  // Focus handling + focus trap + ESC
+  useEffect(() => {
+    if (!open) return;
+    const t = setTimeout(() => firstFocusableRef.current?.focus(), 0);
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+      if (e.key === 'Tab' && dialogRef.current) {
+        const nodes = dialogRef.current.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        if (nodes.length === 0) return;
+        const first = nodes[0];
+        const last = nodes[nodes.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => {
+      clearTimeout(t);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open, onClose]);
+
+  // Compute available steps for current selections
+  const availableSteps = useMemo(() => {
+    return steps.filter(step => {
+      if (!step.parent_step_key || !step.parent_value) return true;
+      return selections[step.parent_step_key] === step.parent_value;
+    });
+  }, [steps, selections]);
+
+  // Current step (based on activeStep within available steps)
+  const currentStep = useMemo(() => {
+    return availableSteps[activeStep] ?? null;
+  }, [availableSteps, activeStep]);
+
+  // Submit logic (unchanged)
+  const handleSubmit = useCallback((finalSelections = selections) => {
+    const filters = {
+      hardness: finalSelections.hardness ? [finalSelections.hardness] : [],
+      width: finalSelections.self_size ? [parseInt(finalSelections.self_size.split('_')[0])] : [],
+      length: finalSelections.self_size ? [parseInt(finalSelections.self_size.split('_')[1])] : [],
+      price: [],
+      inStock: true
+    };
+    navigate('/products', {
+      state: {
+        filters,
+        selections: finalSelections
+      }
+    });
+    onClose();
+  }, [navigate, onClose, selections]);
+
+  // If no current step but we have steps loaded, submit automatically (same behavior, but not during render)
+  useEffect(() => {
+    if (!open || loading) return;
+    if (steps.length > 0 && availableSteps.length > 0 && currentStep == null) {
+      handleSubmit();
+    }
+  }, [open, loading, steps.length, availableSteps.length, currentStep, handleSubmit]);
+
+  const handleSelect = (option: string) => {
+    if (!currentStep) return;
+    const newSelections = { ...selections, [currentStep.step_key]: option };
+    setSelections(newSelections);
+
+    const nextAvailable = steps.filter(step => {
+      if (!step.parent_step_key || !step.parent_value) return true;
+      return newSelections[step.parent_step_key] === step.parent_value;
+    });
+
+    // If last, submit; else next
+    if (activeStep >= nextAvailable.length - 1) {
+      handleSubmit(newSelections);
+      return;
+    }
+    setActiveStep(prev => prev + 1);
   };
 
-  const onKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'ArrowLeft') scrollBy(-SCROLL_STEP);
-    if (e.key === 'ArrowRight') scrollBy(SCROLL_STEP);
+  const handleBack = () => {
+    if (activeStep > 0) setActiveStep(prev => prev - 1);
   };
 
+  const progress = useMemo(() => {
+    const total = Math.max(availableSteps.length, 1);
+    return ((Math.min(activeStep, total - 1) + 1) / total) * 100;
+  }, [availableSteps.length, activeStep]);
+
+  if (!open) return null;
+
+  // Loading state
   if (loading) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 py-8 md:py-12">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-48 mb-8" />
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="space-y-4">
-                <div className="w-full aspect-square bg-gray-200 rounded-lg" />
-                <div className="h-4 bg-gray-200 rounded w-3/4" />
-                <div className="h-4 bg-gray-200 rounded w-1/2" />
-              </div>
-            ))}
+    return createPortal(
+      <div
+        className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/50 p-0 md:p-4"
+        onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}
+        role="dialog" aria-modal="true" aria-label="Загрузка опросника"
+      >
+        <div
+          className="w-full md:max-w-md bg-white rounded-t-2xl md:rounded-2xl p-8 text-center"
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-gray-900" />
+          <p>Загрузка опросника...</p>
+        </div>
+      </div>,
+      document.body
+    );
+  }
+
+  // Error / No steps
+  if (error || steps.length === 0) {
+    return createPortal(
+      <div
+        className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/50 p-0 md:p-4"
+        onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}
+        role="dialog" aria-modal="true" aria-label="Ошибка опросника"
+      >
+        <div
+          className="w-full md:max-w-md bg-white rounded-t-2xl md:rounded-2xl p-8 text-center"
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          <p className="text-red-600 mb-4">{error || 'Опросник не настроен'}</p>
+          <button
+            type="button"
+            onClick={onClose}
+            ref={firstFocusableRef}
+            className="bg-teal-500 text-white px-4 py-2 rounded-lg"
+          >
+            Закрыть
+          </button>
+        </div>
+      </div>,
+      document.body
+    );
+  }
+
+  // Main dialog
+  return createPortal(
+    <div
+      className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/50 p-0 md:p-4"
+      onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      role="dialog" aria-modal="true" aria-labelledby="quiz-title"
+    >
+      <div
+        ref={dialogRef}
+        className="
+          w-full md:max-w-3xl max-h-[90vh]
+          bg-white rounded-t-2xl md:rounded-2xl
+          overflow-y-auto
+        "
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="relative px-5 pt-4 pb-2 md:px-6 md:pt-5 md:pb-3 border-b">
+          <h2 id="quiz-title" className="text-lg md:text-xl font-semibold text-center">
+            {currentStep?.label}
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute right-3 top-3 p-2 -m-2 text-gray-500 hover:text-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+            aria-label="Закрыть"
+            ref={firstFocusableRef}
+          >
+            <X size={22} />
+          </button>
+        </div>
+
+        {/* Progress */}
+        <div className="px-5 md:px-6 pt-3">
+          <div className="h-2 bg-gray-200 rounded-full mb-4 md:mb-6">
+            <div
+              className="h-full bg-teal-500 rounded-full transition-all duration-300"
+              style={{ width: `${progress}%` }}
+            />
           </div>
         </div>
-      </div>
-    );
-  }
 
-  if (error) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 py-8 md:py-12">
-        <div className="text-center">
-          <PackageOpen className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-semibold text-gray-900">{error}</h3>
-          <p className="mt-1 text-sm text-gray-500">Check back later for new products.</p>
-          <button
-            onClick={() => location.reload()}
-            className="mt-4 px-4 py-2 bg-teal-500 text-white rounded hover:bg-teal-600"
-          >
-            Retry
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (!products.length) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 py-8 md:py-12">
-        <div className="text-center">
-          <PackageOpen className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-semibold text-gray-900">No products available</h3>
-          <p className="mt-1 text-sm text-gray-500">Check back later for new products.</p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <section aria-label="Рекомендованные товары" className="max-w-7xl mx-auto px-4 py-8 md:py-12">
-      <div className="flex items-center justify-between mb-6 md:mb-8">
-        <h2 className="text-xl md:text-2xl font-bold">Вас может заинтересовать</h2>
-
-        {/* Desktop controls (show on hover/focus) */}
-        <div className="hidden md:flex items-center gap-2">
-          <button
-            onClick={() => scrollBy(-SCROLL_STEP)}
-            disabled={!canScrollLeft}
-            className={`
-              p-2 rounded-full transition
-              ${canScrollLeft ? 'hover:bg-gray-100 text-gray-700' : 'text-gray-300 cursor-not-allowed'}
-            `}
-            aria-label="Предыдущие"
-          >
-            <ChevronLeft size={24} />
-          </button>
-          <button
-            onClick={() => scrollBy(SCROLL_STEP)}
-            disabled={!canScrollRight}
-            className={`
-              p-2 rounded-full transition
-              ${canScrollRight ? 'hover:bg-gray-100 text-gray-700' : 'text-gray-300 cursor-not-allowed'}
-            `}
-            aria-label="Следующие"
-          >
-            <ChevronRight size={24} />
-          </button>
-        </div>
-      </div>
-
-      {/* One scroller for all sizes */}
-      <div
-        className="group relative"
-        onKeyDown={onKeyDown}
-        tabIndex={0}
-        aria-roledescription="carousel"
-      >
-        {/* hover-reveal overlay controls for md+ */}
-        <button
-          type="button"
-          onClick={() => scrollBy(-SCROLL_STEP)}
-          disabled={!canScrollLeft}
-          aria-label="Предыдущие товары"
-          className="
-            hidden md:flex items-center justify-center
-            absolute left-2 top-1/2 -translate-y-1/2 z-10
-            p-2 rounded-full bg-white/80 backdrop-blur shadow
-            hover:bg-white transition
-            opacity-0 group-hover:opacity-100 focus:opacity-100
-            disabled:opacity-50 disabled:cursor-not-allowed
-          "
-        >
-          <ChevronLeft size={22} />
-        </button>
-
-        <button
-          type="button"
-          onClick={() => scrollBy(SCROLL_STEP)}
-          disabled={!canScrollRight}
-          aria-label="Следующие товары"
-          className="
-            hidden md:flex items-center justify-center
-            absolute right-2 top-1/2 -translate-y-1/2 z-10
-            p-2 rounded-full bg-white/80 backdrop-blur shadow
-            hover:bg-white transition
-            opacity-0 group-hover:opacity-100 focus:opacity-100
-            disabled:opacity-50 disabled:cursor-not-allowed
-          "
-        >
-          <ChevronRight size={22} />
-        </button>
-
-        {/* Horizontal track (snap on mobile, free scroll on desktop) */}
-        <div
-          ref={scrollRef}
-          className="
-            overflow-x-auto scrollbar-hide -mx-4 px-4
-            snap-x snap-mandatory md:snap-none
-          "
-        >
-          <div className="flex gap-4 md:gap-6">
-            {products.map((product) => (
-              <div
-                key={product.id}
-                className="
-                  flex-none w-[280px] sm:w-[300px] md:w-[320px] lg:w-[340px]
-                  snap-start
-                "
-              >
-                <div className="relative mb-3 md:mb-4">
-                  <div className="w-full aspect-square rounded-lg overflow-hidden bg-gray-100">
+        {/* Options */}
+        <div className="px-5 pb-5 md:px-6 md:pb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 mb-4 md:mb-6">
+            {currentStep?.options.map((option) => {
+              const selected = selections[currentStep.step_key] === option.option_value;
+              return (
+                <button
+                  key={option.option_value}
+                  onClick={() => handleSelect(option.option_value)}
+                  className={`relative rounded-lg overflow-hidden transition-all focus:outline-none focus:ring-2 focus:ring-teal-500 ${
+                    selected ? 'ring-2 ring-teal-500' : 'hover:shadow-lg'
+                  }`}
+                >
+                  <div className="aspect-square">
                     <img
-                      src={product.image_url}
-                      alt={product.name}
-                      loading="lazy"
+                      src={option.image_url}
+                      alt={option.option_label}
                       className="w-full h-full object-cover"
+                      loading="lazy"
                       decoding="async"
                     />
                   </div>
-                  {product.sale_percentage && (
-                    <span className="absolute top-3 left-3 bg-red-500 text-white px-2 py-1 rounded text-xs md:text-sm">
-                      -{product.sale_percentage}%
-                    </span>
-                  )}
-                </div>
-
-                <div>
-                  <div className="text-xs md:text-sm text-gray-500 mb-1.5 md:mb-2">
-                    {product.review_count} оценок
-                  </div>
-                  <h3 className="text-sm md:text-base font-medium mb-1.5 md:mb-2 line-clamp-2">
-                    {product.name}
-                  </h3>
-                  {product.weight_category && (
-                    <p className="text-xs text-gray-600 mb-2">
-                      {product.weight_category}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-3">
+                    <p className="text-white text-center font-medium">
+                      {option.option_label}
                     </p>
-                  )}
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-base md:text-lg font-bold">
-                      {product.price.toLocaleString()} с.
-                    </span>
-                    {product.old_price && (
-                      <span className="text-sm text-gray-500 line-through">
-                        {product.old_price.toLocaleString()} с.
-                      </span>
-                    )}
                   </div>
-                  <button className="w-full bg-teal-500 text-white py-2 rounded text-sm hover:bg-teal-600 transition-colors">
-                    Подробнее
-                  </button>
-                </div>
-              </div>
-            ))}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Nav */}
+          <div className="flex justify-between">
+            <button
+              type="button"
+              onClick={handleBack}
+              disabled={activeStep === 0}
+              className={`px-6 py-2 rounded-lg transition-colors ${
+                activeStep === 0
+                  ? 'text-gray-400 cursor-not-allowed'
+                  : 'text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              Назад
+            </button>
+            {/* (Forward button is implicit: selecting an option moves forward) */}
           </div>
         </div>
-
-        {/* Mobile progress bar */}
-        <div className="md:hidden h-0.5 bg-gray-100 mt-4 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-teal-500 transition-all duration-300 ease-out"
-            style={{ width: `${scrollProgress}%` }}
-          />
-        </div>
       </div>
-    </section>
+    </div>,
+    document.body
   );
 };
 
-export default RecommendedProducts;
+export default QuizModal;
