@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import BlogMainPost from './blog/BlogMainPost';
 import BlogSidePost from './blog/BlogSidePost';
 
@@ -38,25 +38,37 @@ const blogPosts: BlogPost[] = [
   }
 ];
 
-const SleepClubBlog = () => {
-  return (
-    <div className="max-w-7xl mx-auto px-4 py-8 md:py-12">
-      <h2 className="text-xl md:text-2xl font-bold mb-6 md:mb-8">Блог Sleep Club</h2>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-        {/* Main Featured Post - Full width on mobile */}
-        {blogPosts.filter(post => post.isMain).map(post => (
-          <BlogMainPost key={post.id} post={post} />
-        ))}
+const SleepClubBlog: React.FC = () => {
+  // Single-pass split with a safe fallback
+  const { main, sides } = useMemo(() => {
+    let mainPost = blogPosts.find(p => p.isMain) ?? blogPosts[0];
+    const sidePosts = blogPosts.filter(p => p.id !== mainPost?.id);
+    return { main: mainPost, sides: sidePosts };
+  }, []);
 
-        {/* Side Posts - Stack on mobile */}
+  return (
+    <section
+      aria-labelledby="sleepclub-blog-title"
+      className="max-w-7xl mx-auto px-4 py-8 md:py-12"
+    >
+      <h2 id="sleepclub-blog-title" className="text-xl md:text-2xl font-bold mb-6 md:mb-8">
+        Блог Sleep Club
+      </h2>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+        {/* Main Featured Post */}
+        <div className="md:col-span-2">
+          {main && <BlogMainPost post={main} />}
+        </div>
+
+        {/* Side Posts */}
         <div className="space-y-6">
-          {blogPosts.filter(post => !post.isMain).map(post => (
+          {sides.map(post => (
             <BlogSidePost key={post.id} post={post} />
           ))}
         </div>
       </div>
-    </div>
+    </section>
   );
 };
 
