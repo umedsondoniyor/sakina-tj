@@ -59,6 +59,19 @@ const AdminDashboard = () => {
               </NavLink>
 
               <NavLink
+                to="/admin/about"
+                className={({ isActive }) =>
+                  `flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                    isActive ? 'bg-teal-500 text-white' : 'text-gray-600 hover:bg-gray-100'
+                  }`
+                }
+              >
+                <Target size={20} />
+                <span>О компании</span>
+              </NavLink>
+
+
+              <NavLink
                 to="/admin/reviews"
                 className={({ isActive }) =>
                   `flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
