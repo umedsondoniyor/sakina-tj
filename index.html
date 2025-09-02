@@ -1,35 +1,112 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
   <head>
     <meta charset="UTF-8" />
-    <!-- <link rel="icon" type="image/svg+xml" href="/vite.svg" /> -->
-    <link
-      rel="icon"
-      type="image/png"
-      href="/favicon/favicon-96x96.png"
-      sizes="96x96"
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
     />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+    <!-- Primary Meta -->
+    <title>Sakina — матрасы, кровати и товары для здорового сна</title>
+    <meta
+      name="description"
+      content="Sakina — магазин матрасов, кроватей, подушек и аксессуаров для здорового сна. Бесплатная консультация, доставка по всему Таджикистану, гарантия до 8 лет."
+    />
+    <meta name="keywords" content="матрасы, кровати, подушки, одеяла, Sakina, ортопедический матрас, Таджикистан" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="canonical" href="https://www.sakina.tj/" />
+
+    <!-- PWA / Theming -->
+    <meta name="theme-color" content="#0fb6c9" />
+    <link rel="manifest" href="/favicon/site.webmanifest" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Sakina" />
+    <meta name="color-scheme" content="light only" />
+
+    <!-- Icons -->
+    <link rel="icon" type="image/png" href="/favicon/favicon-96x96.png" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="/favicon/favicon.svg" />
     <link rel="shortcut icon" href="/favicon/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png" />
+
+    <!-- Preconnects/Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- combine your fonts in one request; use display=swap for CLS-friendly loading -->
     <link
-      rel="apple-touch-icon"
-      sizes="180x180"
-      href="/favicon/apple-touch-icon.png"
-    />
-    <meta name="apple-mobile-web-app-title" content="MyWebSite" />
-    <link rel="manifest" href="/favicon/site.webmanifest" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
+
+    <!-- Social (Open Graph) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="ru_RU" />
+    <meta property="og:site_name" content="Sakina" />
+    <meta property="og:title" content="Sakina — матрасы, кровати и товары для здорового сна" />
+    <meta
+      property="og:description"
+      content="Подберите идеальный матрас с консультацией эксперта. Доставка по всему Таджикистану и гарантия до 8 лет."
     />
-    <title>Sakina</title>
+    <meta property="og:url" content="https://www.sakina.tj/" />
+    <!-- Replace with a real, absolute URL to a 1200x630 image -->
+    <meta property="og:image" content="https://www.sakina.tj/og/cover-1200x630.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Sakina — матрасы, кровати и товары для здорового сна" />
+    <meta
+      name="twitter:description"
+      content="Подберите идеальный матрас с консультацией эксперта. Доставка по всему Таджикистану и гарантия до 8 лет."
+    />
+    <meta name="twitter:image" content="https://www.sakina.tj/og/cover-1200x630.jpg" />
+
+    <!-- Hreflang (add more locales when you have them) -->
+    <link rel="alternate" href="https://www.sakina.tj/" hreflang="ru" />
+    <link rel="alternate" href="https://www.sakina.tj/" hreflang="x-default" />
+
+    <!-- Structured Data (Organization + Website) -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "Sakina",
+        "url": "https://www.sakina.tj/",
+        "logo": "https://www.sakina.tj/favicon/android-chrome-192x192.png",
+        "sameAs": [
+          "https://www.facebook.com/",
+          "https://www.instagram.com/"
+        ],
+        "contactPoint": [{
+          "@type": "ContactPoint",
+          "telephone": "+992905339595",
+          "contactType": "customer service",
+          "areaServed": "TJ",
+          "availableLanguage": "ru"
+        }]
+      }
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "Sakina",
+        "url": "https://www.sakina.tj/",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": "https://www.sakina.tj/search?q={query}",
+          "query-input": "required name=query"
+        }
+      }
+    </script>
   </head>
+
   <body>
+    <noscript>Для корректной работы сайта включите JavaScript.</noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
