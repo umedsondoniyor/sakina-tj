@@ -43,6 +43,8 @@ import OneClickConfirmationPage from './components/OneClickConfirmationPage';
 import PaymentSuccessPage from './components/PaymentSuccessPage';
 import PaymentCancelPage from './components/PaymentCancelPage';
 import AboutUsPage from './components/AboutUsPage';
+import AdminAbout from './components/admin/AdminAbout';
+
 
 function App() {
   return (
@@ -65,6 +67,9 @@ function App() {
             <Route path="navigation" element={<AdminNavigation />} />
             <Route path="one-click-orders" element={<AdminOneClickOrders />} />
             <Route path="users" element={<AdminUsers />} />
+            
+            {/* 👇 NEW: /admin/about */}
+            <Route path="about" element={<AdminAbout />} />
           </Route>
 
           {/* Public Routes */}
