@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Award, Users, Heart, Target, Clock, Globe, type Icon as LucideIcon
+  Award, Users, Heart, Target, Clock, Globe, type LucideIcon
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
-// ---------- Types you can mirror in Supabase ----------
+/* =========================
+   Types (mirror Supabase)
+   ========================= */
 type AboutSettings = {
   hero_title: string | null;
   hero_subtitle: string | null;
@@ -15,7 +17,7 @@ type AboutStat = {
   id: string;
   number: string;
   label: string;
-  icon_key: string; // e.g. "Clock","Users","Award","Globe"
+  icon_key: string;
   order: number | null;
 };
 
@@ -23,7 +25,7 @@ type AboutValue = {
   id: string;
   title: string;
   description: string;
-  icon_key: string; // e.g. "Heart","Award","Users","Target"
+  icon_key: string;
   order: number | null;
 };
 
@@ -44,17 +46,47 @@ type AboutTeam = {
   order: number | null;
 };
 
-// ---------- Icon mapping ----------
+/* =========================
+   Icon Resolver (tolerant)
+   ========================= */
 const ICONS: Record<string, LucideIcon> = {
-  Clock,
-  Users,
-  Award,
-  Globe,
-  Heart,
-  Target,
+  clock: Clock,
+  users: Users,
+  award: Award,
+  globe: Globe,
+  heart: Heart,
+  target: Target,
 };
 
-// ---------- Static fallbacks (used if tables are empty) ----------
+const ICON_ALIASES: Record<string, string> = {
+  time: 'clock',
+  timer: 'clock',
+  people: 'users',
+  team: 'users',
+  medal: 'award',
+  trophy: 'award',
+  world: 'globe',
+  earth: 'globe',
+  love: 'heart',
+  care: 'heart',
+  aim: 'target',
+  goals: 'target',
+  focus: 'target',
+};
+
+function resolveIcon(key?: string): LucideIcon {
+  if (!key) return Award;
+  const norm = key.trim().toLowerCase().replace(/[\s_-]+/g, '');
+  if (ICONS[norm]) return ICONS[norm];
+  if (ICON_ALIASES[norm] && ICONS[ICON_ALIASES[norm]]) return ICONS[ICON_ALIASES[norm]];
+  const stripped = norm.replace(/(icon|logo)$/, '');
+  if (ICONS[stripped]) return ICONS[stripped];
+  return Award;
+}
+
+/* =========================
+   Fallback Content
+   ========================= */
 const FALLBACK_SETTINGS: AboutSettings = {
   hero_title: 'О компании Sakina',
   hero_subtitle:
@@ -64,16 +96,16 @@ const FALLBACK_SETTINGS: AboutSettings = {
 };
 
 const FALLBACK_STATS: AboutStat[] = [
-  { id: '1', number: '30+', label: 'лет на рынке', icon_key: 'Clock', order: 1 },
-  { id: '2', number: '50,000+', label: 'довольных клиентов', icon_key: 'Users', order: 2 },
-  { id: '3', number: '100+', label: 'моделей продукции', icon_key: 'Award', order: 3 },
-  { id: '4', number: '5', label: 'стран присутствия', icon_key: 'Globe', order: 4 },
+  { id: '1', number: '30+', label: 'лет на рынке', icon_key: 'clock', order: 1 },
+  { id: '2', number: '50,000+', label: 'довольных клиентов', icon_key: 'users', order: 2 },
+  { id: '3', number: '100+', label: 'моделей продукции', icon_key: 'award', order: 3 },
+  { id: '4', number: '5', label: 'стран присутствия', icon_key: 'globe', order: 4 },
 ];
 
 const FALLBACK_VALUES: AboutValue[] = [
   {
     id: '1',
-    icon_key: 'Heart',
+    icon_key: 'heart',
     title: 'Забота о здоровье',
     description:
       'Мы создаем продукцию, которая способствует здоровому сну и улучшению качества жизни наших клиентов.',
@@ -81,14 +113,14 @@ const FALLBACK_VALUES: AboutValue[] = [
   },
   {
     id: '2',
-    icon_key: 'Award',
+    icon_key: 'award',
     title: 'Качество превыше всего',
     description: 'Используем только проверенные материалы и современные технологии производства.',
     order: 2,
   },
   {
     id: '3',
-    icon_key: 'Users',
+    icon_key: 'users',
     title: 'Индивидуальный подход',
     description:
       'Каждый клиент уникален, поэтому мы предлагаем персональные решения для комфортного сна.',
@@ -96,7 +128,7 @@ const FALLBACK_VALUES: AboutValue[] = [
   },
   {
     id: '4',
-    icon_key: 'Target',
+    icon_key: 'target',
     title: 'Постоянное развитие',
     description:
       'Мы постоянно совершенствуем наши продукты и услуги, следуя последним тенденциям в индустрии сна.',
@@ -142,6 +174,9 @@ const FALLBACK_TEAM: AboutTeam[] = [
   },
 ];
 
+/* =========================
+   Component
+   ========================= */
 const AboutUsPage: React.FC = () => {
   const [settings, setSettings] = useState<AboutSettings | null>(null);
   const [stats, setStats] = useState<AboutStat[] | null>(null);
@@ -151,7 +186,6 @@ const AboutUsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Load all blocks in parallel
     (async () => {
       try {
         setLoading(true);
@@ -171,7 +205,9 @@ const AboutUsPage: React.FC = () => {
         ]);
 
         setSettings(
-          settingsRes.error || !settingsRes.data ? FALLBACK_SETTINGS : (settingsRes.data as AboutSettings)
+          settingsRes.error || !settingsRes.data
+            ? FALLBACK_SETTINGS
+            : (settingsRes.data as AboutSettings)
         );
 
         setStats(
@@ -203,7 +239,6 @@ const AboutUsPage: React.FC = () => {
     })();
   }, []);
 
-  // Loading state (simple skeleton)
   if (loading) {
     return (
       <div className="min-h-screen bg-white">
@@ -221,14 +256,10 @@ const AboutUsPage: React.FC = () => {
   }
 
   const hero = settings ?? FALLBACK_SETTINGS;
-  const statsArr = stats ?? FALLBACK_STATS;
-  const valuesArr = values ?? FALLBACK_VALUES;
-  const timelineArr = timeline ?? FALLBACK_TIMELINE;
-  const teamArr = team ?? FALLBACK_TEAM;
-
-  // Pick icons at runtime
-  const StatIcon = (key: string) => (ICONS[key] ?? Award);
-  const ValueIcon = (key: string) => (ICONS[key] ?? Award);
+  const statsArr = (stats ?? FALLBACK_STATS).sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
+  const valuesArr = (values ?? FALLBACK_VALUES).sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
+  const timelineArr = (timeline ?? FALLBACK_TIMELINE).sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
+  const teamArr = (team ?? FALLBACK_TEAM).sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
 
   return (
     <div className="min-h-screen bg-white">
@@ -245,7 +276,7 @@ const AboutUsPage: React.FC = () => {
               </p>
               <div className="grid grid-cols-2 gap-6">
                 {statsArr.slice(0, 2).map((stat) => {
-                  const Icon = StatIcon(stat.icon_key);
+                  const Icon = resolveIcon(stat.icon_key);
                   return (
                     <div key={stat.id} className="text-center">
                       <Icon className="w-8 h-8 mx-auto mb-2 text-yellow-300" />
@@ -288,7 +319,7 @@ const AboutUsPage: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {valuesArr.map((value) => {
-              const Icon = ValueIcon(value.icon_key);
+              const Icon = resolveIcon(value.icon_key);
               return (
                 <div key={value.id} className="text-center group">
                   <div className="w-16 h-16 bg-brand-turquoise rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-brand-navy transition-colors">
@@ -315,6 +346,7 @@ const AboutUsPage: React.FC = () => {
           </div>
 
           <div className="relative">
+            {/* Timeline line */}
             <div className="absolute left-1/2 transform -translate-x-1/2 w-1 h-full bg-brand-turquoise hidden md:block"></div>
 
             <div className="space-y-12">
@@ -327,9 +359,12 @@ const AboutUsPage: React.FC = () => {
                       <p className="text-gray-600">{item.description}</p>
                     </div>
                   </div>
+
+                  {/* Timeline dot */}
                   <div className="hidden md:flex w-2/12 justify-center">
                     <div className="w-4 h-4 bg-brand-turquoise rounded-full border-4 border-white shadow-lg"></div>
                   </div>
+
                   <div className="hidden md:block w-5/12"></div>
                 </div>
               ))}
