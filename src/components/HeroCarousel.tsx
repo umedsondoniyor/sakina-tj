@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { ChevronLeft, ChevronRight, PackageOpen } from 'lucide-react'; // ⬅ import arrows
 import { getCarouselSlides } from '../lib/api';
 import type { CarouselSlide } from '../lib/types';
-import { PackageOpen } from 'lucide-react';
 import HeroSlide from './hero/HeroSlide';
 import SlideIndicators from './hero/SlideIndicators';
 
@@ -52,6 +52,20 @@ const HeroCarousel = () => {
     autoPlayRef.current = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
     }, 5000);
+  };
+
+  const goPrev = () => {
+    if (!slides.length) return;
+    if (autoPlayRef.current) clearInterval(autoPlayRef.current);
+    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
+    startAutoPlay();
+  };
+
+  const goNext = () => {
+    if (!slides.length) return;
+    if (autoPlayRef.current) clearInterval(autoPlayRef.current);
+    setCurrentSlide((prev) => (prev + 1) % slides.length);
+    startAutoPlay();
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -145,6 +159,7 @@ const HeroCarousel = () => {
 
   return (
     <div className="flex flex-col">
+      {/* Relative wrapper so we can absolutely-position arrows & dots */}
       <div className="relative w-full overflow-hidden">
         <div
           className="relative w-full overflow-hidden after:clear-both after:block after:content-['']"
@@ -164,15 +179,48 @@ const HeroCarousel = () => {
             />
           ))}
         </div>
-      </div>
 
-      {/* Slide Indicators */}
-      <SlideIndicators
-        totalSlides={slides.length}
-        currentSlide={currentSlide}
-        onSlideChange={setCurrentSlide}
-        onStartAutoPlay={startAutoPlay}
-      />
+        {/* ⬅︎ Left / Right buttons, centered vertically, white circular like screenshot */}
+        <button
+          type="button"
+          aria-label="Предыдущий слайд"
+          onClick={goPrev}
+          className="
+            absolute left-3 top-1/2 -translate-y-1/2 z-10
+            flex h-12 w-12 items-center justify-center
+            rounded-full bg-white shadow-md
+            hover:shadow-lg hover:bg-white/90
+            transition
+          "
+        >
+          <ChevronLeft size={24} />
+        </button>
+
+        <button
+          type="button"
+          aria-label="Следующий слайд"
+          onClick={goNext}
+          className="
+            absolute right-3 top-1/2 -translate-y-1/2 z-10
+            flex h-12 w-12 items-center justify-center
+            rounded-full bg-white shadow-md
+            hover:shadow-lg hover:bg-white/90
+            transition
+          "
+        >
+          <ChevronRight size={24} />
+        </button>
+
+        {/* Indicators pinned inside the banner (bottom-center) */}
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10">
+          <SlideIndicators
+            totalSlides={slides.length}
+            currentSlide={currentSlide}
+            onSlideChange={setCurrentSlide}
+            onStartAutoPlay={startAutoPlay}
+          />
+        </div>
+      </div>
     </div>
   );
 };
