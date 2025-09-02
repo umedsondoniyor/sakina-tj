@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Award, Users, Heart, Target, Clock, Globe, type LucideIcon
+  Award, Users, Heart, Target, Clock, Globe,
+  type Icon as LucideIcon
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
 /* =========================
-   Types (mirror Supabase)
-   ========================= */
+   Types mirrored from DB
+========================= */
 type AboutSettings = {
   hero_title: string | null;
   hero_subtitle: string | null;
@@ -17,7 +18,11 @@ type AboutStat = {
   id: string;
   number: string;
   label: string;
-  icon_key: string;
+  // icon column may be named differently in DB; we handle that at runtime
+  icon_key?: string | null;
+  icon?: string | null;
+  iconName?: string | null;
+  icon_name?: string | null;
   order: number | null;
 };
 
@@ -25,7 +30,10 @@ type AboutValue = {
   id: string;
   title: string;
   description: string;
-  icon_key: string;
+  icon_key?: string | null;
+  icon?: string | null;
+  iconName?: string | null;
+  icon_name?: string | null;
   order: number | null;
 };
 
@@ -47,65 +55,64 @@ type AboutTeam = {
 };
 
 /* =========================
-   Icon Resolver (tolerant)
-   ========================= */
+   Icon Resolver (robust)
+========================= */
 const ICONS: Record<string, LucideIcon> = {
-  clock: Clock,
-  users: Users,
   award: Award,
-  globe: Globe,
+  users: Users,
   heart: Heart,
   target: Target,
+  clock: Clock,
+  globe: Globe,
 };
 
-const ICON_ALIASES: Record<string, string> = {
-  time: 'clock',
-  timer: 'clock',
-  people: 'users',
-  team: 'users',
-  medal: 'award',
-  trophy: 'award',
-  world: 'globe',
-  earth: 'globe',
-  love: 'heart',
-  care: 'heart',
-  aim: 'target',
-  goals: 'target',
-  focus: 'target',
-};
+function pickIconKey(obj: any): string {
+  return (
+    obj?.icon_key ??
+    obj?.icon ??
+    obj?.iconName ??
+    obj?.icon_name ??
+    ''
+  ).toString();
+}
 
-function resolveIcon(key?: string): LucideIcon {
-  if (!key) return Award;
-  const norm = key.trim().toLowerCase().replace(/[\s_-]+/g, '');
-  if (ICONS[norm]) return ICONS[norm];
-  if (ICON_ALIASES[norm] && ICONS[ICON_ALIASES[norm]]) return ICONS[ICON_ALIASES[norm]];
-  const stripped = norm.replace(/(icon|logo)$/, '');
-  if (ICONS[stripped]) return ICONS[stripped];
-  return Award;
+function normalizeIconKey(key: string): string {
+  // example inputs: "Heart", "heart", "heart-icon", "HEART ", "Icon:Heart"
+  return key
+    .toLowerCase()
+    .replace(/[^a-z]/g, ' ')    // keep letters only
+    .trim()
+    .split(/\s+/)               // split words
+    .pop() || '';               // take the last word (most specific)
+}
+
+function resolveIcon(keyRaw: string): LucideIcon {
+  const key = normalizeIconKey(keyRaw);
+  return ICONS[key] ?? Award; // Award is sane fallback
 }
 
 /* =========================
-   Fallback Content
-   ========================= */
+   Fallback content
+========================= */
 const FALLBACK_SETTINGS: AboutSettings = {
   hero_title: 'О компании Sakina',
   hero_subtitle:
     'Мы создаем мир здорового сна уже более 30 лет, помогая людям просыпаться отдохнувшими и полными энергии.',
   hero_image_url:
-    'https://images.unsplash.com/photo-1631679706909-1844bbd07221?auto=format&fit=crop&w=600&q=80',
+    'https://images.unsplash.com/photo-1631679706909-1844bbd07221?auto=format&fit=crop&w=1200&q=80',
 };
 
 const FALLBACK_STATS: AboutStat[] = [
-  { id: '1', number: '30+', label: 'лет на рынке', icon_key: 'clock', order: 1 },
-  { id: '2', number: '50,000+', label: 'довольных клиентов', icon_key: 'users', order: 2 },
-  { id: '3', number: '100+', label: 'моделей продукции', icon_key: 'award', order: 3 },
-  { id: '4', number: '5', label: 'стран присутствия', icon_key: 'globe', order: 4 },
+  { id: '1', number: '30+', label: 'лет на рынке', icon_key: 'Clock', order: 1 },
+  { id: '2', number: '50,000+', label: 'довольных клиентов', icon_key: 'Users', order: 2 },
+  { id: '3', number: '100+', label: 'моделей продукции', icon_key: 'Award', order: 3 },
+  { id: '4', number: '5', label: 'стран присутствия', icon_key: 'Globe', order: 4 },
 ];
 
 const FALLBACK_VALUES: AboutValue[] = [
   {
     id: '1',
-    icon_key: 'heart',
+    icon_key: 'Heart',
     title: 'Забота о здоровье',
     description:
       'Мы создаем продукцию, которая способствует здоровому сну и улучшению качества жизни наших клиентов.',
@@ -113,14 +120,14 @@ const FALLBACK_VALUES: AboutValue[] = [
   },
   {
     id: '2',
-    icon_key: 'award',
+    icon_key: 'Award',
     title: 'Качество превыше всего',
     description: 'Используем только проверенные материалы и современные технологии производства.',
     order: 2,
   },
   {
     id: '3',
-    icon_key: 'users',
+    icon_key: 'Users',
     title: 'Индивидуальный подход',
     description:
       'Каждый клиент уникален, поэтому мы предлагаем персональные решения для комфортного сна.',
@@ -128,7 +135,7 @@ const FALLBACK_VALUES: AboutValue[] = [
   },
   {
     id: '4',
-    icon_key: 'target',
+    icon_key: 'Target',
     title: 'Постоянное развитие',
     description:
       'Мы постоянно совершенствуем наши продукты и услуги, следуя последним тенденциям в индустрии сна.',
@@ -176,7 +183,7 @@ const FALLBACK_TEAM: AboutTeam[] = [
 
 /* =========================
    Component
-   ========================= */
+========================= */
 const AboutUsPage: React.FC = () => {
   const [settings, setSettings] = useState<AboutSettings | null>(null);
   const [stats, setStats] = useState<AboutStat[] | null>(null);
@@ -256,14 +263,14 @@ const AboutUsPage: React.FC = () => {
   }
 
   const hero = settings ?? FALLBACK_SETTINGS;
-  const statsArr = (stats ?? FALLBACK_STATS).sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
-  const valuesArr = (values ?? FALLBACK_VALUES).sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
-  const timelineArr = (timeline ?? FALLBACK_TIMELINE).sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
-  const teamArr = (team ?? FALLBACK_TEAM).sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
+  const statsArr = stats ?? FALLBACK_STATS;
+  const valuesArr = values ?? FALLBACK_VALUES;
+  const timelineArr = timeline ?? FALLBACK_TIMELINE;
+  const teamArr = team ?? FALLBACK_TEAM;
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Hero Section */}
+      {/* Hero */}
       <div className="relative bg-gradient-to-r from-brand-turquoise to-brand-navy text-white py-16 md:py-24">
         <div className="max-w-7xl mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
@@ -276,7 +283,7 @@ const AboutUsPage: React.FC = () => {
               </p>
               <div className="grid grid-cols-2 gap-6">
                 {statsArr.slice(0, 2).map((stat) => {
-                  const Icon = resolveIcon(stat.icon_key);
+                  const Icon = resolveIcon(pickIconKey(stat));
                   return (
                     <div key={stat.id} className="text-center">
                       <Icon className="w-8 h-8 mx-auto mb-2 text-yellow-300" />
@@ -287,6 +294,7 @@ const AboutUsPage: React.FC = () => {
                 })}
               </div>
             </div>
+
             <div className="relative">
               <img
                 src={hero.hero_image_url || FALLBACK_SETTINGS.hero_image_url!}
@@ -304,12 +312,12 @@ const AboutUsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Mission Section */}
+      {/* Mission / Values */}
       <div className="py-16 md:py-24">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-brand-navy mb-6">Наша миссия</h2>
-            <div className="bg-yellow-300 h-2 w-16 mx-auto mb-8"></div>
+            <div className="bg-yellow-300 h-2 w-16 mx-auto mb-8" />
             <p className="text-lg text-gray-600 max-w-3xl mx-auto">
               Мы верим, что качественный сон — это основа здоровой и счастливой жизни.
               Наша цель — предоставить каждому человеку возможность наслаждаться комфортным
@@ -319,7 +327,7 @@ const AboutUsPage: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {valuesArr.map((value) => {
-              const Icon = resolveIcon(value.icon_key);
+              const Icon = resolveIcon(pickIconKey(value));
               return (
                 <div key={value.id} className="text-center group">
                   <div className="w-16 h-16 bg-brand-turquoise rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-brand-navy transition-colors">
@@ -334,24 +342,25 @@ const AboutUsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* History Timeline */}
+      {/* Timeline */}
       <div className="bg-gray-50 py-16 md:py-24">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-brand-navy mb-6">История развития</h2>
-            <div className="bg-yellow-300 h-2 w-16 mx-auto mb-8"></div>
+            <div className="bg-yellow-300 h-2 w-16 mx-auto mb-8" />
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
               Путь от небольшой мастерской до ведущего производителя товаров для сна
             </p>
           </div>
 
           <div className="relative">
-            {/* Timeline line */}
-            <div className="absolute left-1/2 transform -translate-x-1/2 w-1 h-full bg-brand-turquoise hidden md:block"></div>
-
+            <div className="absolute left-1/2 -translate-x-1/2 w-1 h-full bg-brand-turquoise hidden md:block" />
             <div className="space-y-12">
               {timelineArr.map((item, index) => (
-                <div key={item.id} className={`flex items-center ${index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'}`}>
+                <div
+                  key={item.id}
+                  className={`flex items-center ${index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'}`}
+                >
                   <div className={`w-full md:w-5/12 ${index % 2 === 0 ? 'md:text-right md:pr-8' : 'md:text-left md:pl-8'}`}>
                     <div className="bg-white rounded-lg p-6 shadow-lg">
                       <div className="text-2xl font-bold text-brand-turquoise mb-2">{item.year}</div>
@@ -359,13 +368,10 @@ const AboutUsPage: React.FC = () => {
                       <p className="text-gray-600">{item.description}</p>
                     </div>
                   </div>
-
-                  {/* Timeline dot */}
                   <div className="hidden md:flex w-2/12 justify-center">
-                    <div className="w-4 h-4 bg-brand-turquoise rounded-full border-4 border-white shadow-lg"></div>
+                    <div className="w-4 h-4 bg-brand-turquoise rounded-full border-4 border-white shadow-lg" />
                   </div>
-
-                  <div className="hidden md:block w-5/12"></div>
+                  <div className="hidden md:block w-5/12" />
                 </div>
               ))}
             </div>
@@ -373,12 +379,12 @@ const AboutUsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Team Section */}
+      {/* Team */}
       <div className="py-16 md:py-24">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-brand-navy mb-6">Наша команда</h2>
-            <div className="bg-yellow-300 h-2 w-16 mx-auto mb-8"></div>
+            <div className="bg-yellow-300 h-2 w-16 mx-auto mb-8" />
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
               Профессионалы, которые делают ваш сон лучше каждый день
             </p>
@@ -393,7 +399,7 @@ const AboutUsPage: React.FC = () => {
                     alt={member.name}
                     className="w-48 h-48 rounded-full mx-auto object-cover group-hover:scale-105 transition-transform"
                   />
-                  <div className="absolute inset-0 rounded-full bg-brand-turquoise opacity-0 group-hover:opacity-20 transition-opacity"></div>
+                  <div className="absolute inset-0 rounded-full bg-brand-turquoise opacity-0 group-hover:opacity-20 transition-opacity" />
                 </div>
                 <h3 className="text-xl font-semibold text-brand-navy mb-2">{member.name}</h3>
                 <p className="text-brand-turquoise font-medium mb-3">{member.position}</p>
@@ -404,7 +410,7 @@ const AboutUsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Contact CTA */}
+      {/* CTA */}
       <div className="bg-brand-turquoise py-16">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
