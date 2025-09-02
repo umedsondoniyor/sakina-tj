@@ -7,20 +7,45 @@ interface HeroSlideProps {
 }
 
 const HeroSlide: React.FC<HeroSlideProps> = ({ slide, isActive }) => {
+  // If your type has link_url, this preserves click-through on the banner.
+  const Wrapper: React.FC<React.PropsWithChildren> = ({ children }) =>
+    (slide as any).link_url ? (
+      <a
+        href={(slide as any).link_url}
+        className="block w-full h-full focus:outline-none"
+        tabIndex={isActive ? 0 : -1}
+        aria-label={slide.title}
+      >
+        {children}
+      </a>
+    ) : (
+      <div className="w-full h-full">{children}</div>
+    );
+
   return (
     <div
-      className={`relative float-left -mr-[100%] w-full transition-transform duration-[600ms] ease-in-out motion-reduce:transition-none ${
-        isActive ? 'opacity-100' : 'opacity-0'
-      }`}
+      className={`
+        w-full h-full
+        transition-opacity duration-500 ease-in-out
+        ${isActive ? 'opacity-100' : 'opacity-0'}
+      `}
       style={{ pointerEvents: isActive ? 'auto' : 'none' }}
+      aria-hidden={!isActive}
     >
-      <div className="relative w-full mx-auto">
+      <Wrapper>
+        {/* 
+          Parent sets the aspect ratio; we just cover the frame.
+          Prevent drag/select to avoid ghost images during swipe.
+        */}
         <img
           src={slide.image_url}
           alt={slide.title}
-          className="hero-image mx-auto"
+          className="w-full h-full object-cover object-center select-none"
+          draggable={false}
+          loading={isActive ? 'eager' : 'lazy'}
+          decoding="async"
         />
-      </div>
+      </Wrapper>
     </div>
   );
 };
