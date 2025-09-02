@@ -42,7 +42,7 @@ import OrderConfirmationPage from './components/OrderConfirmationPage';
 import OneClickConfirmationPage from './components/OneClickConfirmationPage';
 import PaymentSuccessPage from './components/PaymentSuccessPage';
 import PaymentCancelPage from './components/PaymentCancelPage';
-import AboutUsPage from './components/AboutUs';
+import AboutUsPage from './components/AboutUsPage';
 import AdminAbout from './components/admin/AdminAbout';
 
 
