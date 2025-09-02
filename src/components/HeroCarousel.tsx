@@ -181,35 +181,41 @@ const HeroCarousel = () => {
         </div>
 
         {/* ⬅︎ Left / Right buttons, centered vertically, white circular like screenshot */}
-        <button
-          type="button"
-          aria-label="Предыдущий слайд"
-          onClick={goPrev}
-          className="
-            absolute left-3 top-1/2 -translate-y-1/2 z-10
-            flex h-12 w-12 items-center justify-center
-            rounded-full bg-white shadow-md
-            hover:shadow-lg hover:bg-white/90
-            transition
-          "
-        >
-          <ChevronLeft size={24} />
-        </button>
+{/* ⬅︎ Left / Right buttons */}
+<button
+  type="button"
+  aria-label="Предыдущий слайд"
+  onClick={goPrev}
+  className="
+    absolute left-2 top-1/2 -translate-y-1/2 z-10
+    hidden group-hover:flex focus:flex
+    h-8 w-8 md:h-12 md:w-12
+    items-center justify-center
+    rounded-full bg-white shadow-md
+    hover:shadow-lg hover:bg-white/90
+    transition
+  "
+>
+  <ChevronLeft size={18} className="md:size-24" />
+</button>
 
-        <button
-          type="button"
-          aria-label="Следующий слайд"
-          onClick={goNext}
-          className="
-            absolute right-3 top-1/2 -translate-y-1/2 z-10
-            flex h-12 w-12 items-center justify-center
-            rounded-full bg-white shadow-md
-            hover:shadow-lg hover:bg-white/90
-            transition
-          "
-        >
-          <ChevronRight size={24} />
-        </button>
+<button
+  type="button"
+  aria-label="Следующий слайд"
+  onClick={goNext}
+  className="
+    absolute right-2 top-1/2 -translate-y-1/2 z-10
+    hidden group-hover:flex focus:flex
+    h-8 w-8 md:h-12 md:w-12
+    items-center justify-center
+    rounded-full bg-white shadow-md
+    hover:shadow-lg hover:bg-white/90
+    transition
+  "
+>
+  <ChevronRight size={18} className="md:size-24" />
+</button>
+
 
         {/* Indicators pinned inside the banner (bottom-center) */}
         <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10">
