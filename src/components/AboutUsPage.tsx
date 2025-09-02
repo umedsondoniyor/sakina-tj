@@ -248,7 +248,7 @@ const AboutUsPage: React.FC = () => {
                   const Icon = StatIcon(stat.icon_key);
                   return (
                     <div key={stat.id} className="text-center">
-                      <Icon className="w-8 h-8 mx-auto mb-2 text-yellow-300" />
+                      <StatIcon(stat.icon_key) className="w-8 h-8 mx-auto mb-2 text-yellow-300" />
                       <div className="text-2xl font-bold">{stat.number}</div>
                       <div className="text-sm text-white/80">{stat.label}</div>
                     </div>
