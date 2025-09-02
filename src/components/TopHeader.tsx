@@ -8,7 +8,11 @@ const TopHeader: React.FC = () => {
   const [panelRect, setPanelRect] = useState<{ left: number; top: number; width: number } | null>(null);
 
   const address = 'Душанбе, Пулоди 4';
-  const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+
+  // ✅ Use your provided shop link
+  const shopLink = 'https://maps.app.goo.gl/5exgpkraKy9foeD27';
+
+  // Optional fallbacks if you want to keep them handy
   const twoGisUrl = `https://2gis.com/search/${encodeURIComponent(address)}`;
   const appleMapsUrl = `maps://?q=${encodeURIComponent(address)}`;
 
@@ -29,7 +33,7 @@ const TopHeader: React.FC = () => {
     const onScroll = () => measure();
     const onResize = () => measure();
     window.addEventListener('scroll', onScroll, true);
-    window.addEventListener('resize', onResize, { passive: true });
+    window.addEventListener('resize', onResize as any, { passive: true } as any);
     return () => {
       window.removeEventListener('scroll', onScroll, true);
       window.removeEventListener('resize', onResize as any);
@@ -69,11 +73,11 @@ const TopHeader: React.FC = () => {
               <button
                 type="button"
                 onClick={() => {
-                  // open Google Maps by default
-                  window.open(googleMapsUrl, '_blank');
+                  // Open your shop link in a new tab (safe window features)
+                  window.open(shopLink, '_blank', 'noopener,noreferrer');
 
-                  // optional: try 2GIS or Apple Maps
-                  // window.open(twoGisUrl, '_blank');
+                  // Optional: also try 2GIS / Apple Maps if needed
+                  // window.open(twoGisUrl, '_blank', 'noopener,noreferrer');
                   // window.open(appleMapsUrl, '_blank');
 
                   setOpen(false);
