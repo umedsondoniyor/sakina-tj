@@ -3,19 +3,25 @@ import type { CarouselSlide } from '../../lib/types';
 
 interface HeroSlideProps {
   slide: CarouselSlide;
+  isActive: boolean;
 }
 
-const HeroSlide: React.FC<HeroSlideProps> = ({ slide }) => {
+const HeroSlide: React.FC<HeroSlideProps> = ({ slide, isActive }) => {
   return (
-    // parent provides a relative aspect-ratio box
-    <img
-      src={slide.image_url}
-      alt={slide.title}
-      className="absolute inset-0 w-full h-full object-cover select-none hero-image"
-      draggable={false}
-      decoding="async"
-      loading="eager"
-    />
+    <div
+      className={`relative float-left -mr-[100%] w-full transition-transform duration-[600ms] ease-in-out motion-reduce:transition-none ${
+        isActive ? 'opacity-100' : 'opacity-0'
+      }`}
+      style={{ pointerEvents: isActive ? 'auto' : 'none' }}
+    >
+      <div className="relative w-full mx-auto">
+        <img
+          src={slide.image_url}
+          alt={slide.title}
+          className="hero-image mx-auto"
+        />
+      </div>
+    </div>
   );
 };
 
