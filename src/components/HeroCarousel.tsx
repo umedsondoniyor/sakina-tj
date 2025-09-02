@@ -19,12 +19,12 @@ const HeroCarousel: React.FC = () => {
   const startX = useRef(0);
   const endX = useRef(0);
 
-  // autoplay
+  // autoplay/pause
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   const isPaused = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // respect reduced motion
+  // reduced motion
   const prefersReducedMotion = useMemo(() => {
     if (typeof window === 'undefined' || !('matchMedia' in window)) return false;
     return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -47,45 +47,40 @@ const HeroCarousel: React.FC = () => {
     })();
   }, []);
 
-  // keep current index valid if slides change
+  // keep index valid if length changes
   useEffect(() => {
     if (!slides.length) return;
-    setCurrent((idx) => (idx % slides.length + slides.length) % slides.length);
+    setCurrent((i) => (i % slides.length + slides.length) % slides.length);
   }, [slides.length]);
 
-  // visibility + intersection: pause when hidden or offscreen
+  // pause when tab hidden or offscreen
   useEffect(() => {
-    const onVis = () => {
-      if (document.hidden) stopAutoplay();
-      else maybeStartAutoplay();
-    };
+    const onVis = () => (document.hidden ? stopAutoplay() : maybeStartAutoplay());
     document.addEventListener('visibilitychange', onVis);
 
-    let observer: IntersectionObserver | null = null;
+    let obs: IntersectionObserver | null = null;
     if (containerRef.current && 'IntersectionObserver' in window) {
-      observer = new IntersectionObserver(
-        (entries) => {
-          const entry = entries[0];
+      obs = new IntersectionObserver(
+        ([entry]) => {
           if (!entry) return;
           if (entry.isIntersecting) maybeStartAutoplay();
           else stopAutoplay();
         },
         { threshold: 0.2 }
       );
-      observer.observe(containerRef.current);
+      obs.observe(containerRef.current);
     }
     return () => {
       document.removeEventListener('visibilitychange', onVis);
-      observer?.disconnect();
+      obs?.disconnect();
     };
   }, []);
 
-  // start/stop autoplay
+  // autoplay controls
   const stopAutoplay = () => {
     if (timer.current) clearInterval(timer.current);
     timer.current = null;
   };
-
   const startAutoplay = () => {
     if (!slides.length || prefersReducedMotion || isPaused.current) return;
     stopAutoplay();
@@ -93,12 +88,10 @@ const HeroCarousel: React.FC = () => {
       setCurrent((p) => (p + 1) % slides.length);
     }, AUTOPLAY_MS);
   };
-
   const maybeStartAutoplay = () => {
     if (!prefersReducedMotion && !document.hidden) startAutoplay();
   };
 
-  // start autoplay when slides load
   useEffect(() => {
     if (!slides.length) return;
     maybeStartAutoplay();
@@ -106,7 +99,7 @@ const HeroCarousel: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slides, prefersReducedMotion]);
 
-  // navigation helpers
+  // navigation
   const goPrev = () => {
     if (!slides.length) return;
     stopAutoplay();
@@ -122,8 +115,8 @@ const HeroCarousel: React.FC = () => {
   const goTo = (i: number) => {
     if (!slides.length) return;
     stopAutoplay();
-    const clamped = ((i % slides.length) + slides.length) % slides.length;
-    setCurrent(clamped);
+    const clamp = ((i % slides.length) + slides.length) % slides.length;
+    setCurrent(clamp);
     maybeStartAutoplay();
   };
 
@@ -143,26 +136,14 @@ const HeroCarousel: React.FC = () => {
     endX.current = 0;
   };
 
-  const onTouchStart = (e: React.TouchEvent) => {
-    startX.current = e.touches[0].clientX;
-    beginDrag();
-  };
-  const onTouchMove = (e: React.TouchEvent) => {
-    if (!dragging) return;
-    endX.current = e.touches[0].clientX;
-  };
-  const onTouchEnd = () => endDrag();
+  const onTouchStart = (e: React.TouchEvent) => { startX.current = e.touches[0].clientX; beginDrag(); };
+  const onTouchMove  = (e: React.TouchEvent) => { if (dragging) endX.current = e.touches[0].clientX; };
+  const onTouchEnd   = () => endDrag();
 
-  const onMouseDown = (e: React.MouseEvent) => {
-    startX.current = e.clientX;
-    beginDrag();
-  };
-  const onMouseMove = (e: React.MouseEvent) => {
-    if (!dragging) return;
-    endX.current = e.clientX;
-  };
-  const onMouseUp = () => endDrag();
-  const onMouseLeave = () => dragging && endDrag();
+  const onMouseDown = (e: React.MouseEvent) => { startX.current = e.clientX; beginDrag(); };
+  const onMouseMove = (e: React.MouseEvent) => { if (dragging) endX.current = e.clientX; };
+  const onMouseUp   = () => endDrag();
+  const onMouseLeave= () => dragging && endDrag();
 
   // keyboard
   const onKeyDown = (e: React.KeyboardEvent) => {
@@ -178,7 +159,6 @@ const HeroCarousel: React.FC = () => {
       </div>
     );
   }
-
   if (err) {
     return (
       <div className="flex flex-col items-center justify-center h-64 bg-gray-100">
@@ -191,7 +171,7 @@ const HeroCarousel: React.FC = () => {
               const data = await getCarouselSlides();
               setSlides(Array.isArray(data) ? data : []);
               setErr(null);
-            } catch (e) {
+            } catch {
               setErr('Failed to load carousel slides');
             } finally {
               setLoading(false);
@@ -204,7 +184,6 @@ const HeroCarousel: React.FC = () => {
       </div>
     );
   }
-
   if (!slides.length) {
     return (
       <div className="flex flex-col items-center justify-center h-64 bg-gray-100">
@@ -224,10 +203,10 @@ const HeroCarousel: React.FC = () => {
         aria-label="Промо слайды"
         tabIndex={0}
         onKeyDown={onKeyDown}
-        // pause autoplay when user hovers (desktop)
         onMouseEnter={() => { isPaused.current = true; stopAutoplay(); }}
         onMouseLeave={() => { isPaused.current = false; maybeStartAutoplay(); }}
       >
+        {/* Slide frame */}
         <div
           className="relative w-full aspect-[16/9] sm:aspect-[21/9] md:aspect-[3/1]"
           onTouchStart={onTouchStart}
@@ -237,11 +216,11 @@ const HeroCarousel: React.FC = () => {
           onMouseMove={onMouseMove}
           onMouseUp={onMouseUp}
           onMouseLeave={onMouseLeave}
-          // keep vertical scrolling smooth on touch devices
           style={{ touchAction: 'pan-y' }}
           onDragStart={(e) => e.preventDefault()}
           aria-live="polite"
         >
+          {/* Slides layered */}
           {slides.map((slide, i) => (
             <div
               key={slide.id}
@@ -251,13 +230,13 @@ const HeroCarousel: React.FC = () => {
             </div>
           ))}
 
-          {/* Left control (desktop) */}
+          {/* Left/Right controls (desktop) */}
           <button
             type="button"
             aria-label="Предыдущий слайд"
             onClick={goPrev}
             className="
-              flex items-center justify-center
+              hidden md:flex items-center justify-center
               absolute left-2 top-1/2 -translate-y-1/2 z-10
               p-2 rounded-full bg-white/80 backdrop-blur shadow
               hover:bg-white transition
@@ -266,8 +245,6 @@ const HeroCarousel: React.FC = () => {
           >
             <ChevronLeft size={22} />
           </button>
-
-          {/* Right control (desktop) */}
           <button
             type="button"
             aria-label="Следующий слайд"
@@ -283,14 +260,17 @@ const HeroCarousel: React.FC = () => {
             <ChevronRight size={22} />
           </button>
         </div>
-      </div>
 
-      <SlideIndicators
-        totalSlides={slides.length}
-        currentSlide={current}
-        onSlideChange={goTo}
-        onStartAutoPlay={maybeStartAutoplay}
-      />
+        {/* ⬇️ Dots pinned INSIDE the carousel, centered at bottom */}
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10">
+          <SlideIndicators
+            totalSlides={slides.length}
+            currentSlide={current}
+            onSlideChange={goTo}
+            onStartAutoPlay={maybeStartAutoplay}
+          />
+        </div>
+      </div>
     </div>
   );
 };
