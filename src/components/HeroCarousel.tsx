@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronLeft, ChevronRight, PackageOpen } from 'lucide-react'; // ⬅ import arrows
+import { ChevronLeft, ChevronRight, PackageOpen } from 'lucide-react';
 import { getCarouselSlides } from '../lib/api';
 import type { CarouselSlide } from '../lib/types';
 import HeroSlide from './hero/HeroSlide';
 import SlideIndicators from './hero/SlideIndicators';
 
-const HeroCarousel = () => {
+const HeroCarousel: React.FC = () => {
   const [slides, setSlides] = useState<CarouselSlide[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [touchStart, setTouchStart] = useState(0);
@@ -35,20 +35,14 @@ const HeroCarousel = () => {
   };
 
   useEffect(() => {
-    if (slides.length > 0) {
-      startAutoPlay();
-    }
+    if (slides.length > 0) startAutoPlay();
     return () => {
-      if (autoPlayRef.current) {
-        clearInterval(autoPlayRef.current);
-      }
+      if (autoPlayRef.current) clearInterval(autoPlayRef.current);
     };
   }, [slides]);
 
   const startAutoPlay = () => {
-    if (autoPlayRef.current) {
-      clearInterval(autoPlayRef.current);
-    }
+    if (autoPlayRef.current) clearInterval(autoPlayRef.current);
     autoPlayRef.current = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
     }, 5000);
@@ -68,36 +62,25 @@ const HeroCarousel = () => {
     startAutoPlay();
   };
 
+  // Touch/Mouse swipe handling (unchanged behavior)
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchStart(e.touches[0].clientX);
     setIsDragging(true);
-    if (autoPlayRef.current) {
-      clearInterval(autoPlayRef.current);
-    }
+    if (autoPlayRef.current) clearInterval(autoPlayRef.current);
   };
-
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!isDragging) return;
     setTouchEnd(e.touches[0].clientX);
   };
-
   const handleTouchEnd = () => {
     setIsDragging(false);
     startAutoPlay();
-
     if (!touchStart || !touchEnd) return;
-
     const distance = touchStart - touchEnd;
     const isLeftSwipe = distance > minSwipeDistance;
     const isRightSwipe = distance < -minSwipeDistance;
-
-    if (isLeftSwipe) {
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }
-    if (isRightSwipe) {
-      setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
-    }
-
+    if (isLeftSwipe) setCurrentSlide((prev) => (prev + 1) % slides.length);
+    if (isRightSwipe) setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
     setTouchStart(0);
     setTouchEnd(0);
   };
@@ -105,34 +88,23 @@ const HeroCarousel = () => {
   const handleMouseDown = (e: React.MouseEvent) => {
     setTouchStart(e.clientX);
     setIsDragging(true);
-    if (autoPlayRef.current) {
-      clearInterval(autoPlayRef.current);
-    }
+    if (autoPlayRef.current) clearInterval(autoPlayRef.current);
   };
-
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDragging) return;
     setTouchEnd(e.clientX);
   };
+  const handleMouseUp = () => handleTouchEnd();
+  const handleMouseLeave = () => { if (isDragging) handleTouchEnd(); };
 
-  const handleMouseUp = () => {
-    handleTouchEnd();
-  };
-
-  const handleMouseLeave = () => {
-    if (isDragging) {
-      handleTouchEnd();
-    }
-  };
-
+  // Loading/Error states
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64 bg-gray-100">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
       </div>
     );
   }
-
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center h-64 bg-gray-100">
@@ -147,7 +119,6 @@ const HeroCarousel = () => {
       </div>
     );
   }
-
   if (slides.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-64 bg-gray-100">
@@ -159,8 +130,8 @@ const HeroCarousel = () => {
 
   return (
     <div className="flex flex-col">
-      {/* Relative wrapper so we can absolutely-position arrows & dots */}
-      <div className="relative w-full overflow-hidden">
+      {/* group -> enables hover-reveal for arrows on desktop */}
+      <div className="relative w-full overflow-hidden group">
         <div
           className="relative w-full overflow-hidden after:clear-both after:block after:content-['']"
           onTouchStart={handleTouchStart}
@@ -180,44 +151,42 @@ const HeroCarousel = () => {
           ))}
         </div>
 
-        {/* ⬅︎ Left / Right buttons, centered vertically, white circular like screenshot */}
-{/* ⬅︎ Left / Right buttons */}
-<button
-  type="button"
-  aria-label="Предыдущий слайд"
-  onClick={goPrev}
-  className="
-    absolute left-2 top-1/2 -translate-y-1/2 z-10
-    hidden group-hover:flex focus:flex
-    h-8 w-8 md:h-12 md:w-12
-    items-center justify-center
-    rounded-full bg-white shadow-md
-    hover:shadow-lg hover:bg-white/90
-    transition
-  "
->
-  <ChevronLeft size={18} className="md:size-24" />
-</button>
+        {/* Left/Right buttons — hidden until hover (desktop), smaller on mobile */}
+        <button
+          type="button"
+          aria-label="Предыдущий слайд"
+          onClick={goPrev}
+          className="
+            absolute left-2 top-1/2 -translate-y-1/2 z-10
+            hidden group-hover:flex focus:flex
+            h-8 w-8 md:h-12 md:w-12
+            items-center justify-center
+            rounded-full bg-white shadow-md
+            hover:shadow-lg hover:bg-white/90
+            transition
+          "
+        >
+          <ChevronLeft size={18} />
+        </button>
 
-<button
-  type="button"
-  aria-label="Следующий слайд"
-  onClick={goNext}
-  className="
-    absolute right-2 top-1/2 -translate-y-1/2 z-10
-    hidden group-hover:flex focus:flex
-    h-8 w-8 md:h-12 md:w-12
-    items-center justify-center
-    rounded-full bg-white shadow-md
-    hover:shadow-lg hover:bg-white/90
-    transition
-  "
->
-  <ChevronRight size={18} className="md:size-24" />
-</button>
+        <button
+          type="button"
+          aria-label="Следующий слайд"
+          onClick={goNext}
+          className="
+            absolute right-2 top-1/2 -translate-y-1/2 z-10
+            hidden group-hover:flex focus:flex
+            h-8 w-8 md:h-12 md:w-12
+            items-center justify-center
+            rounded-full bg-white shadow-md
+            hover:shadow-lg hover:bg-white/90
+            transition
+          "
+        >
+          <ChevronRight size={18} />
+        </button>
 
-
-        {/* Indicators pinned inside the banner (bottom-center) */}
+        {/* Indicators pinned INSIDE the banner at bottom-center */}
         <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10">
           <SlideIndicators
             totalSlides={slides.length}
