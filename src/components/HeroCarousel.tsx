@@ -222,12 +222,9 @@ const HeroCarousel: React.FC = () => {
         >
           {/* Slides layered */}
           {slides.map((slide, i) => (
-            <div
-              key={slide.id}
-              className={`absolute inset-0 transition-opacity duration-500 ${i === current ? 'opacity-100' : 'opacity-0'}`}
-            >
+
               <HeroSlide slide={slide} isActive={i === current} />
-            </div>
+
           ))}
 
           {/* Left/Right controls (desktop) */}
