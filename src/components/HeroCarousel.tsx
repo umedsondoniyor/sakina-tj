@@ -3,7 +3,6 @@ import { ChevronLeft, ChevronRight, PackageOpen } from 'lucide-react';
 import { getCarouselSlides } from '../lib/api';
 import type { CarouselSlide } from '../lib/types';
 import HeroSlide from './hero/HeroSlide';
-import SlideIndicators from './hero/SlideIndicators';
 
 const AUTOPLAY_MS = 5000;
 const SWIPE_MIN = 50;
@@ -14,23 +13,23 @@ const HeroCarousel: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
 
+  const trackRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
   // gestures
   const [dragging, setDragging] = useState(false);
   const startX = useRef(0);
   const endX = useRef(0);
 
-  // autoplay/pause
+  // autoplay
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   const isPaused = useRef(false);
-  const containerRef = useRef<HTMLDivElement>(null);
 
-  // reduced motion
   const prefersReducedMotion = useMemo(() => {
     if (typeof window === 'undefined' || !('matchMedia' in window)) return false;
     return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   }, []);
 
-  // fetch slides
   useEffect(() => {
     (async () => {
       try {
@@ -47,13 +46,11 @@ const HeroCarousel: React.FC = () => {
     })();
   }, []);
 
-  // keep index valid if length changes
   useEffect(() => {
     if (!slides.length) return;
     setCurrent((i) => (i % slides.length + slides.length) % slides.length);
   }, [slides.length]);
 
-  // pause when tab hidden or offscreen
   useEffect(() => {
     const onVis = () => (document.hidden ? stopAutoplay() : maybeStartAutoplay());
     document.addEventListener('visibilitychange', onVis);
@@ -76,7 +73,6 @@ const HeroCarousel: React.FC = () => {
     };
   }, []);
 
-  // autoplay controls
   const stopAutoplay = () => {
     if (timer.current) clearInterval(timer.current);
     timer.current = null;
@@ -99,7 +95,6 @@ const HeroCarousel: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slides, prefersReducedMotion]);
 
-  // navigation
   const goPrev = () => {
     if (!slides.length) return;
     stopAutoplay();
@@ -115,8 +110,8 @@ const HeroCarousel: React.FC = () => {
   const goTo = (i: number) => {
     if (!slides.length) return;
     stopAutoplay();
-    const clamp = ((i % slides.length) + slides.length) % slides.length;
-    setCurrent(clamp);
+    const clamped = ((i % slides.length) + slides.length) % slides.length;
+    setCurrent(clamped);
     maybeStartAutoplay();
   };
 
@@ -145,13 +140,11 @@ const HeroCarousel: React.FC = () => {
   const onMouseUp   = () => endDrag();
   const onMouseLeave= () => dragging && endDrag();
 
-  // keyboard
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowLeft') { e.preventDefault(); goPrev(); }
     if (e.key === 'ArrowRight') { e.preventDefault(); goNext(); }
   };
 
-  // UI states
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64 bg-gray-100">
@@ -194,21 +187,24 @@ const HeroCarousel: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col">
-      <div
-        ref={containerRef}
-        className="relative w-full overflow-hidden group select-none"
-        role="region"
-        aria-roledescription="carousel"
-        aria-label="Промо слайды"
-        tabIndex={0}
-        onKeyDown={onKeyDown}
-        onMouseEnter={() => { isPaused.current = true; stopAutoplay(); }}
-        onMouseLeave={() => { isPaused.current = false; maybeStartAutoplay(); }}
-      >
-        {/* Slide frame */}
+    <div
+      ref={containerRef}
+      className="relative w-full group select-none"
+      role="region"
+      aria-roledescription="carousel"
+      aria-label="Промо слайды"
+      tabIndex={0}
+      onKeyDown={onKeyDown}
+      onMouseEnter={() => { isPaused.current = true; stopAutoplay(); }}
+      onMouseLeave={() => { isPaused.current = false; maybeStartAutoplay(); }}
+    >
+      {/* Viewport */}
+      <div className="overflow-hidden">
+        {/* Track */}
         <div
-          className="relative w-full aspect-[16/9] sm:aspect-[21/9] md:aspect-[3/1]"
+          ref={trackRef}
+          className="flex transition-transform duration-500 ease-in-out"
+          style={{ transform: `translateX(-${current * 100}%)` }}
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
@@ -216,50 +212,63 @@ const HeroCarousel: React.FC = () => {
           onMouseMove={onMouseMove}
           onMouseUp={onMouseUp}
           onMouseLeave={onMouseLeave}
-          style={{ touchAction: 'pan-y' }}
+          style={{ touchAction: 'pan-y' } as React.CSSProperties}
           onDragStart={(e) => e.preventDefault()}
           aria-live="polite"
         >
-          {/* Slides layered */}
-          {slides.map((slide, i) => (
-
-              <HeroSlide slide={slide} isActive={i === current} />
-
+          {slides.map((slide) => (
+            <div key={slide.id} className="basis-full shrink-0">
+              {/* aspect ratio holder so height is consistent */}
+              <div className="relative w-full aspect-[16/9] sm:aspect-[21/9] md:aspect-[3/1]">
+                <HeroSlide slide={slide} />
+              </div>
+            </div>
           ))}
-
-          {/* Left/Right controls (desktop) */}
-          <button
-            type="button"
-            aria-label="Предыдущий слайд"
-            onClick={goPrev}
-            className="
-              hidden md:flex items-center justify-center
-              absolute left-2 top-1/2 -translate-y-1/2 z-10
-              p-2 rounded-full bg-white/80 backdrop-blur shadow
-              hover:bg-white transition
-              opacity-0 group-hover:opacity-100 focus:opacity-100
-            "
-          >
-            <ChevronLeft size={22} />
-          </button>
-          <button
-            type="button"
-            aria-label="Следующий слайд"
-            onClick={goNext}
-            className="
-              hidden md:flex items-center justify-center
-              absolute right-2 top-1/2 -translate-y-1/2 z-10
-              p-2 rounded-full bg-white/80 backdrop-blur shadow
-              hover:bg-white transition
-              opacity-0 group-hover:opacity-100 focus:opacity-100
-            "
-          >
-            <ChevronRight size={22} />
-          </button>
         </div>
+      </div>
 
-        {/* ⬇️ Dots pinned INSIDE the carousel, centered at bottom */}
-        
+      {/* Left/Right arrows (desktop) */}
+      <button
+        type="button"
+        aria-label="Предыдущий слайд"
+        onClick={goPrev}
+        className="
+          hidden md:flex items-center justify-center
+          absolute left-2 top-1/2 -translate-y-1/2 z-10
+          p-2 rounded-full bg-white/80 backdrop-blur shadow
+          hover:bg-white transition
+          opacity-0 group-hover:opacity-100 focus:opacity-100
+        "
+      >
+        <ChevronLeft size={22} />
+      </button>
+      <button
+        type="button"
+        aria-label="Следующий слайд"
+        onClick={goNext}
+        className="
+          hidden md:flex items-center justify-center
+          absolute right-2 top-1/2 -translate-y-1/2 z-10
+          p-2 rounded-full bg-white/80 backdrop-blur shadow
+          hover:bg-white transition
+          opacity-0 group-hover:opacity-100 focus:opacity-100
+        "
+      >
+        <ChevronRight size={22} />
+      </button>
+
+      {/* Dots pinned under the banner */}
+      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2">
+        {slides.map((_, i) => (
+          <button
+            key={i}
+            onClick={() => goTo(i)}
+            aria-label={`Перейти к слайду ${i + 1}`}
+            className={`h-2 w-2 rounded-full transition ${
+              current === i ? 'bg-teal-500 scale-110' : 'bg-gray-300 hover:bg-gray-400'
+            }`}
+          />
+        ))}
       </div>
     </div>
   );
