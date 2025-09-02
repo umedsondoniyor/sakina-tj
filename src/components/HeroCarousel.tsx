@@ -257,7 +257,7 @@ const HeroCarousel: React.FC = () => {
             aria-label="Предыдущий слайд"
             onClick={goPrev}
             className="
-              hidden md:flex items-center justify-center
+              flex items-center justify-center
               absolute left-2 top-1/2 -translate-y-1/2 z-10
               p-2 rounded-full bg-white/80 backdrop-blur shadow
               hover:bg-white transition
