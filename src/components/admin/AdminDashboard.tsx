@@ -10,7 +10,8 @@ import {
   Home,
   Navigation,
   MousePointer,
-  Users
+  Users,
+  Target
 } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import Logo from '../Logo';
