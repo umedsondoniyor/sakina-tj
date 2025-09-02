@@ -63,7 +63,6 @@ const TopHeader: React.FC = () => {
             left: panelRect.left,
             top: panelRect.top + 8,
             zIndex: 1000,
-            width: panelRect.width, // optional: match trigger width
           }}
         >
           <div className="rounded-xl bg-white shadow-xl border border-gray-100">
