@@ -262,14 +262,7 @@ const HeroCarousel: React.FC = () => {
         </div>
 
         {/* ⬇️ Dots pinned INSIDE the carousel, centered at bottom */}
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10">
-          <SlideIndicators
-            totalSlides={slides.length}
-            currentSlide={current}
-            onSlideChange={goTo}
-            onStartAutoPlay={maybeStartAutoplay}
-          />
-        </div>
+        
       </div>
     </div>
   );
