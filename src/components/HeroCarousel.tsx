@@ -163,7 +163,7 @@ const HeroCarousel: React.FC = () => {
             items-center justify-center
             rounded-full bg-white shadow-md
             hover:shadow-lg hover:bg-white/90
-            transition ml-4 md:ml-16
+            transition ml-4 md:ml-16 lg:ml-64
           "
         >
           <ChevronLeft size={18} />
