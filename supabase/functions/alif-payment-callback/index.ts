@@ -13,7 +13,7 @@ Deno.serve(async (req)=>{
   }
   try {
     const supabase = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');
-    const alifSecretKey = Deno.env.get('ALIF_SECRET_KEY') ?? ''; // Password used to verify token
+    const alifSecretKey = Deno.env.get('ALIF_ENCRYPTED_KEY') ?? 'd1570d15e3bba6a91b5f40119b35048e1e5c5adfe6522cdc732b5249820e0823'; // Password used to verify token
     const callbackData = await req.json();
     console.log('🔁 Callback received:', {
       ...callbackData,
@@ -52,10 +52,10 @@ Deno.serve(async (req)=>{
     // 🔄 Map Alif status to internal payment status
     let paymentStatus = 'failed';
     switch(status?.toLowerCase()){
+      case 'ok':
       case 'success':
       case 'approved':
       case 'paid':
-      case 'complete':
         paymentStatus = 'completed';
         break;
       case 'pending':
