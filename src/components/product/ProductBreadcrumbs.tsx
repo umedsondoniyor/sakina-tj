@@ -10,7 +10,7 @@ const CATEGORY_MAP: Record<
   string,
   { label: string; href: string }
 > = {
-  mattresses: { label: 'Матрасы', href: '/mattresses' },
+  mattresses: { label: 'Матрасы', href: '/products?category=mattresses' },
   pillows:    { label: 'Подушки', href: '/products?category=pillows' },
   beds:       { label: 'Кровати', href: '/products?category=beds' },
   smartchair: { label: 'Массажные кресла', href: '/products?category=smartchair' },
