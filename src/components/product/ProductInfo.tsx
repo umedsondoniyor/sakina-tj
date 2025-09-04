@@ -258,8 +258,8 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
         <div className="flex items-start space-x-2">
           <Truck className="w-5 h-5 text-gray-600" />
           <div>
-            <div>Доставка на дом</div>
             <div>Доставим по г. Душанбе</div>
+            <div>на дом</div>
           </div>
         </div>
         <div className="flex items-start space-x-2">
