@@ -250,7 +250,9 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
           <Eye className="w-5 h-5 text-gray-600" />
           <div>
             <div>Где посмотреть</div>
-            <div className="text-teal-600">Душанбе, Пулоди 4</div>
+            <a href="https://maps.app.goo.gl/5exgpkraKy9foeD27" target="_blank" rel="noopener noreferrer" >
+              <div className="text-teal-600">Душанбе, Пулоди 4</div>
+            </a>
           </div>
         </div>
         <div className="flex items-start space-x-2">
