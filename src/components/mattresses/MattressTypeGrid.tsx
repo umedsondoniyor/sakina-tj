@@ -107,7 +107,7 @@ const MattressTypeGrid: React.FC = () => {
             className="text-center group cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 rounded-lg"
             aria-label={`Показать матрасы: ${type.name}`}
           >
-            <div className="mx-auto mb-3 rounded-full overflow-hidden bg-gray-100 w-32 h-32 md:w-36 md:h-36">
+            <div className="mx-auto mb-3 overflow-hidden bg-gray-100 w-32 h-32 md:w-36 md:h-36">
               <img
                 src={type.image}
                 alt={type.name}
