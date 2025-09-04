@@ -250,7 +250,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
           <Eye className="w-5 h-5 text-gray-600" />
           <div>
             <div>Где посмотреть</div>
-            <div className="text-teal-600">в 41 салонах</div>
+            <div className="text-teal-600">Душанбе, Пулоди 4</div>
           </div>
         </div>
         <div className="flex items-start space-x-2">
