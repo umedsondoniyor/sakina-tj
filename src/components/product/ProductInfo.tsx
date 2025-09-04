@@ -7,7 +7,7 @@ import OneClickModal from '../OneClickModal';
 import { useNavigate } from 'react-router-dom';
 
 interface ProductInfoProps {
-  product: Product;
+  product: Product; // ensure Product has: warranty_years?: number | null
   selectedVariant: ProductVariant | null;
   onVariantChange: (variant: ProductVariant) => void;
   onAddToCart: () => void;
@@ -28,6 +28,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
     if (product.id) {
       loadVariants();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product.id]);
 
   const loadVariants = async () => {
@@ -35,7 +36,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
       setLoadingVariants(true);
       const data = await getProductVariants(product.id);
       setVariants(data);
-      
+
       // Auto-select first available variant
       if (data.length > 0 && !selectedVariant) {
         const firstAvailable = data.find(v => v.in_stock) || data[0];
@@ -48,24 +49,31 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
     }
   };
 
-  const getCurrentPrice = () => {
-    return selectedVariant ? selectedVariant.price : product.price;
-  };
-
-  const getCurrentOldPrice = () => {
-    return selectedVariant ? selectedVariant.old_price : product.old_price;
-  };
+  const getCurrentPrice = () => (selectedVariant ? selectedVariant.price : product.price);
+  const getCurrentOldPrice = () => (selectedVariant ? selectedVariant.old_price : product.old_price);
 
   const handleOneClickSuccess = (orderId: string) => {
     navigate(`/one-click-confirmation/${orderId}`);
   };
 
+  // Russian pluralization for "год/года/лет"
+  const formatYears = (years: number) => {
+    const n = Math.abs(years);
+    const last = n % 10;
+    const lastTwo = n % 100;
+    let unit = 'лет';
+    if (last === 1 && lastTwo !== 11) unit = 'год';
+    else if ([2, 3, 4].includes(last) && ![12, 13, 14].includes(lastTwo)) unit = 'года';
+    return `${years} ${unit}`;
+  };
+
+  const warrantyYears = typeof product.warranty_years === 'number' ? product.warranty_years : null;
+  const showWarranty = warrantyYears !== null && warrantyYears > 0;
+
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-2">
-         {product.name}
-      </h1>
-      
+      <h1 className="text-2xl font-bold mb-2">{product.name}</h1>
+
       {product.weight_category && (
         <div className="bg-teal-50 border border-teal-200 rounded-lg p-3 mb-4">
           <div className="flex items-center">
@@ -76,23 +84,17 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
           </div>
         </div>
       )}
-      
+
       <div className="flex items-center mb-4">
         <div className="flex">
           {[...Array(5)].map((_, i) => (
             <Star
               key={i}
-              className={`w-4 h-4 ${
-                i < product.rating
-                  ? 'text-yellow-400 fill-current'
-                  : 'text-gray-300'
-              }`}
+              className={`w-4 h-4 ${i < product.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
             />
           ))}
         </div>
-        <span className="ml-2 text-sm text-gray-600">
-          {product.review_count} отзывов
-        </span>
+        <span className="ml-2 text-sm text-gray-600">{product.review_count} отзывов</span>
       </div>
 
       <div className="mb-6">
@@ -119,7 +121,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
               Все размеры ({variants.length})
             </a>
           </div>
-          
+
           {loadingVariants ? (
             <div className="text-center py-4">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900 mx-auto"></div>
@@ -134,9 +136,9 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
                   className={`p-2 text-center border rounded-lg transition-colors ${
                     selectedVariant?.id === variant.id
                       ? 'border-teal-500 bg-teal-50'
-                      : variant.inventory?.in_stock 
-                        ? 'border-gray-200 hover:border-teal-500'
-                        : 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-50'
+                      : variant.inventory?.in_stock
+                      ? 'border-gray-200 hover:border-teal-500'
+                      : 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-50'
                   }`}
                 >
                   <div className="font-medium">
@@ -144,16 +146,14 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
                       ? `${variant.size_name}, h - ${variant.height_cm}см`
                       : variant.width_cm && variant.length_cm
                       ? `${variant.width_cm}×${variant.length_cm}`
-                      : variant.size_name
-                    }
+                      : variant.size_name}
                   </div>
-                  <div className="text-sm text-gray-600">
-                    {variant.price.toLocaleString()} с.
-                  </div>
+                  <div className="text-sm text-gray-600">{variant.price.toLocaleString()} с.</div>
                   <div className="text-xs">
                     {variant.inventory?.in_stock ? (
                       <span className="text-teal-600">
-                        В наличии {variant.inventory?.stock_quantity ? `(${variant.inventory.stock_quantity})` : ''}
+                        В наличии{' '}
+                        {variant.inventory?.stock_quantity ? `(${variant.inventory.stock_quantity})` : ''}
                       </span>
                     ) : (
                       <span className="text-red-600">Нет в наличии</span>
@@ -170,14 +170,12 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
       {variants.length === 0 && !loadingVariants && (
         <div className="mb-6">
           <div className="p-3 bg-gray-50 rounded-lg text-center">
-            <p className="text-sm text-gray-600">
-              Размеры для этого товара настраиваются администратором
-            </p>
+            <p className="text-sm text-gray-600">Размеры для этого товара настраиваются администратором</p>
           </div>
         </div>
       )}
 
-      {/* Size Selection - Legacy fallback */}
+      {/* Size Selection - Legacy fallback (mattresses) */}
       {product.category === 'mattresses' && variants.length === 0 && !loadingVariants && (
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
@@ -196,16 +194,10 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
             ].map(({ size, price }) => (
               <button
                 key={size}
-                className={`p-2 text-center border rounded-lg transition-colors ${
-                  true
-                    ? 'border-gray-200 hover:border-teal-500'
-                    : 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-50'
-                }`}
+                className="p-2 text-center border rounded-lg transition-colors border-gray-200 hover:border-teal-500"
               >
                 <div className="font-medium">{size}</div>
-                <div className="text-sm text-gray-600">
-                  {price.toLocaleString()} с.
-                </div>
+                <div className="text-sm text-gray-600">{price.toLocaleString()} с.</div>
                 <div className="text-xs text-teal-600">В наличии</div>
               </button>
             ))}
@@ -213,15 +205,15 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
         </div>
       )}
 
-      {/* Warranty Info */}
-      <div className="bg-gray-50 p-4 rounded-lg mb-6">
-        <div className="flex items-center text-sm">
-          <Box className="w-5 h-5 mr-2 text-teal-600" />
-          <div>
-            <div>Гарантия на товар 5 года</div>
+      {/* Warranty Info (only if product.warranty_years exists and > 0) */}
+      {showWarranty && (
+        <div className="bg-gray-50 p-4 rounded-lg mb-6">
+          <div className="flex items-center text-sm">
+            <Box className="w-5 h-5 mr-2 text-teal-600" />
+            <div>Гарантия на товар {formatYears(warrantyYears!)}</div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Action Buttons */}
       <div className="flex items-center space-x-4 mb-6">
@@ -231,7 +223,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
         >
           В корзину
         </button>
-        <button 
+        <button
           onClick={() => setShowOneClickModal(true)}
           className="flex-1 bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center"
         >
@@ -246,7 +238,12 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
           <Eye className="w-5 h-5 text-gray-600" />
           <div>
             <div>Где посмотреть</div>
-            <a href="https://maps.app.goo.gl/5exgpkraKy9foeD27" target="_blank" rel="noopener noreferrer" class="flex items-start gap-2 text-left text-gray-700 hover:text-teal-600">
+            <a
+              href="https://maps.app.goo.gl/5exgpkraKy9foeD27"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-start gap-2 text-left text-gray-700 hover:text-teal-600"
+            >
               <div className="text-teal-600">Душанбе, Пулоди 4</div>
             </a>
           </div>
