@@ -218,8 +218,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
         <div className="flex items-center text-sm">
           <Box className="w-5 h-5 mr-2 text-teal-600" />
           <div>
-            <div>Гарантия на товар 1.5 года</div>
-            <div>10 лет при покупке с чехлом</div>
+            <div>Гарантия на товар 5 года</div>
           </div>
         </div>
       </div>
