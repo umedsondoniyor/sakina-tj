@@ -274,7 +274,6 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
           <ArrowLeftRight className="w-5 h-5 text-gray-600" />
           <div>
             <div>Без обмен</div>
-            <div>в течение дней</div>
           </div>
         </div>
       </div>
