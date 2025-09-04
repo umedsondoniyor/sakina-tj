@@ -105,9 +105,6 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
               </span>
             )}
           </div>
-          <div className="text-sm text-gray-600">
-            + 2 694 бонусов
-          </div>
         </div>
       </div>
 
