@@ -35,7 +35,6 @@ const menuItems: MenuItem[] = [
   { id: 'covers', name: 'Чехлы', icon: Box },
   { id: 'pillows', name: 'Подушки', icon: Pillow },
   { id: 'blankets', name: 'Одеяла', icon: Box },
-  { id: 'bedding', name: 'Постельное белье', icon: Box },
   { id: 'kids', name: 'Для детей', icon: Baby },
 ];
 
@@ -191,7 +190,7 @@ const CatalogMenu: React.FC<CatalogMenuProps> = ({ isOpen, onClose }) => {
               <div className="absolute left-1/2 -translate-x-1/2">
                 <Logo variant="horizontal" className="-my-2" />
               </div>
-              <a href="tel:88002004090" className="text-gray-600">
+              <a href="tel:+992905339595" className="text-gray-600">
                 <Phone size={24} />
               </a>
             </div>
