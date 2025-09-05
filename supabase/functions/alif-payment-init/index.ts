@@ -19,7 +19,7 @@ Deno.serve(async (req)=>{
     const apiUrl = Deno.env.get('ALIF_API_URL');
     const returnSiteUrl = Deno.env.get('SITE_URL') || 'https://sakina-tj.netlify.app';
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const { amount, currency = 'TJS', gate = 'korti_milli', orderData } = requestBody;
+    const { amount, currency = 'TJS', gate = 'vsa', orderData } = requestBody;
     if (!amount || amount <= 0) throw new Error('Invalid amount');
     if (!orderData?.customerInfo?.email) throw new Error('Customer email is required');
     if (!orderData?.customerInfo?.name) throw new Error('Customer name is required');

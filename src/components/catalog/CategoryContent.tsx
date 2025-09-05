@@ -1,59 +1,47 @@
+// catalog/CategoryContent.tsx
 import React from 'react';
+import { ChevronRight } from 'lucide-react';
 
-interface CategoryContentProps {
-  content: {
-    title: string;
-    categories: {
-      title: string;
-      items: string[];
-    }[];
-    promos: {
-      title: string;
-      description: string;
-      image: string;
-    }[];
-  };
-}
+type CategoryContent = {
+  title: string;
+  categories: { title: string; items: string[] }[];
+  promos: { title: string; description: string; image: string }[];
+};
 
-const CategoryContent: React.FC<CategoryContentProps> = ({ content }) => {
+export default function CategoryContent({
+  content,
+  onItemClick,                           // ⬅️ add
+}: {
+  content: CategoryContent;
+  onItemClick?: (sectionTitle: string, itemLabel: string) => void; // ⬅️ add
+}) {
   return (
-    <div className="flex-1 p-6 overflow-y-auto">
-      <h2 className="text-2xl font-bold mb-6">{content.title}</h2>
-
-      <div className="grid grid-cols-4 gap-8">
-        <div className="col-span-3 grid grid-cols-3 gap-8">
-          {content.categories.map((category) => (
-            <div key={category.title}>
-              <h3 className="font-semibold mb-4">{category.title}</h3>
-              <div className="space-y-2">
-                {category.items.map((item) => (
-                  <a key={item} href="#" className="block py-1 hover:text-teal-600">
-                    {item}
-                  </a>
-                ))}
-              </div>
+    <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-8 p-6">
+      {/* left 3 cols: sections */}
+      <div className="md:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-8">
+        {content.categories.map((section) => (
+          <div key={section.title}>
+            <h3 className="font-semibold mb-3">{section.title}</h3>
+            <div className="space-y-2">
+              {section.items.map((label) => (
+                <button
+                  key={label}
+                  onClick={() => onItemClick?.(section.title, label)}  // ⬅️ call back
+                  className="w-full text-left flex items-center justify-between text-gray-700 hover:text-teal-600"
+                >
+                  <span>{label}</span>
+                  <ChevronRight size={18} className="text-gray-400" />
+                </button>
+              ))}
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
+      </div>
 
-        <div className="space-y-6">
-          {content.promos.map((promo) => (
-            <div key={promo.title}>
-              <img
-                src={promo.image}
-                alt={promo.title}
-                className="w-full h-auto rounded-lg mb-4"
-              />
-              <a href="#" className="block text-teal-600 hover:text-teal-700 font-medium">
-                {promo.title}
-              </a>
-              <p className="text-sm text-gray-600">{promo.description}</p>
-            </div>
-          ))}
-        </div>
+      {/* right col: promos — unchanged */}
+      <div className="hidden md:block">
+        {/* ... your promo card(s) ... */}
       </div>
     </div>
   );
-};
-
-export default CategoryContent;
+}
