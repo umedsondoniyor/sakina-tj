@@ -1,54 +1,44 @@
+// src/lib/api.ts
 import { supabase } from './supabaseClient';
-import type { Product, Category, CustomerReview, CarouselSlide } from './types';
-import toast from 'react-hot-toast';
+import type {
+  Product,
+  ProductVariant,
+  Category,
+  CustomerReview,
+  CarouselSlide,
+  QuizStep,
+  NavigationItem,
+} from './types';
 
-// Enhanced utility function for retrying failed requests
+// Lightweight retry with exponential backoff
 async function retryOperation<T>(
-  operation: () => Promise<T>,
+  op: () => Promise<T>,
   retries = 3,
-  initialDelay = 1000,
+  initialDelay = 600,
   context = ''
 ): Promise<T> {
-  let lastError: Error | null = null;
+  let lastErr: unknown;
   let delay = initialDelay;
-  
+
   for (let attempt = 1; attempt <= retries + 1; attempt++) {
     try {
-      const result = await operation();
-      if (attempt > 1) {
-        console.log(`Successfully completed ${context} after ${attempt} attempts`);
-      }
-      return result;
-    } catch (error) {
-      lastError = error as Error;
-      
-      console.error(`Attempt ${attempt}/${retries + 1} failed for ${context}:`, {
-        message: lastError.message,
-        stack: lastError.stack,
-        context,
-        attempt
-      });
-
-      if (attempt <= retries) {
-        console.warn(
-          `Retrying in ${delay}ms...`
-        );
-        await new Promise(resolve => setTimeout(resolve, delay));
-        delay *= 2; // Exponential backoff
-      }
+      const res = await op();
+      if (attempt > 1) console.info(`[api] ${context} succeeded on attempt ${attempt}`);
+      return res;
+    } catch (err) {
+      lastErr = err;
+      if (attempt > retries) break;
+      console.warn(`[api] ${context} failed (attempt ${attempt}/${retries + 1}). Retrying in ${delay}ms…`, err);
+      await new Promise(r => setTimeout(r, delay));
+      delay *= 2;
     }
   }
-
-  const errorMessage = `Operation failed after ${retries + 1} attempts: ${lastError?.message}`;
-  console.error(`All retry attempts failed for ${context}:`, {
-    error: lastError,
-    context,
-    totalAttempts: retries + 1
-  });
-  
-  throw new Error(errorMessage);
+  throw lastErr instanceof Error
+    ? new Error(`[api] ${context} failed: ${lastErr.message}`)
+    : new Error(`[api] ${context} failed`);
 }
 
+/* ------------------- Carousel ------------------- */
 export async function getCarouselSlides(): Promise<CarouselSlide[]> {
   return retryOperation(async () => {
     const { data, error } = await supabase
@@ -57,51 +47,32 @@ export async function getCarouselSlides(): Promise<CarouselSlide[]> {
       .eq('active', true)
       .order('order', { ascending: true });
 
-    if (error) {
-      console.error('Error fetching carousel slides:', error);
-      toast.error('Failed to load carousel slides');
-      throw error;
-    }
-
-    return data || [];
-  }, 3, 1000, 'getCarouselSlides');
+    if (error) throw error;
+    return data ?? [];
+  }, 3, 600, 'getCarouselSlides');
 }
 
+/* ------------------- Products ------------------- */
+// NOTE: pulls variants; if payload is too big, create a slimmer variant (e.g. getProductsLite)
 export async function getProducts(): Promise<Product[]> {
   return retryOperation(async () => {
-    // First check if we have a valid session and connection
-    const { error: healthCheckError } = await supabase
-      .from('products')
-      .select('count')
-      .limit(1)
-      .single();
-
-    if (healthCheckError) {
-      console.error('Database health check failed:', healthCheckError);
-      throw new Error('Database connection error');
-    }
-
     const { data, error } = await supabase
       .from('products')
       .select(`
         *,
-        variants:product_variants(*)
+        product_variants:product_variants(*)
       `)
       .order('created_at', { ascending: false });
 
-    if (error) {
-      console.error('Error fetching products:', error);
-      toast.error('Failed to load products. Please try again.');
-      throw error;
-    }
+    if (error) throw error;
 
-    if (!data) {
-      console.log('No products found in the database');
-      return [];
-    }
-
-    return data;
-  }, 3, 1000, 'getProducts');
+    // Normalize to .variants for legacy callers if needed
+    const normalized = (data ?? []).map((p: any) => ({
+      ...p,
+      variants: p.product_variants ?? p.variants ?? [],
+    })) as Product[];
+    return normalized;
+  }, 3, 600, 'getProducts');
 }
 
 export async function getProductVariants(productId: string): Promise<ProductVariant[]> {
@@ -110,34 +81,33 @@ export async function getProductVariants(productId: string): Promise<ProductVari
       .from('product_variants')
       .select(`
         *,
-        inventory!inner(
+        inventory:inventory(
           stock_quantity,
           in_stock,
           location_id,
-          locations!inner(name, is_active)
+          locations:locations(name, is_active)
         )
       `)
       .eq('product_id', productId)
-      .eq('inventory.locations.is_active', true)
       .order('display_order', { ascending: true });
 
-    if (error) {
-      console.error('Error fetching product variants:', error);
-      throw error;
-    }
+    if (error) throw error;
 
-    // Transform data to include inventory information
-    const transformedData = (data || []).map(variant => ({
-      ...variant,
-      inventory: variant.inventory?.[0] ? {
-        stock_quantity: variant.inventory[0].stock_quantity,
-        in_stock: variant.inventory[0].in_stock,
-        location_id: variant.inventory[0].location_id
-      } : undefined
-    }));
-
-    return transformedData;
-  }, 3, 1000, `getProductVariants:${productId}`);
+    // flatten first inventory record
+    return (data ?? []).map((v: any) => {
+      const inv = Array.isArray(v.inventory) ? v.inventory[0] : v.inventory;
+      return {
+        ...v,
+        inventory: inv
+          ? {
+              stock_quantity: inv.stock_quantity,
+              in_stock: inv.in_stock,
+              location_id: inv.location_id,
+            }
+          : undefined,
+      } as ProductVariant & { inventory?: { stock_quantity?: number; in_stock?: boolean; location_id?: string } };
+    });
+  }, 3, 600, `getProductVariants:${productId}`);
 }
 
 export async function getVariantsByType(sizeType: string): Promise<ProductVariant[]> {
@@ -146,56 +116,35 @@ export async function getVariantsByType(sizeType: string): Promise<ProductVarian
       .from('product_variants')
       .select(`
         *,
-        inventory!inner(
+        inventory:inventory(
           stock_quantity,
           in_stock,
           location_id,
-          locations!inner(name, is_active)
+          locations:locations(name, is_active)
         )
       `)
       .eq('size_type', sizeType)
-      .eq('inventory.in_stock', true)
-      .eq('inventory.locations.is_active', true)
       .order('display_order', { ascending: true });
 
-    if (error) {
-      console.error('Error fetching variants by type:', error);
-      throw error;
-    }
+    if (error) throw error;
 
-    // Transform data to include inventory information
-    const transformedData = (data || []).map(variant => ({
-      ...variant,
-      inventory: variant.inventory?.[0] ? {
-        stock_quantity: variant.inventory[0].stock_quantity,
-        in_stock: variant.inventory[0].in_stock,
-        location_id: variant.inventory[0].location_id
-      } : undefined
-    }));
-
-    return transformedData;
-  }, 3, 1000, `getVariantsByType:${sizeType}`);
+    return (data ?? []).map((v: any) => {
+      const inv = Array.isArray(v.inventory) ? v.inventory[0] : v.inventory;
+      return {
+        ...v,
+        inventory: inv
+          ? {
+              stock_quantity: inv.stock_quantity,
+              in_stock: inv.in_stock,
+              location_id: inv.location_id,
+            }
+          : undefined,
+      } as ProductVariant;
+    });
+  }, 3, 600, `getVariantsByType:${sizeType}`);
 }
 
-export async function getDefaultLocation() {
-  return retryOperation(async () => {
-    const { data, error } = await supabase
-      .from('locations')
-      .select('*')
-      .eq('is_active', true)
-      .order('created_at', { ascending: true })
-      .limit(1)
-      .single();
-
-    if (error) {
-      console.error('Error fetching default location:', error);
-      throw error;
-    }
-
-    return data;
-  }, 3, 1000, 'getDefaultLocation');
-}
-
+/* ------------------- Best sellers & categories ------------------- */
 export async function getBestSellers(): Promise<Product[]> {
   return retryOperation(async () => {
     const { data, error } = await supabase
@@ -204,19 +153,9 @@ export async function getBestSellers(): Promise<Product[]> {
       .order('review_count', { ascending: false })
       .limit(4);
 
-    if (error) {
-      console.error('Error fetching best sellers:', error);
-      toast.error('Failed to load best sellers. Please try again.');
-      throw error;
-    }
-
-    if (!data) {
-      console.log('No best sellers found in the database');
-      return [];
-    }
-
-    return data;
-  }, 3, 1000, 'getBestSellers');
+    if (error) throw error;
+    return data ?? [];
+  }, 3, 600, 'getBestSellers');
 }
 
 export async function getCategories(): Promise<Category[]> {
@@ -226,39 +165,31 @@ export async function getCategories(): Promise<Category[]> {
       .select('*')
       .order('name', { ascending: true });
 
-    if (error) {
-      console.error('Error fetching categories:', error);
-      toast.error('Failed to load categories. Please try again.');
-      throw error;
-    }
-
-    return data || [];
-  }, 3, 1000, 'getCategories');
+    if (error) throw error;
+    return data ?? [];
+  }, 3, 600, 'getCategories');
 }
 
 export async function getProductsByCategory(category: string): Promise<Product[]> {
   return retryOperation(async () => {
     const { data, error } = await supabase
       .from('products')
-      .select('*')
+      .select(`
+        *,
+        product_variants:product_variants(*)
+      `)
       .eq('category', category)
       .order('created_at', { ascending: false });
 
-    if (error) {
-      console.error('Error fetching products by category:', error);
-      toast.error('Failed to load products for this category. Please try again.');
-      throw error;
-    }
-
-    if (!data) {
-      console.log(`No products found in category: ${category}`);
-      return [];
-    }
-
-    return data;
-  }, 3, 1000, `getProductsByCategory:${category}`);
+    if (error) throw error;
+    return (data ?? []).map((p: any) => ({
+      ...p,
+      variants: p.product_variants ?? p.variants ?? [],
+    })) as Product[];
+  }, 3, 600, `getProductsByCategory:${category}`);
 }
 
+/* ------------------- Reviews ------------------- */
 export async function getCustomerReviews(): Promise<CustomerReview[]> {
   return retryOperation(async () => {
     const { data, error } = await supabase
@@ -267,35 +198,33 @@ export async function getCustomerReviews(): Promise<CustomerReview[]> {
       .eq('active', true)
       .order('order', { ascending: true });
 
-    if (error) {
-      console.error('Error fetching customer reviews:', error);
-      toast.error('Failed to load customer reviews. Please try again.');
-      throw error;
-    }
-
-    if (!data) {
-      console.log('No customer reviews found');
-      return [];
-    }
-
-    return data;
-  }, 3, 1000, 'getCustomerReviews');
+    if (error) throw error;
+    return data ?? [];
+  }, 3, 600, 'getCustomerReviews');
 }
 
+/* ------------------- Auth helpers ------------------- */
 export async function isAuthenticated(): Promise<boolean> {
   try {
-    const { data: { session }, error } = await supabase.auth.getSession();
-    if (error) {
-      console.error('Error checking authentication:', error);
-      throw error;
-    }
-    return !!session;
-  } catch (error) {
-    console.error('Error checking authentication:', error);
+    const { data, error } = await supabase.auth.getSession();
+    if (error) throw error;
+    return !!data.session;
+  } catch {
     return false;
   }
 }
 
+export async function getCurrentUser() {
+  try {
+    const { data, error } = await supabase.auth.getUser();
+    if (error) throw error;
+    return data.user ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/* ------------------- Quiz / Navigation ------------------- */
 export async function getQuizSteps(): Promise<QuizStep[]> {
   return retryOperation(async () => {
     const { data, error } = await supabase
@@ -307,35 +236,15 @@ export async function getQuizSteps(): Promise<QuizStep[]> {
       .eq('is_active', true)
       .order('order_index', { ascending: true });
 
-    if (error) {
-      console.error('Error fetching quiz steps:', error);
-      throw error;
-    }
+    if (error) throw error;
 
-    // Transform data to include sorted options
-    const transformedData = (data || []).map(step => ({
+    return (data ?? []).map((step: any) => ({
       ...step,
-      options: (step.options || [])
-        .filter((option: any) => option.is_active)
-        .sort((a: any, b: any) => a.order_index - b.order_index)
-    }));
-
-    return transformedData;
-  }, 3, 1000, 'getQuizSteps');
-}
-
-export async function getCurrentUser() {
-  try {
-    const { data: { user }, error } = await supabase.auth.getUser();
-    if (error) {
-      console.error('Error getting current user:', error);
-      throw error;
-    }
-    return user;
-  } catch (error) {
-    console.error('Error getting current user:', error);
-    return null;
-  }
+      options: (step.options ?? [])
+        .filter((o: any) => o.is_active)
+        .sort((a: any, b: any) => a.order_index - b.order_index),
+    })) as QuizStep[];
+  }, 3, 600, 'getQuizSteps');
 }
 
 export async function getNavigationItems(): Promise<NavigationItem[]> {
@@ -346,11 +255,7 @@ export async function getNavigationItems(): Promise<NavigationItem[]> {
       .eq('is_active', true)
       .order('order_index', { ascending: true });
 
-    if (error) {
-      console.error('Error fetching navigation items:', error);
-      throw error;
-    }
-
-    return data || [];
-  }, 3, 1000, 'getNavigationItems');
+    if (error) throw error;
+    return data ?? [];
+  }, 3, 600, 'getNavigationItems');
 }
