@@ -34,7 +34,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({ isCatalogOpen, onToggleCata
       {/* Actions: phone + cart */}
       <div className="flex items-center space-x-4">
         <a
-          href="tel:+992905339595"
+          href="tel:88002004090"
           className="text-gray-600 hover:text-brand-turquoise"
           aria-label="Позвонить нам"
         >

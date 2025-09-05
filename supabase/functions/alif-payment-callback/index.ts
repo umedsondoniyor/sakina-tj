@@ -1,65 +1,61 @@
-// deno-lint-ignore-file no-explicit-any
 import { createClient } from 'npm:@supabase/supabase-js@2.39.7';
+import { createHmac } from 'node:crypto';
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-application-name',
   'Access-Control-Allow-Methods': 'POST, OPTIONS'
 };
 Deno.serve(async (req)=>{
-  // Preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', {
       headers: corsHeaders
     });
   }
-  // Only POST expected
-  if (req.method !== 'POST') {
-    return new Response(JSON.stringify({
-      success: false,
-      error: 'Method not allowed'
-    }), {
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'application/json'
-      },
-      status: 405
-    });
-  }
   try {
     const supabase = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');
-    const callbackData = await req.json().catch(()=>({}));
-    // Alif sample: { token, amount, status, account, orderId, transactionId, transaction_type }
-    const { orderId, status, transactionId } = callbackData || {};
-    console.log('🔁 Callback received (no-auth, no-token-verify):', {
-      orderId,
-      status,
-      transactionId
+    const alifSecretKey = Deno.env.get('ALIF_SECRET_KEY') ?? ''; // Password used to verify token
+    const callbackData = await req.json();
+    console.log('🔁 Callback received:', {
+      ...callbackData,
+      token: callbackData.token ? '[HIDDEN]' : undefined
     });
-    // Minimal required fields
-    if (!orderId || !status) {
-      console.error('⚠️ Callback missing required fields:', {
-        orderId,
-        status
+    const { orderId, status, transactionId, token } = callbackData;
+    if (!token || !orderId || !status || !transactionId) {
+      throw new Error('Missing required callback fields');
+    }
+    // ✅ Token verification using correct logic: HMAC256(orderId + status + transactionId, password)
+    const tokenString = `${orderId}${status}${transactionId}`;
+    const expectedToken = createHmac('sha256', alifSecretKey).update(tokenString).digest('hex');
+    if (token !== expectedToken) {
+      console.error('❌ Invalid token:', {
+        received: token,
+        expected: expectedToken
       });
-      // Still ACK with 200 so Alif does not retry
       return new Response(JSON.stringify({
-        success: true,
-        message: 'ACK (missing fields logged)'
+        success: false,
+        error: 'Invalid token - callback rejected'
       }), {
         headers: {
           ...corsHeaders,
           'Content-Type': 'application/json'
         },
-        status: 200
+        status: 401
       });
     }
-    // Map Alif status → internal status
+    console.log('✅ Callback token verified successfully');
+    // 🔍 Fetch payment from Supabase
+    const { data: payment, error: paymentError } = await supabase.from('payments').select('*').eq('alif_order_id', orderId).single();
+    if (paymentError || !payment) {
+      console.error('❌ Payment not found:', paymentError);
+      throw new Error('Payment record not found');
+    }
+    // 🔄 Map Alif status to internal payment status
     let paymentStatus = 'failed';
-    switch(String(status).toLowerCase()){
-      case 'ok':
+    switch(status?.toLowerCase()){
       case 'success':
       case 'approved':
       case 'paid':
+      case 'complete':
         paymentStatus = 'completed';
         break;
       case 'pending':
@@ -78,57 +74,29 @@ Deno.serve(async (req)=>{
       case 'error':
       case 'declined':
       case 'rejected':
-      default:
         paymentStatus = 'failed';
         break;
+      default:
+        paymentStatus = 'failed';
+        console.warn('⚠️ Unknown callback status received:', status);
     }
-    // Find payment by alif_order_id
-    const { data: payment, error: paymentError } = await supabase.from('payments').select('*').eq('alif_order_id', orderId).single();
-    if (paymentError || !payment) {
-      console.error('❌ Payment not found for orderId:', orderId, paymentError);
-      // Still ACK; we don’t want Alif to retry forever
-      return new Response(JSON.stringify({
-        success: true,
-        message: 'ACK (payment not found; logged)',
-        order_id: orderId,
-        status: paymentStatus
-      }), {
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json'
-        },
-        status: 200
-      });
-    }
-    // Update payment (idempotent)
+    // 💾 Update the payment record in Supabase
     const { error: updateError } = await supabase.from('payments').update({
       status: paymentStatus,
-      alif_transaction_id: transactionId ?? payment.alif_transaction_id ?? null,
+      alif_transaction_id: transactionId,
       alif_callback_payload: callbackData,
       updated_at: new Date().toISOString()
     }).eq('id', payment.id);
     if (updateError) {
       console.error('❌ Failed to update payment record:', updateError);
-      // Still ACK to prevent retries
-      return new Response(JSON.stringify({
-        success: true,
-        message: 'ACK (update failed; logged)',
-        order_id: orderId,
-        status: paymentStatus
-      }), {
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json'
-        },
-        status: 200
-      });
+      throw new Error('Failed to update payment');
     }
-    // ✅ Success
+    // ✅ Respond to Alif with success
     return new Response(JSON.stringify({
       success: true,
-      message: 'Callback processed',
-      order_id: orderId,
-      status: paymentStatus
+      message: 'Callback processed successfully',
+      status: paymentStatus,
+      order_id: orderId
     }), {
       headers: {
         ...corsHeaders,
@@ -138,10 +106,9 @@ Deno.serve(async (req)=>{
     });
   } catch (err) {
     console.error('🔥 Callback processing error:', err);
-    // Still ACK to avoid retries
     return new Response(JSON.stringify({
-      success: true,
-      message: 'ACK (exception logged)'
+      success: false,
+      error: err.message
     }), {
       headers: {
         ...corsHeaders,
