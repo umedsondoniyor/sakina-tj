@@ -115,7 +115,7 @@ const CatalogMenu: React.FC<CatalogMenuProps> = ({ isOpen, onClose }) => {
                     {section.items.map((label) => (
                       <button
                         key={label}
-                        onClick={() => goToProducts(section.title, label)}     {/* ⬅️ navigate */}
+                        onClick={() => goToProducts(section.title, label)}
                         className="flex items-center justify-between w-full text-left text-gray-700 hover:text-teal-600"
                       >
                         <span>{label}</span>
