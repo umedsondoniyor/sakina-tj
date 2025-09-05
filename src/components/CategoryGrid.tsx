@@ -8,7 +8,7 @@ const categories = [
   { id: 1, name: 'Матрасы', image: 'https://ik.imagekit.io/3js0rb3pk/categ_matress.png', slug: 'mattresses' },
   { id: 2, name: 'Кровати', image: 'https://ik.imagekit.io/3js0rb3pk/categ_bed.png', slug: 'beds', link: '/products?category=beds' },
   { id: 3, name: 'Одеяло', image: 'https://ik.imagekit.io/3js0rb3pk/categ_blanket.png', slug: 'blankets' },
-  { id: 4, name: 'Массажное кресло', image: '/images/smart-chair-b.png', slug: 'massage-chairs' },
+  { id: 4, name: 'Массажное кресло', image: '/images/smart-chair-b.png', slug: 'smartchair' },
   { id: 5, name: 'Подушки', image: 'https://ik.imagekit.io/3js0rb3pk/categ_pillow.png', slug: 'pillows', link: '/products?category=pillows' },
   { id: 6, name: 'Деревянные 3D-карты', image: 'https://ik.imagekit.io/3js0rb3pk/categ_map.png', slug: 'world-maps', link: '/products?category=map' },
 ];
