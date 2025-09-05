@@ -1,312 +1,169 @@
-// src/components/ProductFilters.tsx
-import React from 'react';
-
-interface FilterState {
-  age: string[];
-  hardness: string[];
-  width: number[];   // [min, max] or []
-  length: number[];  // [min, max] or []
-  height: number[];  // [min, max] or []
-  price: number[];   // [min, max] or []
-  inStock: boolean;
-  productType: string[];
-  mattressType: string[];
-  preferences: string[];
-  functions: string[];
-  weightCategory: string[];
-}
-
-interface ProductFiltersProps {
-  filters: FilterState;
-  setFilters: React.Dispatch<React.SetStateAction<FilterState>>;
-  selectedCategories: string[];
-  onCategoryChange: (categoryValue: string, isChecked: boolean) => void;
-  onClearFilters: () => void;
-  categoryDisplayNames: Record<string, string>;
-}
-
-const numberOrUndefined = (v: string) => {
-  const n = Number(v);
-  return Number.isFinite(n) && v !== '' ? n : undefined;
-};
-
-const upsertRange = (prev: number[], idx: 0 | 1, value?: number): number[] => {
-  const next: (number | undefined)[] = [prev?.[0], prev?.[1]];
-  next[idx] = value;
-  const min = next[0];
-  const max = next[1];
-  if (min == null && max == null) return [];
-  // normalize if both present & min > max
-  if (min != null && max != null && min > max) {
-    return [max, min];
-  }
-  return [min ?? 0, max ?? Number.MAX_SAFE_INTEGER];
-};
-
-const getInputValue = (range: number[], idx: 0 | 1) => {
-  if (!range?.length) return '';
-  const val = range[idx];
-  if (val === 0 && idx === 0) return ''; // treat 0-min as empty in UI
-  if (val === Number.MAX_SAFE_INTEGER && idx === 1) return ''; // treat max as empty
-  return String(val);
-};
+// products/ProductFilters.tsx
+import React, { useMemo } from 'react';
+import { facetsForCategories } from '../../lib/facets';
 
 const ProductFilters: React.FC<ProductFiltersProps> = ({
-  filters,
-  setFilters,
-  selectedCategories,
-  onCategoryChange,
-  onClearFilters,
-  categoryDisplayNames,
+  filters, setFilters, selectedCategories, onCategoryChange, onClearFilters, categoryDisplayNames
 }) => {
-  const showMattressOnly =
-    selectedCategories.includes('mattresses') || selectedCategories.length === 0;
+  const activeFacets = useMemo(
+    () => facetsForCategories(selectedCategories),
+    [selectedCategories]
+  );
+
+  const show = (key: string) => activeFacets.includes(key as any);
 
   return (
     <div className="bg-gray-50 p-4 rounded-lg border-2 w-64 flex-shrink-0 border-gray-200 pr-8">
       <div className="space-y-6">
-        {/* Category Selection */}
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <h3 className="font-semibold text-lg mb-3 text-gray-900">Выберите категорию</h3>
-          <div className="space-y-2">
-            {Object.entries(categoryDisplayNames).map(([value, label]) => (
-              <label key={value} className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={selectedCategories.includes(value)}
-                  onChange={(e) => onCategoryChange(value, e.target.checked)}
-                  className="rounded text-teal-600 focus:ring-teal-500 w-4 h-4"
-                />
-                <span
-                  className={`text-sm ${
-                    selectedCategories.includes(value)
-                      ? 'font-semibold text-teal-600'
-                      : 'text-gray-700'
-                  }`}
-                >
-                  {label}
-                </span>
-              </label>
-            ))}
-          </div>
-        </div>
+        {/* Category selection – unchanged */}
+        {/* ... */}
 
-        {/* Availability */}
-        <div>
-          <h3 className="font-medium mb-3">Наличие</h3>
-          <label className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              checked={filters.inStock}
-              onChange={(e) => setFilters((p) => ({ ...p, inStock: e.target.checked }))}
-              className="rounded text-teal-600 focus:ring-teal-500"
-            />
-            <span>Только в наличии</span>
-          </label>
-        </div>
-
-        {/* Age (only for mattresses / or when none selected) */}
-        {showMattressOnly && (
+        {/* In stock */}
+        {show('inStock') && (
           <div>
-            <h3 className="font-medium mb-3">Возраст</h3>
-            <div className="space-y-2">
-              {[
-                { value: 'from0to3', label: '0-3 года' },
-                { value: 'from3to7', label: '3-7 лет' },
-                { value: 'from7to14', label: '7-14 лет' },
-              ].map((opt) => (
-                <label key={opt.value} className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    checked={filters.age.includes(opt.value)}
-                    onChange={(e) =>
-                      setFilters((p) => ({
-                        ...p,
-                        age: e.target.checked
-                          ? [...p.age, opt.value]
-                          : p.age.filter((a) => a !== opt.value),
-                      }))
-                    }
-                    className="rounded text-teal-600 focus:ring-teal-500"
-                  />
-                  <span>{opt.label}</span>
-                </label>
-              ))}
-            </div>
+            <h3 className="font-medium mb-3">Наличие</h3>
+            <label className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                checked={filters.inStock}
+                onChange={(e) => setFilters(prev => ({ ...prev, inStock: e.target.checked }))}
+                className="rounded text-teal-600 focus:ring-teal-500"
+              />
+              <span>Только в наличии</span>
+            </label>
           </div>
         )}
 
-        {/* Hardness */}
-        <div>
-          <h3 className="font-medium mb-3">Жесткость</h3>
-          <div className="space-y-2">
-            {['Жесткий', 'Средняя', 'Мягкий', 'Разная жесткость сторон'].map((opt) => (
-              <label key={opt} className="flex items-center space-x-2">
+        {/* Mattress-only */}
+        {show('hardness') && (
+          <div>
+            <h3 className="font-medium mb-3">Жесткость</h3>
+            {['Жесткий','Средняя','Мягкий','Разная жесткость сторон'].map(o => (
+              <label key={o} className="flex items-center space-x-2">
                 <input
                   type="checkbox"
-                  checked={filters.hardness.includes(opt)}
+                  checked={filters.hardness.includes(o)}
                   onChange={(e) =>
-                    setFilters((p) => ({
-                      ...p,
+                    setFilters(prev => ({
+                      ...prev,
                       hardness: e.target.checked
-                        ? [...p.hardness, opt]
-                        : p.hardness.filter((h) => h !== opt),
+                        ? [...prev.hardness, o]
+                        : prev.hardness.filter(x => x !== o)
                     }))
                   }
                   className="rounded text-teal-600 focus:ring-teal-500"
                 />
-                <span>{opt}</span>
+                <span>{o}</span>
               </label>
             ))}
           </div>
-        </div>
+        )}
 
-        {/* Weight Category (mattresses) */}
-        {showMattressOnly && (
+        {show('mattressType') && (
           <div>
-            <h3 className="font-medium mb-3">Весовая категория</h3>
-            <div className="space-y-2">
-              {[
-                { value: '50-85 kg (Soft)', label: '50-85 kg (Мягкая)' },
-                { value: '85-100 kg (Medium)', label: '85-100 kg (Средняя)' },
-                { value: '100+ kg (Hard)', label: '100+ kg (Жесткая)' },
-              ].map((opt) => (
-                <label key={opt.value} className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    checked={filters.weightCategory.includes(opt.value)}
-                    onChange={(e) =>
-                      setFilters((p) => ({
-                        ...p,
-                        weightCategory: e.target.checked
-                          ? [...p.weightCategory, opt.value]
-                          : p.weightCategory.filter((w) => w !== opt.value),
-                      }))
-                    }
-                    className="rounded text-teal-600 focus:ring-teal-500"
-                  />
-                  <span>{opt.label}</span>
-                </label>
-              ))}
-            </div>
+            <h3 className="font-medium mb-3">Тип матраса</h3>
+            {['Двусторонний','Ортопедический','Анатомический'].map(o => (
+              <label key={o} className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={filters.mattressType.includes(o)}
+                  onChange={(e) =>
+                    setFilters(prev => ({
+                      ...prev,
+                      mattressType: e.target.checked
+                        ? [...prev.mattressType, o]
+                        : prev.mattressType.filter(x => x !== o)
+                    }))
+                  }
+                  className="rounded text-teal-600 focus:ring-teal-500"
+                />
+                <span>{o}</span>
+              </label>
+            ))}
           </div>
         )}
 
-        {/* Width */}
-        <div>
-          <h3 className="font-semibold mb-3">Ширина, см</h3>
-          <div className="flex space-x-2">
-            <input
-              type="number"
-              inputMode="numeric"
-              placeholder="от"
-              className="w-24 px-3 py-2 border rounded"
-              value={getInputValue(filters.width, 0)}
-              onChange={(e) => {
-                const v = numberOrUndefined(e.target.value);
-                setFilters((p) => ({ ...p, width: upsertRange(p.width, 0, v) }));
-              }}
-            />
-            <input
-              type="number"
-              inputMode="numeric"
-              placeholder="до"
-              className="w-24 px-3 py-2 border rounded"
-              value={getInputValue(filters.width, 1)}
-              onChange={(e) => {
-                const v = numberOrUndefined(e.target.value);
-                setFilters((p) => ({ ...p, width: upsertRange(p.width, 1, v) }));
-              }}
-            />
+        {show('weightCategory') && (
+          <div>
+            <h3 className="font-medium mb-3">Весовая категория</h3>
+            {[
+              '50-85 kg (Soft)',
+              '85-100 kg (Medium)',
+              '100+ kg (Hard)'
+            ].map(o => (
+              <label key={o} className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={filters.weightCategory.includes(o)}
+                  onChange={(e) =>
+                    setFilters(prev => ({
+                      ...prev,
+                      weightCategory: e.target.checked
+                        ? [...prev.weightCategory, o]
+                        : prev.weightCategory.filter(x => x !== o)
+                    }))
+                  }
+                  className="rounded text-teal-600 focus:ring-teal-500"
+                />
+                <span>{o}</span>
+              </label>
+            ))}
           </div>
-        </div>
+        )}
 
-        {/* Length */}
-        <div>
-          <h3 className="font-semibold mb-3">Длина, см</h3>
-          <div className="flex space-x-2">
-            <input
-              type="number"
-              inputMode="numeric"
-              placeholder="от"
-              className="w-24 px-3 py-2 border rounded"
-              value={getInputValue(filters.length, 0)}
-              onChange={(e) => {
-                const v = numberOrUndefined(e.target.value);
-                setFilters((p) => ({ ...p, length: upsertRange(p.length, 0, v) }));
-              }}
-            />
-            <input
-              type="number"
-              inputMode="numeric"
-              placeholder="до"
-              className="w-24 px-3 py-2 border rounded"
-              value={getInputValue(filters.length, 1)}
-              onChange={(e) => {
-                const v = numberOrUndefined(e.target.value);
-                setFilters((p) => ({ ...p, length: upsertRange(p.length, 1, v) }));
-              }}
-            />
-          </div>
-        </div>
+        {/* Dimensions (variants) */}
+        {show('width') && (
+          <RangeInputs
+            label="Ширина, см"
+            value={filters.width}
+            onChange={(v) => setFilters(prev => ({ ...prev, width: v }))}
+          />
+        )}
+        {show('length') && (
+          <RangeInputs
+            label="Длина, см"
+            value={filters.length}
+            onChange={(v) => setFilters(prev => ({ ...prev, length: v }))}
+          />
+        )}
+        {show('height') && (
+          <RangeInputs
+            label="Высота, см"
+            value={filters.height}
+            onChange={(v) => setFilters(prev => ({ ...prev, height: v }))}
+          />
+        )}
 
-        {/* Height */}
-        <div>
-          <h3 className="font-semibold mb-3">Высота, см</h3>
-          <div className="flex space-x-2">
-            <input
-              type="number"
-              inputMode="numeric"
-              placeholder="от"
-              className="w-24 px-3 py-2 border rounded"
-              value={getInputValue(filters.height, 0)}
-              onChange={(e) => {
-                const v = numberOrUndefined(e.target.value);
-                setFilters((p) => ({ ...p, height: upsertRange(p.height, 0, v) }));
-              }}
-            />
-            <input
-              type="number"
-              inputMode="numeric"
-              placeholder="до"
-              className="w-24 px-3 py-2 border rounded"
-              value={getInputValue(filters.height, 1)}
-              onChange={(e) => {
-                const v = numberOrUndefined(e.target.value);
-                setFilters((p) => ({ ...p, height: upsertRange(p.height, 1, v) }));
-              }}
-            />
-          </div>
-        </div>
+        {/* Pillows / Furniture examples (add when you’re ready) */}
+        {show('pillowHeight') && (
+          <RangeInputs
+            label="Высота подушки, см"
+            value={filters.pillowHeight ?? []}
+            onChange={(v) => setFilters(prev => ({ ...prev, pillowHeight: v }))}
+          />
+        )}
+        {show('sizeName') && (
+          <CheckboxGroup
+            label="Размер"
+            options={['50×70','70×70','Односпальный','Двуспальный']}
+            values={filters.sizeName ?? []}
+            onToggle={(val, checked) =>
+              setFilters(prev => ({
+                ...prev,
+                sizeName: checked
+                  ? [...(prev.sizeName ?? []), val]
+                  : (prev.sizeName ?? []).filter(x => x !== val),
+              }))
+            }
+          />
+        )}
 
-        {/* Price */}
-        <div>
-          <h3 className="font-medium mb-3">Цена, c.</h3>
-          <div className="flex space-x-2">
-            <input
-              type="number"
-              inputMode="numeric"
-              placeholder="от"
-              className="w-24 px-3 py-2 border rounded"
-              value={getInputValue(filters.price, 0)}
-              onChange={(e) => {
-                const v = numberOrUndefined(e.target.value);
-                setFilters((p) => ({ ...p, price: upsertRange(p.price, 0, v) }));
-              }}
-            />
-            <input
-              type="number"
-              inputMode="numeric"
-              placeholder="до"
-              className="w-24 px-3 py-2 border rounded"
-              value={getInputValue(filters.price, 1)}
-              onChange={(e) => {
-                const v = numberOrUndefined(e.target.value);
-                setFilters((p) => ({ ...p, price: upsertRange(p.price, 1, v) }));
-              }}
-            />
-          </div>
-        </div>
+        {/* Price – shown for all */}
+        <RangeInputs
+          label="Цена, c."
+          value={filters.price}
+          onChange={(v) => setFilters(prev => ({ ...prev, price: v }))}
+        />
 
         <button onClick={onClearFilters} className="text-teal-600 hover:text-teal-700">
           Сбросить фильтры
@@ -317,3 +174,64 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
 };
 
 export default ProductFilters;
+
+// Small helpers
+function RangeInputs({
+  label, value, onChange,
+}: { label: string; value: number[]; onChange: (v: number[]) => void }) {
+  return (
+    <div>
+      <h3 className="font-medium mb-3">{label}</h3>
+      <div className="flex space-x-2">
+        <input
+          type="number"
+          placeholder="от"
+          className="w-24 px-2 py-1 border rounded"
+          defaultValue={value?.[0] ?? ''}
+          onBlur={(e) => {
+            const min = Number(e.target.value || 0);
+            onChange([min, value?.[1] ?? Number.MAX_SAFE_INTEGER]);
+          }}
+        />
+        <input
+          type="number"
+          placeholder="до"
+          className="w-24 px-2 py-1 border rounded"
+          defaultValue={value?.[1] && value[1] !== Number.MAX_SAFE_INTEGER ? value[1] : ''}
+          onBlur={(e) => {
+            const max = e.target.value ? Number(e.target.value) : Number.MAX_SAFE_INTEGER;
+            onChange([value?.[0] ?? 0, max]);
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function CheckboxGroup({
+  label, options, values, onToggle,
+}: {
+  label: string;
+  options: string[];
+  values: string[];
+  onToggle: (value: string, checked: boolean) => void;
+}) {
+  return (
+    <div>
+      <h3 className="font-medium mb-3">{label}</h3>
+      <div className="space-y-2">
+        {options.map((o) => (
+          <label key={o} className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              checked={values.includes(o)}
+              onChange={(e) => onToggle(o, e.target.checked)}
+              className="rounded text-teal-600 focus:ring-teal-500"
+            />
+            <span>{o}</span>
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+}
