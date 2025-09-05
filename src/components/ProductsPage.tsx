@@ -358,7 +358,7 @@ const ProductsPage: React.FC = () => {
                 setFilters={setFilters}
                 selectedCategories={selectedCategories}
                 onCategoryChange={handleCategoryChange}
-                onClearFilters={clearFilters}   {/* ← now this truly clears only non-category filters */}
+                onClearFilters={clearFilters} 
                 categoryDisplayNames={categoryDisplayNames}
               />
             </div>
