@@ -1,7 +1,8 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+// src/components/ProductsPage.tsx
+import React from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { PackageOpen } from 'lucide-react';
-import { getProducts } from '../lib/api';
+import { supabase } from '../lib/supabaseClient';
 import type { Product } from '../lib/types';
 
 import ProductGrid from './products/ProductGrid';
@@ -12,20 +13,20 @@ import MobileFilterBar from './products/MobileFilterBar';
 import QuickFilters from './products/QuickFilters';
 import CategoryAlert from './products/CategoryAlert';
 
-interface FilterState {
+type FilterState = {
   age: string[];
   hardness: string[];
-  width: number[];      // [min,max] (optional)
-  length: number[];     // [min,max] (optional)
-  height: number[];     // [min,max] (optional)
-  price: number[];      // [min,max] (optional)
+  width: number[];   // [min,max]
+  length: number[];  // [min,max]
+  height: number[];  // [min,max]
+  price: number[];   // [min,max]
   inStock: boolean;
-  productType: string[]; // selected categories
+  productType: string[];   // selected categories
   mattressType: string[];
-  preferences: string[];
-  functions: string[];
+  preferences: string[];   // (not used server-side now)
+  functions: string[];     // (not used server-side now)
   weightCategory: string[];
-}
+};
 
 const categoryDisplayNames: Record<string, string> = {
   mattresses: 'Матрасы',
@@ -37,46 +38,60 @@ const categoryDisplayNames: Record<string, string> = {
   furniture: 'Мебель',
 };
 
-const inRange = (val: number | undefined, range?: number[]) => {
-  if (val == null) return false;
-  if (!range || range.length < 2) return true;
-  const [min, max] = range;
-  if (typeof min === 'number' && val < min) return false;
-  if (typeof max === 'number' && val > max) return false;
-  return true;
+// ---------- Helpers ----------
+const urlSelectedCategories = (
+  location: ReturnType<typeof useLocation>,
+  searchParams: URLSearchParams
+) => {
+  const st = location.state as any;
+  if (st?.selectedCategories) return st.selectedCategories as string[];
+  const single = searchParams.get('category');
+  return single ? [single] : [];
 };
 
-const hasAny = (arr?: any[]) => Array.isArray(arr) && arr.length > 0;
+type VariantRow = {
+  id: string;
+  product_id: string;
+  size_name: string;
+  size_type: string;
+  height_cm: number | null;
+  width_cm: number | null;
+  length_cm: number | null;
+  price: number;
+  old_price: number | null;
+  display_order: number | null;
+  // joins
+  products: Product;
+  inventory?: { in_stock: boolean; stock_quantity: number | null }[] | null;
+};
+
+type Item = {
+  product: Product;
+  variants: VariantRow[];
+  primary: VariantRow; // variant chosen to display price/size
+};
+
+// Choose which variant becomes the “primary” for a product card
+const choosePrimary = (variants: VariantRow, all: VariantRow[]) => {
+  return all.slice().sort((a, b) => Number(a.price) - Number(b.price))[0];
+};
 
 const ProductsPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [sp] = useSearchParams();
 
-  // --- Derive "URL categories" EXACTLY from URL/state. Changes only when URL/state change.
-  const urlSelectedCategories = useMemo<string[]>(() => {
-    const st = location.state as any;
-    if (st?.selectedCategories) return st.selectedCategories as string[];
+  // Read initial categories from URL (or location.state)
+  const initialCats = React.useMemo(() => urlSelectedCategories(location, sp), [location.key, sp.toString()]);
 
-    const categoryParam = searchParams.get('category');
-    if (categoryParam) return [categoryParam];
+  // UI state
+  const [showFilters, setShowFilters] = React.useState(false);
+  const [showSortModal, setShowSortModal] = React.useState(false);
+  const [sortBy, setSortBy] = React.useState<string>((location.state as any)?.sortBy || 'popularity');
 
-    return [];
-    // Depend on URL identity; location.key changes on navigation, and search string change too.
-  }, [location.key, searchParams.toString()]);
-
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error,   setError]   = useState<string | null>(null);
-
-  // This is the "live" category selection (from URL or from sidebar).
-  const [selectedCategories, setSelectedCategories] = useState<string[]>(urlSelectedCategories);
-
-  const [showFilters, setShowFilters]     = useState(false);
-  const [showSortModal, setShowSortModal] = useState(false);
-  const [sortBy, setSortBy]               = useState<string>((location.state as any)?.sortBy || 'popularity');
-
-  const [filters, setFilters] = useState<FilterState>({
+  // Filters
+  const [selectedCategories, setSelectedCategories] = React.useState<string[]>(initialCats);
+  const [filters, setFilters] = React.useState<FilterState>({
     age: [],
     hardness: [],
     width: [],
@@ -84,154 +99,207 @@ const ProductsPage: React.FC = () => {
     height: [],
     price: [],
     inStock: false,
-    productType: urlSelectedCategories,
+    productType: initialCats,
     mattressType: [],
     preferences: [],
     functions: [],
     weightCategory: [],
   });
 
-  // Load products once
-  useEffect(() => {
+  // Data
+  const [items, setItems] = React.useState<Item[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+
+  // Keep sidebar categories in sync when URL-based categories change
+  React.useEffect(() => {
+    setSelectedCategories(initialCats);
+    setFilters(prev => ({ ...prev, productType: initialCats }));
+  }, [initialCats]);
+
+  // Load from Supabase whenever filters or categories change
+  React.useEffect(() => {
+    let cancelled = false;
+
     (async () => {
       try {
         setLoading(true);
         setError(null);
-        const data = await getProducts();
-        setProducts(Array.isArray(data) ? data : []);
-      } catch (err) {
-        console.error(err);
-        setError('Failed to load products');
+
+        // ----- Base select with joins -----
+        // NOTE: use !inner on products so category filter works at the same query
+        let q = supabase
+          .from('product_variants')
+          .select(
+            `
+              *,
+              products!inner(*),
+              inventory(in_stock, stock_quantity)
+            `
+          )
+          .order('display_order', { ascending: true }) as any;
+
+        // ----- Category (products.category) -----
+        if (filters.productType?.length) {
+          q = q.in('products.category', filters.productType);
+        }
+
+        // ----- Hardness (products.hardness) -----
+        if (filters.hardness?.length) {
+          q = q.in('products.hardness', filters.hardness);
+        }
+
+        // ----- Mattress type (products.mattress_type) -----
+        if (filters.mattressType?.length) {
+          q = q.in('products.mattress_type', filters.mattressType);
+        }
+
+        // ----- Weight category (products.weight_category) -----
+        if (filters.weightCategory?.length) {
+          q = q.in('products.weight_category', filters.weightCategory);
+        }
+
+        // ----- In stock (inventory.in_stock) -----
+        if (filters.inStock) {
+          // When filtering by a joined table, inner join is safer:
+          // do an additional filter that at least one joined inventory row is in_stock=true.
+          q = q.eq('inventory.in_stock', true);
+        }
+
+        // ----- Variant numeric ranges -----
+        if (filters.width?.length === 2) {
+          const [min, max] = filters.width;
+          if (Number.isFinite(min)) q = q.gte('width_cm', min);
+          if (Number.isFinite(max)) q = q.lte('width_cm', max);
+        }
+        if (filters.length?.length === 2) {
+          const [min, max] = filters.length;
+          if (Number.isFinite(min)) q = q.gte('length_cm', min);
+          if (Number.isFinite(max)) q = q.lte('length_cm', max);
+        }
+        if (filters.height?.length === 2) {
+          const [min, max] = filters.height;
+          if (Number.isFinite(min)) q = q.gte('height_cm', min);
+          if (Number.isFinite(max)) q = q.lte('height_cm', max);
+        }
+
+        // ----- Price range (by variant price) -----
+        if (filters.price?.length === 2) {
+          const [min, max] = filters.price;
+          if (Number.isFinite(min)) q = q.gte('price', min);
+          if (Number.isFinite(max)) q = q.lte('price', max);
+        }
+
+        const { data, error } = await q;
+        if (error) throw error;
+
+        const rows = (data ?? []) as VariantRow[];
+
+        // Group by product_id
+        const byProduct = new Map<string, { product: Product; variants: VariantRow[] }>();
+        for (const r of rows) {
+          const key = r.product_id;
+          const existing = byProduct.get(key);
+          if (existing) {
+            existing.variants.push(r);
+          } else {
+            byProduct.set(key, { product: r.products, variants: [r] });
+          }
+        }
+
+        const grouped: Item[] = Array.from(byProduct.values()).map(({ product, variants }) => ({
+          product,
+          variants,
+          primary: choosePrimary(variants[0], variants),
+        }));
+
+        if (cancelled) return;
+
+        // Sorting — apply to product cards level
+        let sorted = grouped.slice();
+
+        const discountValue = (p: Item) => {
+          const cur = p.primary;
+          if (cur.old_price && cur.price) return Number(cur.old_price) - Number(cur.price);
+          if (p.product.sale_percentage) return p.product.sale_percentage;
+          return 0;
+        };
+
+        switch (sortBy) {
+          case 'price-asc':
+            sorted.sort((a, b) => Number(a.primary.price) - Number(b.primary.price));
+            break;
+          case 'price-desc':
+            sorted.sort((a, b) => Number(b.primary.price) - Number(a.primary.price));
+            break;
+          case 'rating':
+            sorted.sort((a, b) => Number(b.product.rating ?? 0) - Number(a.product.rating ?? 0));
+            break;
+          case 'reviews':
+            sorted.sort((a, b) => Number(b.product.review_count ?? 0) - Number(a.product.review_count ?? 0));
+            break;
+          case 'new':
+            sorted.sort(
+              (a, b) =>
+                new Date(b.product.created_at as any).getTime() -
+                new Date(a.product.created_at as any).getTime()
+            );
+            break;
+          case 'in-stock':
+            sorted.sort((a, b) => {
+              const av = a.variants.some(v => v.inventory?.some(i => i.in_stock)) ? 1 : 0;
+              const bv = b.variants.some(v => v.inventory?.some(i => i.in_stock)) ? 1 : 0;
+              if (bv !== av) return bv - av;
+              // tie-break by popularity
+              const ap = (a.product.review_count ?? 0) * (a.product.rating ?? 0);
+              const bp = (b.product.review_count ?? 0) * (b.product.rating ?? 0);
+              return bp - ap;
+            });
+            break;
+          case 'discount':
+            sorted.sort((a, b) => discountValue(b) - discountValue(a));
+            break;
+          default: {
+            // popularity
+            sorted.sort((a, b) => {
+              const ap = (a.product.review_count ?? 0) * (a.product.rating ?? 0);
+              const bp = (b.product.review_count ?? 0) * (b.product.rating ?? 0);
+              return bp - ap;
+            });
+          }
+        }
+
+        setItems(sorted);
+      } catch (e: any) {
+        console.error(e);
+        if (!cancelled) {
+          setItems([]);
+          setError(e?.message ?? 'Не удалось загрузить товары');
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     })();
-  }, []);
 
-  // ONE-WAY sync: when URL categories change, adopt them.
-  useEffect(() => {
-    setSelectedCategories(urlSelectedCategories);
-    setFilters(prev => ({ ...prev, productType: urlSelectedCategories }));
-  }, [urlSelectedCategories]);
-
-  // Filtering + sorting
-  const filteredProducts = useMemo(() => {
-    if (!products.length) return [];
-
-    let list = products.slice();
-
-    // Categories
-    if (hasAny(selectedCategories)) {
-      list = list.filter(p => selectedCategories.includes(p.category));
-    }
-
-    // Age (string)
-    if (hasAny(filters.age)) {
-      list = list.filter(p => (p as any).age && filters.age.includes((p as any).age));
-    }
-
-    // Hardness (string)
-    if (hasAny(filters.hardness)) {
-      list = list.filter(p => p.hardness && filters.hardness.includes(p.hardness));
-    }
-
-    // Weight category (string)
-    if (hasAny(filters.weightCategory)) {
-      list = list.filter(p => p.weight_category && filters.weightCategory.includes(p.weight_category));
-    }
-
-    // Mattress type (string)
-    if (hasAny(filters.mattressType)) {
-      const key = (p: Product) => (p as any).mattress_type || (p as any).mattressType;
-      list = list.filter(p => {
-        const mt = key(p);
-        return mt && filters.mattressType.includes(mt);
-      });
-    }
-
-    // Preferences/functions (arrays)
-    if (hasAny(filters.preferences)) {
-      list = list.filter(p =>
-        Array.isArray((p as any).preferences) &&
-        (p as any).preferences.some((x: string) => filters.preferences.includes(x))
-      );
-    }
-    if (hasAny(filters.functions)) {
-      list = list.filter(p =>
-        Array.isArray((p as any).functions) &&
-        (p as any).functions.some((x: string) => filters.functions.includes(x))
-      );
-    }
-
-    // In stock
-    if (filters.inStock) {
-      list = list.filter(p => p.variants?.some(v => v.inventory?.in_stock));
-    }
-
-    // Numeric ranges (apply only if [min,max] is set)
-    if (filters.width.length === 2)  list = list.filter(p => inRange((p as any).width,  filters.width));
-    if (filters.length.length === 2) list = list.filter(p => inRange((p as any).length, filters.length));
-    if (filters.height.length === 2) list = list.filter(p => inRange((p as any).height, filters.height));
-    if (filters.price.length === 2)  list = list.filter(p => inRange(p.price,                     filters.price));
-
-    // Sort
-    const discountValue = (p: Product) => {
-      if (p.old_price && p.price) return p.old_price - p.price;
-      if ((p as any).sale_percentage) return (p as any).sale_percentage;
-      return 0;
+    return () => {
+      cancelled = true;
     };
+  }, [filters, selectedCategories, sortBy]);
 
-    switch (sortBy) {
-      case 'price-asc':
-        list.sort((a, b) => (a.price ?? 0) - (b.price ?? 0));
-        break;
-      case 'price-desc':
-        list.sort((a, b) => (b.price ?? 0) - (a.price ?? 0));
-        break;
-      case 'rating':
-        list.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
-        break;
-      case 'reviews':
-        list.sort((a, b) => (b.review_count ?? 0) - (a.review_count ?? 0));
-        break;
-      case 'new':
-        list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-        break;
-      case 'in-stock':
-        list.sort((a, b) => {
-          const av = a.variants?.some(v => v.inventory?.in_stock) ? 1 : 0;
-          const bv = b.variants?.some(v => v.inventory?.in_stock) ? 1 : 0;
-          if (bv !== av) return bv - av;
-          const ap = (a.review_count ?? 0) * (a.rating ?? 0);
-          const bp = (b.review_count ?? 0) * (b.rating ?? 0);
-          return bp - ap;
-        });
-        break;
-      case 'discount':
-        list.sort((a, b) => discountValue(b) - discountValue(a));
-        break;
-      default: // popularity
-        list.sort((a, b) => {
-          const ap = (a.review_count ?? 0) * (a.rating ?? 0);
-          const bp = (b.review_count ?? 0) * (b.rating ?? 0);
-          return bp - ap;
-        });
-    }
+  // Category change from sidebar
+  const handleCategoryChange = React.useCallback(
+    (categoryValue: string, isChecked: boolean) => {
+      const next = isChecked
+        ? Array.from(new Set([...selectedCategories, categoryValue]))
+        : selectedCategories.filter(c => c !== categoryValue);
 
-    return list;
-  }, [products, selectedCategories, filters, sortBy]);
+      setSelectedCategories(next);
+      setFilters(prev => ({ ...prev, productType: next }));
+    },
+    [selectedCategories]
+  );
 
-  // Sidebar toggles (state only; URL unchanged)
-  const handleCategoryChange = useCallback((categoryValue: string, isChecked: boolean) => {
-    const newCategories = isChecked
-      ? [...selectedCategories, categoryValue]
-      : selectedCategories.filter(cat => cat !== categoryValue);
-
-    setSelectedCategories(newCategories);
-    setFilters(prev => ({ ...prev, productType: newCategories }));
-  }, [selectedCategories]);
-
-  const clearFilters = useCallback(() => {
+  const clearFilters = React.useCallback(() => {
     setFilters({
       age: [],
       hardness: [],
@@ -249,16 +317,12 @@ const ProductsPage: React.FC = () => {
     setSelectedCategories([]);
   }, []);
 
-  const clearCategories = useCallback(() => {
+  const clearCategories = React.useCallback(() => {
     setSelectedCategories([]);
     setFilters(prev => ({ ...prev, productType: [] }));
   }, []);
 
-  const handleProductClick = useCallback((productId: string) => {
-    navigate(`/products/${productId}`);
-  }, [navigate]);
-
-  // UI states
+  // Render
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -296,14 +360,12 @@ const ProductsPage: React.FC = () => {
             onClick={() => {
               setError(null);
               setLoading(true);
-              getProducts()
-                .then((data) => setProducts(Array.isArray(data) ? data : []))
-                .catch(() => setError('Failed to load products'))
-                .finally(() => setLoading(false));
+              // force a refetch by touching filters
+              setFilters(prev => ({ ...prev }));
             }}
             className="mt-4 px-4 py-2 bg-teal-500 text-white rounded hover:bg-teal-600"
           >
-            Retry
+            Повторить
           </button>
         </div>
       </div>
@@ -315,6 +377,14 @@ const ProductsPage: React.FC = () => {
       ? categoryDisplayNames[selectedCategories[0]] || 'Товары'
       : 'Все товары';
 
+  // Adapt items to the ProductGrid's expected shape:
+  // override product price/old_price with the primary variant’s values for display
+  const gridProducts: Product[] = items.map(({ product, primary }) => ({
+    ...product,
+    price: Number(primary.price),
+    old_price: primary.old_price != null ? Number(primary.old_price) : product.old_price,
+  }));
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 py-8">
@@ -323,8 +393,8 @@ const ProductsPage: React.FC = () => {
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">{pageTitle}</h1>
           <p className="text-gray-600">
             {selectedCategories.length === 1
-              ? `Найдено ${filteredProducts.length} товаров в категории "${categoryDisplayNames[selectedCategories[0]]}"`
-              : `Найдено ${filteredProducts.length} товаров`}
+              ? `Найдено ${items.length} товаров в категории "${categoryDisplayNames[selectedCategories[0]]}"`
+              : `Найдено ${items.length} товаров`}
           </p>
         </header>
 
@@ -364,9 +434,7 @@ const ProductsPage: React.FC = () => {
           {/* Products + Desktop Sort */}
           <section className="flex-1" aria-label="Список товаров">
             <div className="hidden md:flex justify-between items-center mb-6">
-              <span className="text-gray-600">
-                Показано {filteredProducts.length} из {products.length} товаров
-              </span>
+              <span className="text-gray-600">Показано {items.length}</span>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
@@ -384,7 +452,7 @@ const ProductsPage: React.FC = () => {
             </div>
 
             <ProductGrid
-              products={filteredProducts}
+              products={gridProducts}
               onProductClick={(id) => navigate(`/products/${id}`)}
             />
           </section>
@@ -396,7 +464,7 @@ const ProductsPage: React.FC = () => {
           onClose={() => setShowFilters(false)}
           filters={filters}
           setFilters={setFilters}
-          productsCount={filteredProducts.length}
+          productsCount={items.length}
         />
         <SortModal
           showSortModal={showSortModal}
