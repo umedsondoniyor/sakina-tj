@@ -68,6 +68,13 @@ const RU_NAME: Record<string, string> = {
 /* ---------- Helpers ---------- */
 const uniq = <T,>(arr: T[]) => Array.from(new Set(arr));
 
+// helpers at top (keep or add if missing)
+const dedupeBy = <T, K extends string | number>(arr: T[], key: (x: T) => K) => {
+  const m = new Map<K, T>();
+  for (const it of arr) m.set(key(it), it);
+  return Array.from(m.values());
+};
+
 const asSizeLabel = (w?: number | null, l?: number | null) =>
   w && l ? `${w}×${l}` : null;
 
@@ -84,54 +91,78 @@ const CatalogMenu: React.FC<CatalogMenuProps> = ({ isOpen, onClose }) => {
   const hoverTimerRef = useRef<NodeJS.Timeout>();
 
   /* Load categories (prefer the `categories` table; fallback to distinct product categories) */
-  useEffect(() => {
-    if (!isOpen) return;
+// --- REPLACE your existing categories-loading useEffect with THIS ---
+useEffect(() => {
+  if (!isOpen) return;
 
-    (async () => {
-      // Try categories table
-      const { data: cats, error: catsErr } = await supabase
-        .from('categories')
-        .select('*')
-        .order('name', { ascending: true });
+  (async () => {
+    // 1) Build a product-count map: { [category]: count }
+    const { data: productsRows, error: prodErr } = await supabase
+      .from('products')
+      .select('category'); // lightweight (only category)
 
-      let list: { id: string; name: string }[] = [];
-      if (!catsErr && cats && cats.length) {
-        // Try to pick a stable id/slug/name
-        list = cats.map((c: any) => ({
-          id: (c.slug || c.key || c.id || '').toString() || (c.name || '').toString().toLowerCase(),
-          name: c.display_name || c.name || RU_NAME[(c.slug || c.key || '').toString()] || (c.name || 'Категория'),
-        }));
-      } else {
-        // Fallback: distinct categories from products
-        const { data: prodCats, error: pcErr } = await supabase
-          .from('products')
-          .select('category', { distinct: true })
-          .order('category', { ascending: true });
+    if (prodErr) {
+      console.warn('Could not fetch products for category counts:', prodErr);
+    }
 
-        if (!pcErr && prodCats) {
-          list = prodCats
-            .map((row: any) => row.category as string)
-            .filter(Boolean)
-            .map((id: string) => ({
-              id,
-              name: RU_NAME[id] || id,
-            }));
-        }
-      }
+    const counts = new Map<string, number>();
+    (productsRows || []).forEach((r: any) => {
+      const c = (r.category || '').toString();
+      if (!c) return;
+      counts.set(c, (counts.get(c) || 0) + 1);
+    });
 
-      const items: MenuItem[] = list.map(({ id, name }) => ({
+    // Helper to translate a row to a menu item (only if has products)
+    const toMenuItem = (idRaw: string, nameRaw?: string) => {
+      const id = (idRaw || '').toString();
+      if (!id) return null;
+      if (!counts.get(id)) return null; // <-- drop categories without products
+      return {
         id,
-        name,
+        name: nameRaw || RU_NAME[id] || id,
         icon: ICON_BY_CATEGORY[id] || Box,
-      }));
+      } as MenuItem;
+    };
 
-      setMenuItems(items);
-      if (items.length && !items.find((i) => i.id === selectedCategory)) {
-        setSelectedCategory(items[0].id);
-      }
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen]);
+    // 2) Try categories table first
+    let items: MenuItem[] = [];
+    const { data: cats, error: catsErr } = await supabase
+      .from('categories')
+      .select('*')
+      .order('name', { ascending: true });
+
+    if (!catsErr && cats && cats.length) {
+      items = cats
+        .map((c: any) => {
+          const id =
+            (c.slug || c.key || c.id || '').toString() ||
+            (c.name || '').toString().toLowerCase();
+          const name = c.display_name || c.name;
+          return toMenuItem(id, name);
+        })
+        .filter(Boolean) as MenuItem[];
+    } else {
+      // 3) Fallback: distinct categories from products (already have counts)
+      const uniqueCats = Array.from(counts.keys()).sort(); // simple alpha
+      items = uniqueCats
+        .map((id) => toMenuItem(id))
+        .filter(Boolean) as MenuItem[];
+    }
+
+    // 4) Deduplicate by id and sort by RU display name for stable UI
+    items = dedupeBy(items, (x) => x.id).sort((a, b) =>
+      (a.name || a.id).localeCompare(b.name || b.id, 'ru')
+    );
+
+    setMenuItems(items);
+
+    // 5) Ensure selectedCategory is valid
+    if (!items.find((i) => i.id === selectedCategory)) {
+      setSelectedCategory(items[0]?.id || ''); // blank if nothing available
+    }
+  })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [isOpen]);
 
   /* Debounced hover → change selected category */
   useEffect(() => {
