@@ -178,7 +178,7 @@ const CheckoutPage = () => {
   };
 
   const calculateDeliveryFee = () => {
-    return formData.deliveryType === 'home' ? 1000 : 0;
+    return formData.deliveryType === 'home' ? 0 : 0;
   };
 
   const calculateDiscount = () => {
