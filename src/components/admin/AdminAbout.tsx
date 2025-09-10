@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, Save, X, Upload, Image as ImageIcon } from 'lucide-react';
 import { useAboutData } from '../../hooks/useAboutData';
-import aboutApi  from '../../lib/aboutApi';
+import { aboutApi }  from '../../lib/aboutApi';
 import { AboutSettings, AboutStat, AboutValue, AboutTimelineItem, AboutTeamMember } from '../../lib/types';
 import { validateAboutSettings, validateAboutStat, validateAboutValue, validateAboutTimelineItem, validateAboutTeamMember } from '../../lib/validation';
 import AboutSettingsForm  from './forms/AboutSettingsForm';
