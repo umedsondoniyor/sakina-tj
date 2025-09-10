@@ -23,7 +23,7 @@ const colorOptions = [
   { value: '#f97316', label: 'Orange' }
 ];
 
-const BlogTagModal: React.FC<BlogTagModalProps> = ({
+export default BlogTagModal;
   isOpen,
   onClose,
   tag,
@@ -196,7 +196,7 @@ const BlogTagModal: React.FC<BlogTagModalProps> = ({
               disabled={loading}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
             >
-              {loading ? 'Saving...' : category ? 'Update' : 'Create'}
+              {loading ? 'Saving...' : tag ? 'Update' : 'Create'}
             </button>
           </div>
         </form>
