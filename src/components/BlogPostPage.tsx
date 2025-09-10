@@ -138,46 +138,49 @@ type GetBlogPostsParams = {
   featuredOnly?: boolean;         // optional
 };
 
+/**
+ * Fetch posts, then hydrate category + tags manually (no FK joins).
+ */
 export async function getBlogPosts(params: GetBlogPostsParams = {}): Promise<BlogPost[]> {
-  try {
-    const {
-      status = 'published',
-      limit,
-      categorySlug,
-      tagSlug,
-      search,
-      featuredOnly
-    } = params;
+  const {
+    status = 'published',
+    limit,
+    categorySlug,
+    tagSlug,
+    search,
+    featuredOnly,
+  } = params;
 
-    // 1) Base query
+  try {
+    // 1) Start with posts by status (and optional featured/limit)
     let query = supabase
       .from('blog_posts')
       .select('*')
       .eq('status', status)
       .order('published_at', { ascending: false });
 
-    // 2) Apply filters
-    if (featuredOnly) {
-      query = query.eq('is_featured', true);
-    }
-    if (limit) {
-      query = query.limit(limit);
-    }
+    if (featuredOnly) query = query.eq('is_featured', true);
+    if (limit) query = query.limit(limit);
 
-    const { data: posts, error } = await query;
-    if (error) throw error;
-    if (!posts || posts.length === 0) return [];
+    // We'll post-filter categorySlug/tagSlug/search in JS after hydrating
+    const { data: postsRaw, error: postsErr } = await query;
+    if (postsErr) throw postsErr;
+
+    const posts: BlogPost[] = postsRaw ?? [];
+    if (posts.length === 0) return [];
+
+    // 2) Collect IDs for hydration
+    const categoryIds = Array.from(new Set(posts.map(p => p.category_id).filter(Boolean))) as string[];
 
     // 3) Fetch categories
-    const categoryIds = Array.from(new Set(posts.map(p => p.category_id).filter(Boolean)));
     let categoriesMap = new Map<string, BlogCategory>();
     if (categoryIds.length) {
-      const { data: categories, error: catErr } = await supabase
+      const { data: cats, error: catsErr } = await supabase
         .from('blog_categories')
         .select('*')
         .in('id', categoryIds);
-      if (catErr) throw catErr;
-      (categories ?? []).forEach(c => categoriesMap.set(c.id, c));
+      if (catsErr) throw catsErr;
+      (cats ?? []).forEach(c => categoriesMap.set(c.id, c));
     }
 
     // 4) Fetch tags per post via junction table, then hydrate
@@ -215,25 +218,28 @@ export async function getBlogPosts(params: GetBlogPostsParams = {}): Promise<Blo
 
     // 6) Optional client-side filters
     let filtered = hydrated;
+
     if (categorySlug) {
       filtered = filtered.filter(p => p.category?.slug === categorySlug);
     }
+
     if (tagSlug) {
       filtered = filtered.filter(p => p.tags?.some(t => t.slug === tagSlug));
     }
+
     if (search) {
       const q = search.toLowerCase();
       filtered = filtered.filter(p =>
-        p.title.toLowerCase().includes(q) ||
-        (p.excerpt && p.excerpt.toLowerCase().includes(q)) ||
-        (p.content && p.content.toLowerCase().includes(q))
+        (p.title?.toLowerCase().includes(q)) ||
+        (p.excerpt?.toLowerCase().includes(q)) ||
+        (p.content?.toLowerCase().includes(q))
       );
     }
 
     return filtered;
   } catch (err: any) {
     if (isMissingTable(err)) {
-      console.warn('[blogApi] blog_posts missing, returning empty list');
+      console.warn('[blogApi] blog tables missing, returning empty posts');
       return [];
     }
     console.error('[blogApi] getBlogPosts error:', err);
@@ -241,72 +247,67 @@ export async function getBlogPosts(params: GetBlogPostsParams = {}): Promise<Blo
   }
 }
 
-export async function getBlogPostBySlug(postSlug: string): Promise<BlogPost | null> {
+/**
+ * Fetch single post by slug and hydrate category + tags.
+ */
+export async function getBlogPost(slug: string): Promise<BlogPost | null> {
   try {
-    // Fetch the post with category
-    const { data: postData, error: postError } = await supabase
+    const { data: post, error } = await supabase
       .from('blog_posts')
-      .select(`
-        *,
-        blog_categories (
-          id,
-          name,
-          slug,
-          color
-        )
-      `)
-      .eq('slug', postSlug)
-      .eq('status', 'published')
-      .single();
+      .select('*')
+      .eq('slug', slug)
+      .maybeSingle();
 
-    if (postError) {
-      if (postError.code === 'PGRST116') {
-        return null;
-      } else {
-        throw postError;
-      }
+    if (error) throw error;
+    if (!post) return null;
+
+    const result: BlogPost = { ...post, tags: [], category: null };
+
+    // Category
+    if (post.category_id) {
+      const { data: cat } = await supabase
+        .from('blog_categories')
+        .select('*')
+        .eq('id', post.category_id)
+        .maybeSingle();
+      result.category = cat ?? null;
     }
 
-    // Fetch tags for this post
-    const { data: tagData } = await supabase
+    // Tags
+    const { data: postTags } = await supabase
       .from('blog_post_tags')
-      .select(`
-        blog_tags (
-          id,
-          name,
-          slug,
-          color
-        )
-      `)
-      .eq('post_id', postData.id);
+      .select('tag_id')
+      .eq('post_id', post.id);
 
-    const tags = tagData?.map(item => item.blog_tags).filter(Boolean) || [];
-    const fullPost: BlogPost = {
-      ...postData,
-      category: postData.blog_categories,
-      tags: tags
-    };
+    const tagIds = Array.from(new Set((postTags ?? []).map(pt => pt.tag_id)));
+    if (tagIds.length) {
+      const { data: tags } = await supabase
+        .from('blog_tags')
+        .select('*')
+        .in('id', tagIds);
+      result.tags = tags ?? [];
+    }
 
-    // Increment view count
-    await supabase
-      .from('blog_posts')
-      .update({ view_count: (postData.view_count || 0) + 1 })
-      .eq('id', postData.id);
-
-    return fullPost;
+    return result;
   } catch (err: any) {
-    console.error('[blogApi] getBlogPostBySlug error:', err);
+    if (isMissingTable(err)) {
+      console.warn('[blogApi] blog tables missing, returning null post');
+      return null;
+    }
+    console.error('[blogApi] getBlogPost error:', err);
     throw err;
   }
 }
 
-const blogApi = {
+/* --------------------------- optional default obj -------------------------- */
+
+export const blogApi = {
+  getBlogPosts,
+  getBlogPost,
   getBlogCategories,
   getBlogTags,
-  getBlogPosts,
-  getBlogPostBySlug,
   generateSlug,
-  calculateReadingTime
+  calculateReadingTime,
 };
 
 export default blogApi;
