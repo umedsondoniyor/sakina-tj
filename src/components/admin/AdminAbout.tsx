@@ -3,7 +3,8 @@ import { Plus, Edit2, Trash2, Save, X, Upload, Image as ImageIcon } from 'lucide
 import { useAboutData } from '../../hooks/useAboutData';
 import * as aboutApi from '../../lib/aboutApi';
 import { AboutSettings, AboutStat, AboutValue, AboutTimelineItem, AboutTeamMember } from '../../lib/types';
-import { validateAboutSettings, validateAboutStat, validateAboutValue, validateAboutTimelineItem, validateAboutTeamMember } from '../../lib/validation';
+// import { validateAboutSettings, validateAboutStat, validateAboutValue, validateAboutTimelineItem, validateAboutTeamMember } from '../../lib/validation';
+import { validateAboutSettings } from '../../lib/validation';
 import AboutSettingsForm  from './forms/AboutSettingsForm';
 import ImageUploadField  from './ImageUploadField';
 
