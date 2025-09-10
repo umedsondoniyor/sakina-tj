@@ -23,7 +23,7 @@ const colorOptions = [
   { value: '#f97316', label: 'Orange' }
 ];
 
-export default BlogTagModal;
+const BlogTagModal: React.FC<BlogTagModalProps> = ({
   isOpen,
   onClose,
   tag,
@@ -205,4 +205,4 @@ export default BlogTagModal;
   );
 };
 
-export default BlogCategoryModal;
+export default BlogTagModal;
