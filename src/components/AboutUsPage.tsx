@@ -347,7 +347,8 @@ const AboutUsPage: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </ErrorBoundary>
   );
 };
 

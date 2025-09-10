@@ -80,7 +80,17 @@ const Modal: React.FC<{
   );
 };
 
-const iconOptions = ['Clock', 'Users', 'Award', 'Globe', 'Heart', 'Target'];
+// map icon string -> component
+const iconMap = {
+  Clock,
+  Users,
+  Award,
+  Globe,
+  Heart,
+  Target,
+};
+
+const iconOptions = Object.keys(iconMap) as (keyof typeof iconMap)[];
 
 const AdminAbout: React.FC = () => {
   // loading
@@ -868,8 +878,12 @@ const TeamForm: React.FC<{
           <textarea className="w-full rounded border px-3 py-2" rows={4} value={description} onChange={(e) => setDescription(e.target.value)} />
         </div>
         <div className="sm:col-span-2">
-          <label className="block text-sm font-medium mb-1">Фото (URL)</label>
-          <input className="w-full rounded border px-3 py-2" value={image_url} onChange={(e) => setImage(e.target.value)} />
+          <ImageUploadField
+            label="Фото сотрудника"
+            value={image_url}
+            onChange={setImage}
+            placeholder="https://example.com/team-member.jpg"
+          />
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">Порядок</label>
