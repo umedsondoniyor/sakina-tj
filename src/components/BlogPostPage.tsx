@@ -1,313 +1,268 @@
-// src/lib/blogApi.ts
-import { supabase } from './supabaseClient';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Calendar, Clock, User, Tag, ArrowLeft, Share2, Eye } from 'lucide-react';
+import { getBlogPost, getBlogPosts } from '../lib/blogApi';
+import type { BlogPost } from '../lib/types';
 
-/**
- * Minimal types. If you already have these in `types.ts`,
- * feel free to import from there instead.
- */
-export type BlogStatus = 'draft' | 'published' | 'archived';
+const BlogPostPage: React.FC = () => {
+  const { slug } = useParams();
+  const navigate = useNavigate();
+  
+  const [post, setPost] = useState<BlogPost | null>(null);
+  const [relatedPosts, setRelatedPosts] = useState<BlogPost[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-export interface BlogCategory {
-  id: string;
-  name: string;
-  slug: string;
-  description?: string | null;
-  color?: string | null;
-  is_active?: boolean | null;
-  created_at?: string | null;
-  updated_at?: string | null;
-}
+  useEffect(() => {
+    if (slug) {
+      loadPost();
+    }
+  }, [slug]);
 
-export interface BlogTag {
-  id: string;
-  name: string;
-  slug: string;
-  color?: string | null;
-  is_active?: boolean | null;
-  created_at?: string | null;
-  updated_at?: string | null;
-}
+  const loadPost = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const postData = await getBlogPost(slug!);
+      
+      if (!postData) {
+        setError('Post not found');
+        return;
+      }
+      
+      setPost(postData);
 
-export interface BlogPost {
-  id: string;
-  title: string;
-  slug: string;
-  excerpt?: string | null;
-  content?: string | null;
-  featured_image?: string | null;
-  category_id?: string | null;
-  author_id?: string | null; // if you use it
-  status: BlogStatus;
-  is_featured?: boolean | null;
-  published_at?: string | null;
-  reading_time?: number | null;
-  view_count?: number | null;
-  created_at?: string | null;
-  updated_at?: string | null;
-
-  // hydrated fields (added by API)
-  category?: BlogCategory | null;
-  tags?: BlogTag[];
-}
-
-/* ----------------------------- helpers/utils ----------------------------- */
-
-const isMissingTable = (err: any) =>
-  err && (err.code === '42P01' || err.message?.includes('does not exist'));
-
-/** Simple slugify, safe for Cyrillic & spaces */
-export function generateSlug(input: string): string {
-  const map: Record<string, string> = {
-    а: 'a', б: 'b', в: 'v', г: 'g', д: 'd', е: 'e', ё: 'e', ж: 'zh', з: 'z',
-    и: 'i', й: 'y', к: 'k', л: 'l', м: 'm', н: 'n', о: 'o', п: 'p', р: 'r',
-    с: 's', т: 't', у: 'u', ф: 'f', х: 'h', ц: 'c', ч: 'ch', ш: 'sh', щ: 'sch',
-    ы: 'y', э: 'e', ю: 'yu', я: 'ya', ъ: '', ь: ''
+      // Load related posts from same category
+      if (postData.category_id) {
+        const related = await getBlogPosts({
+          status: 'published',
+          categoryId: postData.category_id,
+          limit: 3
+        });
+        setRelatedPosts(related.filter(p => p.id !== postData.id));
+      }
+    } catch (err) {
+      console.error('Error loading post:', err);
+      setError('Failed to load post');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const translit = input
-    .toLowerCase()
-    .split('')
-    .map(ch => map[ch] ?? ch)
-    .join('');
-
-  return translit
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '');
-}
-
-/** ~200 words/min */
-export function calculateReadingTime(content: string): number {
-  const words = (content || '').trim().split(/\s+/).filter(Boolean).length;
-  return Math.max(1, Math.round(words / 200));
-}
-
-/* ------------------------------- categories ------------------------------ */
-
-export async function getBlogCategories(): Promise<BlogCategory[]> {
-  try {
-    const { data, error } = await supabase
-      .from('blog_categories')
-      .select('*')
-      .eq('is_active', true)
-      .order('name', { ascending: true });
-
-    if (error) throw error;
-    return data ?? [];
-  } catch (err: any) {
-    if (isMissingTable(err)) {
-      console.warn('[blogApi] blog_categories missing, returning empty list');
-      return [];
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: post?.title,
+          text: post?.excerpt,
+          url: window.location.href
+        });
+      } catch (err) {
+        console.log('Share cancelled');
+      }
+    } else {
+      // Fallback: copy to clipboard
+      navigator.clipboard.writeText(window.location.href);
+      // You could show a toast here
     }
-    console.error('[blogApi] getBlogCategories error:', err);
-    throw err;
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-48 mb-8"></div>
+            <div className="h-64 bg-gray-200 rounded-lg mb-8"></div>
+            <div className="space-y-4">
+              <div className="h-4 bg-gray-200 rounded w-full"></div>
+              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
-}
 
-/* ---------------------------------- tags --------------------------------- */
-
-export async function getBlogTags(): Promise<BlogTag[]> {
-  try {
-    const { data, error } = await supabase
-      .from('blog_tags')
-      .select('*')
-      .eq('is_active', true)
-      .order('name', { ascending: true });
-
-    if (error) throw error;
-    return data ?? [];
-  } catch (err: any) {
-    if (isMissingTable(err)) {
-      console.warn('[blogApi] blog_tags missing, returning empty list');
-      return [];
-    }
-    console.error('[blogApi] getBlogTags error:', err);
-    throw err;
+  if (error || !post) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            {error === 'Post not found' ? 'Статья не найдена' : 'Ошибка загрузки'}
+          </h2>
+          <p className="text-gray-600 mb-6">
+            {error === 'Post not found' 
+              ? 'Запрашиваемая статья не существует или была удалена'
+              : 'Не удалось загрузить статью'
+            }
+          </p>
+          <button
+            onClick={() => navigate('/blog')}
+            className="bg-teal-500 text-white px-6 py-2 rounded-lg hover:bg-teal-600"
+          >
+            Вернуться к блогу
+          </button>
+        </div>
+      </div>
+    );
   }
-}
 
-/* ---------------------------------- posts -------------------------------- */
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        {/* Back Button */}
+        <button
+          onClick={() => navigate('/blog')}
+          className="flex items-center text-gray-600 hover:text-teal-600 mb-6"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Назад к блогу
+        </button>
 
-type GetBlogPostsParams = {
-  status?: BlogStatus;            // default: 'published'
-  limit?: number;                 // optional
-  categorySlug?: string;          // optional - filter by category slug
-  tagSlug?: string;               // optional
-  search?: string;                // optional (title/excerpt/content)
-  featuredOnly?: boolean;         // optional
+        {/* Article Header */}
+        <article className="bg-white rounded-lg shadow overflow-hidden">
+          {post.featured_image && (
+            <div className="aspect-video">
+              <img
+                src={post.featured_image}
+                alt={post.title}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
+
+          <div className="p-8">
+            {/* Meta Information */}
+            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 mb-6">
+              {post.published_at && (
+                <div className="flex items-center">
+                  <Calendar className="w-4 h-4 mr-1" />
+                  {new Date(post.published_at).toLocaleDateString('ru-RU', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}
+                </div>
+              )}
+              <div className="flex items-center">
+                <Clock className="w-4 h-4 mr-1" />
+                {post.reading_time} мин чтения
+              </div>
+              {post.author?.full_name && (
+                <div className="flex items-center">
+                  <User className="w-4 h-4 mr-1" />
+                  {post.author.full_name}
+                </div>
+              )}
+              <div className="flex items-center">
+                <Eye className="w-4 h-4 mr-1" />
+                {post.view_count} просмотров
+              </div>
+            </div>
+
+            {/* Category and Tags */}
+            <div className="flex flex-wrap items-center gap-2 mb-6">
+              {post.category && (
+                <span
+                  className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
+                  style={{ backgroundColor: `${post.category.color}20`, color: post.category.color }}
+                >
+                  {post.category.name}
+                </span>
+              )}
+              {post.tags?.map(tag => (
+                <span
+                  key={tag.id}
+                  className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
+                  style={{ backgroundColor: `${tag.color}20`, color: tag.color }}
+                >
+                  <Tag className="w-3 h-3 mr-1" />
+                  {tag.name}
+                </span>
+              ))}
+            </div>
+
+            {/* Title */}
+            <h1 className="text-3xl md:text-4xl font-bold text-brand-navy mb-6">
+              {post.title}
+            </h1>
+
+            {/* Excerpt */}
+            {post.excerpt && (
+              <p className="text-xl text-gray-600 mb-8 italic border-l-4 border-teal-500 pl-4">
+                {post.excerpt}
+              </p>
+            )}
+
+            {/* Content */}
+            <div className="prose prose-lg prose-gray max-w-none mb-8">
+              <div className="whitespace-pre-wrap leading-relaxed">
+                {post.content}
+              </div>
+            </div>
+
+            {/* Share Button */}
+            <div className="flex items-center justify-between pt-8 border-t">
+              <div className="flex items-center space-x-4">
+                <button
+                  onClick={handleShare}
+                  className="flex items-center px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors"
+                >
+                  <Share2 className="w-4 h-4 mr-2" />
+                  Поделиться
+                </button>
+              </div>
+              
+              {post.author?.full_name && (
+                <div className="text-sm text-gray-600">
+                  Автор: <span className="font-medium">{post.author.full_name}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </article>
+
+        {/* Related Posts */}
+        {relatedPosts.length > 0 && (
+          <div className="mt-12">
+            <h2 className="text-2xl font-bold text-brand-navy mb-6">Похожие статьи</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {relatedPosts.map(relatedPost => (
+                <article
+                  key={relatedPost.id}
+                  className="bg-white rounded-lg shadow overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+                  onClick={() => navigate(`/blog/${relatedPost.slug}`)}
+                >
+                  <div className="aspect-video">
+                    <img
+                      src={relatedPost.featured_image || 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=400&q=80'}
+                      alt={relatedPost.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="p-4">
+                    <h3 className="font-bold text-brand-navy mb-2 line-clamp-2">
+                      {relatedPost.title}
+                    </h3>
+                    <p className="text-gray-600 text-sm line-clamp-2">
+                      {relatedPost.excerpt}
+                    </p>
+                    <div className="flex items-center mt-3 text-xs text-gray-500">
+                      <Clock className="w-3 h-3 mr-1" />
+                      {relatedPost.reading_time} мин
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 };
 
-/**
- * Fetch posts, then hydrate category + tags manually (no FK joins).
- */
-export async function getBlogPosts(params: GetBlogPostsParams = {}): Promise<BlogPost[]> {
-  const {
-    status = 'published',
-    limit,
-    categorySlug,
-    tagSlug,
-    search,
-    featuredOnly,
-  } = params;
-
-  try {
-    // 1) Start with posts by status (and optional featured/limit)
-    let query = supabase
-      .from('blog_posts')
-      .select('*')
-      .eq('status', status)
-      .order('published_at', { ascending: false });
-
-    if (featuredOnly) query = query.eq('is_featured', true);
-    if (limit) query = query.limit(limit);
-
-    // We'll post-filter categorySlug/tagSlug/search in JS after hydrating
-    const { data: postsRaw, error: postsErr } = await query;
-    if (postsErr) throw postsErr;
-
-    const posts: BlogPost[] = postsRaw ?? [];
-    if (posts.length === 0) return [];
-
-    // 2) Collect IDs for hydration
-    const categoryIds = Array.from(new Set(posts.map(p => p.category_id).filter(Boolean))) as string[];
-
-    // 3) Fetch categories
-    let categoriesMap = new Map<string, BlogCategory>();
-    if (categoryIds.length) {
-      const { data: cats, error: catsErr } = await supabase
-        .from('blog_categories')
-        .select('*')
-        .in('id', categoryIds);
-      if (catsErr) throw catsErr;
-      (cats ?? []).forEach(c => categoriesMap.set(c.id, c));
-    }
-
-    // 4) Fetch tags per post via junction table, then hydrate
-    const postIds = posts.map(p => p.id);
-    const { data: postTags, error: ptErr } = await supabase
-      .from('blog_post_tags')
-      .select('post_id, tag_id')
-      .in('post_id', postIds);
-    if (ptErr) throw ptErr;
-
-    const tagIds = Array.from(new Set((postTags ?? []).map(pt => pt.tag_id)));
-    let tagsMap = new Map<string, BlogTag>();
-    if (tagIds.length) {
-      const { data: tags, error: tagsErr } = await supabase
-        .from('blog_tags')
-        .select('*')
-        .in('id', tagIds);
-      if (tagsErr) throw tagsErr;
-      (tags ?? []).forEach(t => tagsMap.set(t.id, t));
-    }
-
-    // 5) Hydrate each post
-    const hydrated: BlogPost[] = posts.map(p => {
-      const tagsForPost = (postTags ?? [])
-        .filter(pt => pt.post_id === p.id)
-        .map(pt => tagsMap.get(pt.tag_id))
-        .filter(Boolean) as BlogTag[];
-
-      return {
-        ...p,
-        category: p.category_id ? categoriesMap.get(p.category_id) ?? null : null,
-        tags: tagsForPost,
-      };
-    });
-
-    // 6) Optional client-side filters
-    let filtered = hydrated;
-
-    if (categorySlug) {
-      filtered = filtered.filter(p => p.category?.slug === categorySlug);
-    }
-
-    if (tagSlug) {
-      filtered = filtered.filter(p => p.tags?.some(t => t.slug === tagSlug));
-    }
-
-    if (search) {
-      const q = search.toLowerCase();
-      filtered = filtered.filter(p =>
-        (p.title?.toLowerCase().includes(q)) ||
-        (p.excerpt?.toLowerCase().includes(q)) ||
-        (p.content?.toLowerCase().includes(q))
-      );
-    }
-
-    return filtered;
-  } catch (err: any) {
-    if (isMissingTable(err)) {
-      console.warn('[blogApi] blog tables missing, returning empty posts');
-      return [];
-    }
-    console.error('[blogApi] getBlogPosts error:', err);
-    throw err;
-  }
-}
-
-/**
- * Fetch single post by slug and hydrate category + tags.
- */
-export async function getBlogPost(slug: string): Promise<BlogPost | null> {
-  try {
-    const { data: post, error } = await supabase
-      .from('blog_posts')
-      .select('*')
-      .eq('slug', slug)
-      .maybeSingle();
-
-    if (error) throw error;
-    if (!post) return null;
-
-    const result: BlogPost = { ...post, tags: [], category: null };
-
-    // Category
-    if (post.category_id) {
-      const { data: cat } = await supabase
-        .from('blog_categories')
-        .select('*')
-        .eq('id', post.category_id)
-        .maybeSingle();
-      result.category = cat ?? null;
-    }
-
-    // Tags
-    const { data: postTags } = await supabase
-      .from('blog_post_tags')
-      .select('tag_id')
-      .eq('post_id', post.id);
-
-    const tagIds = Array.from(new Set((postTags ?? []).map(pt => pt.tag_id)));
-    if (tagIds.length) {
-      const { data: tags } = await supabase
-        .from('blog_tags')
-        .select('*')
-        .in('id', tagIds);
-      result.tags = tags ?? [];
-    }
-
-    return result;
-  } catch (err: any) {
-    if (isMissingTable(err)) {
-      console.warn('[blogApi] blog tables missing, returning null post');
-      return null;
-    }
-    console.error('[blogApi] getBlogPost error:', err);
-    throw err;
-  }
-}
-
-/* --------------------------- optional default obj -------------------------- */
-
-export const blogApi = {
-  getBlogPosts,
-  getBlogPost,
-  getBlogCategories,
-  getBlogTags,
-  generateSlug,
-  calculateReadingTime,
-};
-
-export default blogApi;
+export default BlogPostPage;
