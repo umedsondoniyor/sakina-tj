@@ -1,264 +1,307 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Calendar, Clock, User, Tag, Search, Filter } from 'lucide-react';
+import { Calendar, Clock, Tag, Search } from 'lucide-react';
 import { getBlogPosts, getBlogCategories, getBlogTags } from '../lib/blogApi';
 import type { BlogPost, BlogCategory, BlogTag } from '../lib/types';
+
+const FALLBACK_IMG =
+  'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=1200&q=80';
+
+const useDebounced = (val: string, delay = 350) => {
+  const [v, setV] = useState(val);
+  useEffect(() => {
+    const t = setTimeout(() => setV(val), delay);
+    return () => clearTimeout(t);
+  }, [val, delay]);
+  return v;
+};
 
 const BlogPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  
+
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [categories, setCategories] = useState<BlogCategory[]>([]);
   const [tags, setTags] = useState<BlogTag[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
-  const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || '');
-  const [selectedTag, setSelectedTag] = useState(searchParams.get('tag') || '');
 
+  // URL → state
+  const initialSearch = searchParams.get('search') ?? '';
+  const initialCategory = searchParams.get('category') ?? ''; // id or slug or ""
+  const initialTag = searchParams.get('tag') ?? ''; // id or slug or ""
+
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
+  const [selectedCategory, setSelectedCategory] = useState(initialCategory);
+  const [selectedTag, setSelectedTag] = useState(initialTag);
+
+  // debounced search for smoother UX
+  const debouncedSearch = useDebounced(searchQuery);
+
+  // helpers to resolve id/slug param to an ID your API expects
+  const categoryId = useMemo(() => {
+    if (!selectedCategory) return undefined;
+    const byId = categories.find(c => c.id === selectedCategory)?.id;
+    if (byId) return byId;
+    const bySlug = categories.find(c => c.slug === selectedCategory)?.id;
+    return bySlug || selectedCategory; // fall back to whatever you pass
+  }, [selectedCategory, categories]);
+
+  const tagId = useMemo(() => {
+    if (!selectedTag) return undefined;
+    const byId = tags.find(t => t.id === selectedTag)?.id;
+    if (byId) return byId;
+    const bySlug = tags.find(t => t.slug === selectedTag)?.id;
+    return bySlug || selectedTag;
+  }, [selectedTag, tags]);
+
+  // load lists (categories/tags) once
   useEffect(() => {
-    loadData();
-  }, [selectedCategory, selectedTag]);
+    let mounted = true;
+    (async () => {
+      try {
+        const [cats, tgs] = await Promise.all([getBlogCategories(), getBlogTags()]);
+        if (!mounted) return;
+        setCategories(cats);
+        setTags(tgs);
+      } catch (e) {
+        console.error('Failed loading taxonomies', e);
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
 
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      const [postsData, categoriesData, tagsData] = await Promise.all([
-        getBlogPosts({ 
+  // load posts whenever filters change
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        setLoading(true);
+        const data = await getBlogPosts({
           status: 'published',
-          categoryId: selectedCategory || undefined,
-          limit: 20
-        }),
-        getBlogCategories(),
-        getBlogTags()
-      ]);
+          categoryId,
+          tagId,
+          search: debouncedSearch || undefined,
+          limit: 24,
+        });
+        if (!mounted) return;
+        setPosts(data);
+      } catch (e) {
+        console.error('Error loading blog data:', e);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    })();
+    return () => { mounted = false; };
+  }, [categoryId, tagId, debouncedSearch]);
 
-      setPosts(postsData);
-      setCategories(categoriesData);
-      setTags(tagsData);
-    } catch (error) {
-      console.error('Error loading blog data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
+  // keep URL in sync
+  useEffect(() => {
     const params = new URLSearchParams(searchParams);
-    if (searchQuery) {
-      params.set('search', searchQuery);
-    } else {
-      params.delete('search');
-    }
-    setSearchParams(params);
-  };
+    if (searchQuery) params.set('search', searchQuery); else params.delete('search');
+    if (selectedCategory) params.set('category', selectedCategory); else params.delete('category');
+    if (selectedTag) params.set('tag', selectedTag); else params.delete('tag');
+    setSearchParams(params, { replace: true });
+  }, [searchQuery, selectedCategory, selectedTag]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleCategoryFilter = (categoryId: string) => {
-    setSelectedCategory(categoryId);
-    const params = new URLSearchParams(searchParams);
-    if (categoryId) {
-      params.set('category', categoryId);
-    } else {
-      params.delete('category');
-    }
-    setSearchParams(params);
-  };
+  const handlePostClick = (post: BlogPost) => navigate(`/blog/${post.slug}`);
 
-  const handleTagFilter = (tagId: string) => {
-    setSelectedTag(tagId);
-    const params = new URLSearchParams(searchParams);
-    if (tagId) {
-      params.set('tag', tagId);
-    } else {
-      params.delete('tag');
-    }
-    setSearchParams(params);
-  };
-
-  const filteredPosts = posts.filter(post => {
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      return post.title.toLowerCase().includes(query) ||
-             post.excerpt?.toLowerCase().includes(query) ||
-             post.content?.toLowerCase().includes(query);
-    }
-    return true;
-  });
-
-  const handlePostClick = (post: BlogPost) => {
-    navigate(`/blog/${post.slug}`);
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-48 mb-8"></div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="space-y-4">
-                  <div className="h-48 bg-gray-200 rounded-lg"></div>
-                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                  <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
+  const shownPosts = useMemo(() => {
+    // Backend already filtered by category/tag/search; keep an extra client-side guard for search
+    if (!debouncedSearch) return posts;
+    const q = debouncedSearch.toLowerCase();
+    return posts.filter(p =>
+      p.title.toLowerCase().includes(q) ||
+      (p.excerpt ?? '').toLowerCase().includes(q) ||
+      (p.content ?? '').toLowerCase().includes(q)
     );
-  }
+  }, [posts, debouncedSearch]);
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-brand-navy mb-4">Блог Sleep Club</h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+        <div className="text-center mb-10">
+          <h1 className="text-3xl md:text-4xl font-bold text-brand-navy mb-3">
+            Блог <span className="text-teal-600">Sleep Club</span>
+          </h1>
+          <p className="text-gray-600 max-w-2xl mx-auto">
             Экспертные советы, исследования и рекомендации для здорового сна
           </p>
         </div>
 
-        {/* Search and Filters */}
-        <div className="bg-white rounded-lg shadow p-6 mb-8">
-          <form onSubmit={handleSearch} className="mb-6">
-            <div className="relative max-w-md mx-auto">
-              <Search className="absolute left-3 top-3 text-gray-400" size={20} />
+        {/* Search & filters */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 mb-8">
+          <form
+            onSubmit={(e) => e.preventDefault()}
+            className="max-w-xl mx-auto mb-5"
+            role="search"
+          >
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
               <input
-                type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Поиск по статьям..."
-                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                placeholder="Поиск по статьям…"
+                className="w-full pl-10 pr-3 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                aria-label="Поиск по статьям"
               />
             </div>
           </form>
 
-          <div className="flex flex-wrap gap-4 justify-center">
-            {/* Categories */}
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => handleCategoryFilter('')}
-                className={`px-3 py-1 rounded-full text-sm transition-colors ${
-                  !selectedCategory ? 'bg-teal-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                Все категории
-              </button>
-              {categories.map(category => (
+          {/* Category chips */}
+          <div className="flex flex-wrap gap-2 justify-center">
+            <button
+              onClick={() => setSelectedCategory('')}
+              className={`px-3 py-1.5 rounded-full text-sm border transition
+                ${!selectedCategory ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}
+              `}
+            >
+              Все категории
+            </button>
+            {categories.map((c) => {
+              const active = selectedCategory === c.id || selectedCategory === c.slug;
+              return (
                 <button
-                  key={category.id}
-                  onClick={() => handleCategoryFilter(category.id)}
-                  className={`px-3 py-1 rounded-full text-sm transition-colors ${
-                    selectedCategory === category.id ? 'text-white' : 'text-gray-700 hover:bg-gray-200'
-                  }`}
+                  key={c.id}
+                  onClick={() => setSelectedCategory(active ? '' : (c.slug || c.id))}
+                  className={`px-3 py-1.5 rounded-full text-sm border transition
+                    ${active ? 'text-white' : 'text-gray-700 hover:bg-gray-50'}
+                  `}
                   style={{
-                    backgroundColor: selectedCategory === category.id ? category.color : '#f3f4f6'
+                    backgroundColor: active ? (c.color || '#14b8a6') : '#ffffff',
+                    borderColor: active ? (c.color || '#14b8a6') : '#e5e7eb',
                   }}
+                  aria-pressed={active}
                 >
-                  {category.name}
+                  {c.name}
                 </button>
-              ))}
-            </div>
-
-            {/* Tags */}
-            <div className="flex flex-wrap gap-2">
-              {tags.slice(0, 6).map(tag => (
-                <button
-                  key={tag.id}
-                  onClick={() => handleTagFilter(selectedTag === tag.id ? '' : tag.id)}
-                  className={`px-2 py-1 rounded-full text-xs transition-colors flex items-center ${
-                    selectedTag === tag.id ? 'text-white' : 'text-gray-600 hover:bg-gray-200'
-                  }`}
-                  style={{
-                    backgroundColor: selectedTag === tag.id ? tag.color : '#f3f4f6'
-                  }}
-                >
-                  <Tag className="w-3 h-3 mr-1" />
-                  {tag.name}
-                </button>
-              ))}
-            </div>
+              );
+            })}
           </div>
+
+          {/* Tag chips */}
+          {!!tags.length && (
+            <div className="mt-4 flex flex-wrap gap-2 justify-center">
+              {tags.slice(0, 10).map((t) => {
+                const active = selectedTag === t.id || selectedTag === t.slug;
+                return (
+                  <button
+                    key={t.id}
+                    onClick={() => setSelectedTag(active ? '' : (t.slug || t.id))}
+                    className={`px-2.5 py-1 rounded-full text-xs border inline-flex items-center gap-1 transition
+                      ${active ? 'text-white' : 'text-gray-600 hover:bg-gray-50'}
+                    `}
+                    style={{
+                      backgroundColor: active ? (t.color || '#64748b') : '#ffffff',
+                      borderColor: active ? (t.color || '#64748b') : '#e5e7eb',
+                    }}
+                    aria-pressed={active}
+                  >
+                    <Tag className="w-3 h-3" />
+                    {t.name}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
-        {/* Posts Grid */}
-        {filteredPosts.length === 0 ? (
-          <div className="text-center py-12">
+        {/* Grid */}
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                <div className="aspect-[16/9] bg-gray-200" />
+                <div className="p-5 space-y-3">
+                  <div className="h-4 bg-gray-200 rounded w-2/3" />
+                  <div className="h-3 bg-gray-200 rounded w-5/6" />
+                  <div className="h-3 bg-gray-200 rounded w-3/4" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : shownPosts.length === 0 ? (
+          <div className="text-center py-14">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Статьи не найдены</h3>
-            <p className="text-gray-600">Попробуйте изменить параметры поиска</p>
+            <p className="text-gray-600">Попробуйте изменить параметры поиска или фильтры</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredPosts.map((post) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {shownPosts.map((post) => (
               <article
                 key={post.id}
-                className="bg-white rounded-lg shadow overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+                className="group bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition cursor-pointer"
                 onClick={() => handlePostClick(post)}
               >
-                <div className="aspect-video">
-                  <img
-                    src={post.featured_image || 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=400&q=80'}
-                    alt={post.title}
-                    className="w-full h-full object-cover"
-                  />
+                {/* Image */}
+                <div className="relative overflow-hidden">
+                  <div className="aspect-[16/9]">
+                    <img
+                      src={post.featured_image || FALLBACK_IMG}
+                      loading="lazy"
+                      alt={post.title}
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src = FALLBACK_IMG;
+                      }}
+                      className="w-full h-full object-cover transform transition-transform duration-300 group-hover:scale-105"
+                    />
+                  </div>
                 </div>
-                
-                <div className="p-6">
+
+                <div className="p-5">
                   {/* Meta */}
-                  <div className="flex items-center space-x-4 text-sm text-gray-500 mb-3">
+                  <div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
                     {post.published_at && (
-                      <div className="flex items-center">
-                        <Calendar className="w-4 h-4 mr-1" />
+                      <div className="inline-flex items-center gap-1">
+                        <Calendar className="w-4 h-4" />
                         {new Date(post.published_at).toLocaleDateString('ru-RU')}
                       </div>
                     )}
-                    <div className="flex items-center">
-                      <Clock className="w-4 h-4 mr-1" />
-                      {post.reading_time} мин
+                    <div className="inline-flex items-center gap-1">
+                      <Clock className="w-4 h-4" />
+                      {post.reading_time || 3} мин
                     </div>
                   </div>
 
-                  {/* Category */}
+                  {/* Category badge */}
                   {post.category && (
                     <span
-                      className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium mb-3"
-                      style={{ backgroundColor: `${post.category.color}20`, color: post.category.color }}
+                      className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium mb-2"
+                      style={{
+                        backgroundColor: `${post.category.color ?? '#14b8a6'}22`,
+                        color: post.category.color ?? '#0f766e',
+                      }}
                     >
                       {post.category.name}
                     </span>
                   )}
 
-                  <h2 className="text-xl font-bold text-brand-navy mb-3 line-clamp-2">
+                  <h2 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
                     {post.title}
                   </h2>
-                  
-                  <p className="text-gray-600 mb-4 line-clamp-3">
-                    {post.excerpt}
-                  </p>
+                  {!!post.excerpt && (
+                    <p className="text-sm text-gray-600 mb-3 line-clamp-3">{post.excerpt}</p>
+                  )}
 
                   {/* Tags */}
-                  {post.tags && post.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mb-4">
-                      {post.tags.slice(0, 3).map(tag => (
+                  {!!post.tags?.length && (
+                    <div className="flex flex-wrap gap-1.5 mb-3">
+                      {post.tags.slice(0, 3).map((tg) => (
                         <span
-                          key={tag.id}
-                          className="inline-flex items-center px-2 py-1 rounded text-xs"
-                          style={{ backgroundColor: `${tag.color}20`, color: tag.color }}
+                          key={tg.id}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px]"
+                          style={{ backgroundColor: `${tg.color ?? '#64748b'}22`, color: tg.color ?? '#334155' }}
                         >
-                          <Tag className="w-3 h-3 mr-1" />
-                          {tag.name}
+                          <Tag className="w-3 h-3" />
+                          {tg.name}
                         </span>
                       ))}
                     </div>
                   )}
 
-                  <button className="text-teal-600 font-medium hover:text-teal-700 transition-colors">
+                  <span className="text-teal-600 font-medium group-hover:text-teal-700">
                     Читать далее →
-                  </button>
+                  </span>
                 </div>
               </article>
             ))}
