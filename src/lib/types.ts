@@ -189,3 +189,50 @@ export interface OneClickOrder {
   created_at: string;
   updated_at: string;
 }
+
+export interface BlogCategory {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  color: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BlogTag {
+  id: string;
+  name: string;
+  slug: string;
+  color: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BlogPost {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt?: string;
+  content?: string;
+  featured_image?: string;
+  category_id?: string;
+  author_id?: string;
+  status: 'draft' | 'published' | 'archived';
+  is_featured: boolean;
+  published_at?: string;
+  reading_time: number;
+  view_count: number;
+  created_at: string;
+  updated_at: string;
+  // Relations
+  category?: BlogCategory;
+  author?: {
+    id: string;
+    full_name?: string;
+    email?: string;
+  };
+  tags?: BlogTag[];
+}

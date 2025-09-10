@@ -44,6 +44,8 @@ import PaymentSuccessPage from './components/PaymentSuccessPage';
 import PaymentCancelPage from './components/PaymentCancelPage';
 import AboutUsPage from './components/AboutUsPage';
 import AdminAbout from './components/admin/AdminAbout';
+import BlogPage from './components/BlogPage';
+import BlogPostPage from './components/BlogPostPage';
 
 
 function App() {
@@ -164,6 +166,28 @@ function App() {
                 <TopHeader />
                 <MainHeader />
                 <AboutUsPage />
+                <Footer />
+              </>
+            }
+          />
+          <Route
+            path="/blog"
+            element={
+              <>
+                <TopHeader />
+                <MainHeader />
+                <BlogPage />
+                <Footer />
+              </>
+            }
+          />
+          <Route
+            path="/blog/:slug"
+            element={
+              <>
+                <TopHeader />
+                <MainHeader />
+                <BlogPostPage />
                 <Footer />
               </>
             }

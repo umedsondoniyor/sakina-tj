@@ -11,7 +11,8 @@ import {
   Navigation,
   MousePointer,
   Users,
-  Target
+  Target,
+  FileText
 } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import Logo from '../Logo';
@@ -84,6 +85,20 @@ const AdminDashboard = () => {
               >
                 <Star size={20} />
                 <span>Отзывы</span>
+              </NavLink>
+
+              <NavLink
+                to="/admin/blog"
+                className={({ isActive }) =>
+                  `flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                    isActive
+                      ? 'bg-teal-500 text-white'
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`
+                }
+              >
+                <FileText size={20} />
+                <span>Блог</span>
               </NavLink>
 
               <NavLink
