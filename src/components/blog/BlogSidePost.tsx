@@ -1,5 +1,6 @@
 import React from 'react';
 import { Clock, Tag } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import type { BlogPost } from '../../lib/types';
 
 interface BlogSidePostProps {
@@ -7,8 +8,14 @@ interface BlogSidePostProps {
 }
 
 const BlogSidePost: React.FC<BlogSidePostProps> = ({ post }) => {
+  const navigate = useNavigate();
+
+  const handleClick = () => {
+    navigate(`/blog/${post.slug}`);
+  };
+
   return (
-    <div className="flex space-x-4 group cursor-pointer">
+    <div className="flex space-x-4 group cursor-pointer" onClick={handleClick}>
       <div className="w-24 h-24 md:w-32 md:h-32 flex-shrink-0">
         <img
           src={post.featured_image || 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=300&q=80'}

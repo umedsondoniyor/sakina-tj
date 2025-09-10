@@ -1,5 +1,6 @@
 import React from 'react';
 import { Calendar, Clock, User, Tag } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import type { BlogPost } from '../../lib/types';
 
 interface BlogMainPostProps {
@@ -7,8 +8,14 @@ interface BlogMainPostProps {
 }
 
 const BlogMainPost: React.FC<BlogMainPostProps> = ({ post }) => {
+  const navigate = useNavigate();
+
+  const handleClick = () => {
+    navigate(`/blog/${post.slug}`);
+  };
+
   return (
-    <div className="md:col-span-2 group cursor-pointer">
+    <div className="md:col-span-2 group cursor-pointer" onClick={handleClick}>
       <div className="aspect-[14/9] mb-4 overflow-hidden rounded-lg">
         <img
           src={post.featured_image || 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=800&q=80'}
