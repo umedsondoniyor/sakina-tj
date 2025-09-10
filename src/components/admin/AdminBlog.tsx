@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabaseClient';
+import { getBlogPosts } from '../../lib/blogApi';
 import { 
   Plus, Pencil, Trash2, Eye, EyeOff, FileText, 
   Calendar, User, Tag, Folder, Search, Filter
