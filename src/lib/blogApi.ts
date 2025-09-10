@@ -9,16 +9,19 @@ export async function getBlogPosts(options?: {
   limit?: number;
   offset?: number;
 }): Promise<BlogPost[]> {
+  // First, fetch all categories and tags for mapping
+  const [categoriesResult, tagsResult] = await Promise.all([
+    supabase.from('blog_categories').select('*'),
+    supabase.from('blog_tags').select('*')
+  ]);
+
+  const categories = categoriesResult.data || [];
+  const allTags = tagsResult.data || [];
+
+  // Fetch blog posts
   let query = supabase
     .from('blog_posts')
-    .select(`
-      *,
-      category:blog_categories(*),
-      author:user_profiles(id, full_name, email),
-      tags:blog_post_tags(
-        tag:blog_tags(*)
-      )
-    `);
+    .select('*');
 
   if (options?.status) {
     query = query.eq('status', options.status);
@@ -42,28 +45,55 @@ export async function getBlogPosts(options?: {
     query = query.range(options.offset, (options.offset + (options?.limit || 10)) - 1);
   }
 
-  const { data, error } = await query;
+  const { data: posts, error } = await query;
 
   if (error) throw error;
 
-  // Transform the data to flatten tags
-  return (data || []).map(post => ({
-    ...post,
-    tags: post.tags?.map((pt: any) => pt.tag).filter(Boolean) || []
-  }));
+  if (!posts) return [];
+
+  // Fetch post tags for all posts
+  const postIds = posts.map(post => post.id);
+  const { data: postTags } = await supabase
+    .from('blog_post_tags')
+    .select('post_id, tag_id')
+    .in('post_id', postIds);
+
+  // Fetch user profiles for authors
+  const authorIds = [...new Set(posts.map(post => post.author_id).filter(Boolean))];
+  const { data: authors } = await supabase
+    .from('user_profiles')
+    .select('id, full_name, email')
+    .in('id', authorIds);
+
+  // Map the data manually
+  return posts.map(post => {
+    const category = categories.find(cat => cat.id === post.category_id) || null;
+    const author = authors?.find(auth => auth.id === post.author_id) || null;
+    const postTagIds = postTags?.filter(pt => pt.post_id === post.id).map(pt => pt.tag_id) || [];
+    const tags = allTags.filter(tag => postTagIds.includes(tag.id));
+
+    return {
+      ...post,
+      category,
+      author,
+      tags
+    };
+  });
 }
 
 export async function getBlogPost(slug: string): Promise<BlogPost | null> {
-  const { data, error } = await supabase
+  // First, fetch all categories and tags for mapping
+  const [categoriesResult, tagsResult] = await Promise.all([
+    supabase.from('blog_categories').select('*'),
+    supabase.from('blog_tags').select('*')
+  ]);
+
+  const categories = categoriesResult.data || [];
+  const allTags = tagsResult.data || [];
+
+  const { data: post, error } = await supabase
     .from('blog_posts')
-    .select(`
-      *,
-      category:blog_categories(*),
-      author:user_profiles(id, full_name, email),
-      tags:blog_post_tags(
-        tag:blog_tags(*)
-      )
-    `)
+    .select('*')
     .eq('slug', slug)
     .eq('status', 'published')
     .single();
@@ -73,15 +103,37 @@ export async function getBlogPost(slug: string): Promise<BlogPost | null> {
     throw error;
   }
 
+  if (!post) return null;
+
   // Increment view count
   await supabase
     .from('blog_posts')
-    .update({ view_count: (data.view_count || 0) + 1 })
-    .eq('id', data.id);
+    .update({ view_count: (post.view_count || 0) + 1 })
+    .eq('id', post.id);
+
+  // Fetch post tags
+  const { data: postTags } = await supabase
+    .from('blog_post_tags')
+    .select('tag_id')
+    .eq('post_id', post.id);
+
+  // Fetch author
+  const { data: author } = post.author_id ? await supabase
+    .from('user_profiles')
+    .select('id, full_name, email')
+    .eq('id', post.author_id)
+    .single() : { data: null };
+
+  // Map the data manually
+  const category = categories.find(cat => cat.id === post.category_id) || null;
+  const postTagIds = postTags?.map(pt => pt.tag_id) || [];
+  const tags = allTags.filter(tag => postTagIds.includes(tag.id));
 
   return {
-    ...data,
-    tags: data.tags?.map((pt: any) => pt.tag).filter(Boolean) || []
+    ...post,
+    category,
+    author,
+    tags
   };
 }
 
