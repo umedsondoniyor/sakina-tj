@@ -145,3 +145,19 @@ export const aboutValidationRules = {
     }
   }
 };
+
+// ---- Convenience wrappers so callers can import named validators ----
+export const validateAboutSettings = (data: Record<string, any>) =>
+  validateForm(data, aboutValidationRules.settings);
+
+export const validateAboutStat = (data: Record<string, any>) =>
+  validateForm(data, aboutValidationRules.stat);
+
+export const validateAboutValue = (data: Record<string, any>) =>
+  validateForm(data, aboutValidationRules.value);
+
+export const validateAboutTimelineItem = (data: Record<string, any>) =>
+  validateForm(data, aboutValidationRules.timeline);
+
+export const validateAboutTeamMember = (data: Record<string, any>) =>
+  validateForm(data, aboutValidationRules.team);
