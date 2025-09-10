@@ -138,128 +138,47 @@ type GetBlogPostsParams = {
   featuredOnly?: boolean;         // optional
 };
 
-        {/* Article Header */}
-        <header className="mb-8">
-          {/* Category */}
-          {post.category && (
-            <div className="mb-4">
-              <span
-                className="inline-block px-3 py-1 rounded-full text-sm font-medium text-white"
-                style={{ backgroundColor: post.category.color || '#3B82F6' }}
-              >
-                {post.category.name}
-              </span>
-            </div>
-          )}
+export async function getBlogPosts(params: GetBlogPostsParams = {}): Promise<BlogPost[]> {
+  try {
+    const {
+      status = 'published',
+      limit,
+      categorySlug,
+      tagSlug,
+      search,
+      featuredOnly
+    } = params;
 
-          {/* Title */}
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 leading-tight">
-            {post.title}
-          </h1>
+    // 1) Base query
+    let query = supabase
+      .from('blog_posts')
+      .select('*')
+      .eq('status', status)
+      .order('published_at', { ascending: false });
 
-          {/* Excerpt */}
-          {post.excerpt && (
-            <p className="text-xl text-gray-600 mb-6 leading-relaxed">
-              {post.excerpt}
-            </p>
-          )}
+    // 2) Apply filters
+    if (featuredOnly) {
+      query = query.eq('is_featured', true);
+    }
+    if (limit) {
+      query = query.limit(limit);
+    }
 
-          {/* Meta Information */}
-          <div className="flex flex-wrap items-center gap-6 text-sm text-gray-500 mb-6">
-            {post.published_at && (
-              <div className="flex items-center">
-                <Calendar className="w-4 h-4 mr-2" />
-                {formatDate(post.published_at)}
-              </div>
-            )}
-            {post.reading_time && (
-              <div className="flex items-center">
-                <Clock className="w-4 h-4 mr-2" />
-                {post.reading_time} мин чтения
-              </div>
-            )}
-            <button
-              onClick={handleShare}
-              className="flex items-center hover:text-gray-700 transition-colors"
-            >
-              <Share2 className="w-4 h-4 mr-2" />
-              Поделиться
-            </button>
-          </div>
+    const { data: posts, error } = await query;
+    if (error) throw error;
+    if (!posts || posts.length === 0) return [];
 
-          {/* Tags */}
-          {post.tags && post.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {post.tags.map((tag) => (
-                <span
-                  key={tag.id}
-                  className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-700"
-                >
-                  <Tag className="w-3 h-3 mr-1" />
-                  {tag.name}
-                </span>
-              ))}
-            </div>
-          )}
-        </header>
-
-        {/* Article Content */}
-        <div className="prose prose-lg max-w-none mb-12">
-          {post.content ? (
-            <div
-              className="text-gray-800 leading-relaxed"
-              dangerouslySetInnerHTML={{ __html: post.content }}
-            />
-          ) : (
-            <p className="text-gray-600">Содержание статьи недоступно.</p>
-          )}
-        </div>
-
-        {/* Related Posts */}
-        {relatedPosts.length > 0 && (
-          <section className="border-t pt-12">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Похожие статьи</h2>
-            <div className="grid md:grid-cols-3 gap-6">
-              {relatedPosts.map((relatedPost) => (
-                <article
-                  key={relatedPost.id}
-                  className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
-                  onClick={() => navigate(`/blog/${relatedPost.slug}`)}
-                >
-                  {relatedPost.featured_image && (
-                    <img
-                      src={relatedPost.featured_image}
-                      alt={relatedPost.title}
-                      className="w-full h-48 object-cover"
-                    />
-                  )}
-                  <div className="p-4">
-                    <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
-                      {relatedPost.title}
-                    </h3>
-                    {relatedPost.excerpt && (
-                      <p className="text-sm text-gray-600 line-clamp-3 mb-3">
-                        {relatedPost.excerpt}
-                      </p>
-                    )}
-                    <div className="flex items-center justify-between text-xs text-gray-500">
-                      {relatedPost.published_at && (
-                        <span>{formatDate(relatedPost.published_at)}</span>
-                      )}
-                      {relatedPost.reading_time && (
-                        <span>{relatedPost.reading_time} мин</span>
-                      )}
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </section>
-        )}
-      </article>
-    </div>
-  );
-}
+    // 3) Fetch categories
+    const categoryIds = Array.from(new Set(posts.map(p => p.category_id).filter(Boolean)));
+    let categoriesMap = new Map<string, BlogCategory>();
+    if (categoryIds.length) {
+      const { data: categories, error: catErr } = await supabase
+        .from('blog_categories')
+        .select('*')
+        .in('id', categoryIds);
+      if (catErr) throw catErr;
+      (categories ?? []).forEach(c => categoriesMap.set(c.id, c));
+    }
 
     // 4) Fetch tags per post via junction table, then hydrate
     const postIds = posts.map(p => p.id);
@@ -271,14 +190,6 @@ type GetBlogPostsParams = {
 
     const tagIds = Array.from(new Set((postTags ?? []).map(pt => pt.tag_id)));
     let tagsMap = new Map<string, BlogTag>();
-            name,
-            slug,
-            color
-          )
-        `)
-        .eq('slug', postSlug)
-        .eq('status', 'published')
-        .single();
     if (tagIds.length) {
       const { data: tags, error: tagsErr } = await supabase
         .from('blog_tags')
@@ -301,173 +212,101 @@ type GetBlogPostsParams = {
         tags: tagsForPost,
       };
     });
-      if (postError) {
-        if (postError.code === 'PGRST116') {
-          setError('Blog post not found');
-        } else {
-          throw postError;
-        }
-        return;
-      }
+
     // 6) Optional client-side filters
-      // Fetch tags for this post
-      const { data: tagData } = await supabase
-        .from('blog_post_tags')
-        .select(`
-          blog_tags (
-            id,
-            name,
-            slug,
-            color
-          )
-        `)
-        .eq('post_id', postData.id);
+    let filtered = hydrated;
     if (categorySlug) {
-      const tags = tagData?.map(item => item.blog_tags).filter(Boolean) || [];
+      filtered = filtered.filter(p => p.category?.slug === categorySlug);
+    }
+    if (tagSlug) {
+      filtered = filtered.filter(p => p.tags?.some(t => t.slug === tagSlug));
+    }
+    if (search) {
       const q = search.toLowerCase();
-      const fullPost: BlogPost = {
-        ...postData,
-        category: postData.blog_categories,
-        tags: tags
-      };
-    }
-      setPost(fullPost);
-    }
-      // Increment view count
-      await supabase
-        .from('blog_posts')
-        .update({ view_count: (postData.view_count || 0) + 1 })
-        .eq('id', postData.id);
-/**
-      // Fetch related posts from the same category
-      if (postData.category_id) {
-        const { data: relatedData } = await supabase
-          .from('blog_posts')
-          .select(`
-            id,
-            title,
-            slug,
-            excerpt,
-            featured_image,
-            published_at,
-            reading_time,
-            blog_categories (
-              name,
-              color
-            )
-          `)
-          .eq('status', 'published')
-          .eq('category_id', postData.category_id)
-          .neq('id', postData.id)
-          .limit(3);
- */
-        setRelatedPosts(relatedData || []);
-      }
-    } catch (err: any) {
-      console.error('Error fetching blog post:', err);
-      setError('Failed to load blog post');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleShare = async () => {
-    if (navigator.share && post) {
-      try {
-        await navigator.share({
-          title: post.title,
-          text: post.excerpt || '',
-          url: window.location.href,
-        });
-      } catch (err) {
-        // Fallback to copying URL
-        navigator.clipboard.writeText(window.location.href);
-      }
-    } else {
-      // Fallback to copying URL
-      navigator.clipboard.writeText(window.location.href);
-    if (post.category_id) {
-      const { data: cat } = await supabase
-        .from('blog_categories')
-        .select('*')
-        .eq('id', post.category_id)
-        .maybeSingle();
-      result.category = cat ?? null;
+      filtered = filtered.filter(p =>
+        p.title.toLowerCase().includes(q) ||
+        (p.excerpt && p.excerpt.toLowerCase().includes(q)) ||
+        (p.content && p.content.toLowerCase().includes(q))
+      );
     }
 
-    // Tags
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('ru-RU', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
-      .from('blog_post_tags')
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 py-8">
-        <div className="max-w-4xl mx-auto px-4">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
-            <div className="h-64 bg-gray-200 rounded-lg mb-6"></div>
-            <div className="h-12 bg-gray-200 rounded w-3/4 mb-4"></div>
-            <div className="space-y-3">
-              <div className="h-4 bg-gray-200 rounded"></div>
-              <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-              <div className="h-4 bg-gray-200 rounded w-4/6"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return filtered;
+  } catch (err: any) {
+    if (isMissingTable(err)) {
+      console.warn('[blogApi] blog_posts missing, returning empty list');
+      return [];
+    }
+    console.error('[blogApi] getBlogPosts error:', err);
+    throw err;
   }
-        .select('*')
-  if (error || !post) {
-    return (
-      <div className="min-h-screen bg-gray-50 py-8">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">
-            {error || 'Blog post not found'}
-          </h1>
-          <button
-            onClick={() => navigate('/blog')}
-            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Blog
-          </button>
-        </div>
-      </div>
-    );
+}
+
+export async function getBlogPostBySlug(postSlug: string): Promise<BlogPost | null> {
+  try {
+    // Fetch the post with category
+    const { data: postData, error: postError } = await supabase
+      .from('blog_posts')
+      .select(`
+        *,
+        blog_categories (
+          id,
+          name,
+          slug,
+          color
+        )
+      `)
+      .eq('slug', postSlug)
+      .eq('status', 'published')
+      .single();
+
+    if (postError) {
+      if (postError.code === 'PGRST116') {
+        return null;
+      } else {
+        throw postError;
+      }
     }
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <button
-            onClick={() => navigate('/blog')}
-            className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Назад к блогу
-          </button>
-        </div>
-      </div>
+    // Fetch tags for this post
+    const { data: tagData } = await supabase
+      .from('blog_post_tags')
+      .select(`
+        blog_tags (
+          id,
+          name,
+          slug,
+          color
+        )
+      `)
+      .eq('post_id', postData.id);
 
-      {/* Article */}
-      <article className="max-w-4xl mx-auto px-4 py-8">
-        {/* Featured Image */}
-        {post.featured_image && (
-          <div className="mb-8">
-            <img
-              src={post.featured_image}
-              alt={post.title}
-              className="w-full aspect-[10/9] object-cover rounded-lg"
-            />
-          </div>
-        )}
+    const tags = tagData?.map(item => item.blog_tags).filter(Boolean) || [];
+    const fullPost: BlogPost = {
+      ...postData,
+      category: postData.blog_categories,
+      tags: tags
+    };
+
+    // Increment view count
+    await supabase
+      .from('blog_posts')
+      .update({ view_count: (postData.view_count || 0) + 1 })
+      .eq('id', postData.id);
+
+    return fullPost;
+  } catch (err: any) {
+    console.error('[blogApi] getBlogPostBySlug error:', err);
+    throw err;
+  }
+}
+
+const blogApi = {
+  getBlogCategories,
+  getBlogTags,
+  getBlogPosts,
+  getBlogPostBySlug,
+  generateSlug,
+  calculateReadingTime
+};
 
 export default blogApi;
