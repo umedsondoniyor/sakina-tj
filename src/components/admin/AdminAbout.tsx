@@ -80,17 +80,7 @@ const Modal: React.FC<{
   );
 };
 
-// map icon string -> component
-const iconMap = {
-  Clock,
-  Users,
-  Award,
-  Globe,
-  Heart,
-  Target,
-};
-
-const iconOptions = Object.keys(iconMap) as (keyof typeof iconMap)[];
+const iconOptions = ['Clock', 'Users', 'Award', 'Globe', 'Heart', 'Target'];
 
 const AdminAbout: React.FC = () => {
   // loading

@@ -3,56 +3,18 @@ import {
   Award, Users, Heart, Target, Clock, Globe,
   type Icon as LucideIcon
 } from 'lucide-react';
-import { supabase } from '../lib/supabaseClient';
-
-/* =========================
-   Types mirrored from DB
-========================= */
-type AboutSettings = {
-  hero_title: string | null;
-  hero_subtitle: string | null;
-  hero_image_url: string | null;
-};
-
-type AboutStat = {
-  id: string;
-  number: string;
-  label: string;
-  // icon column may be named differently in DB; we handle that at runtime
-  icon_key?: string | null;
-  icon?: string | null;
-  iconName?: string | null;
-  icon_name?: string | null;
-  order: number | null;
-};
-
-type AboutValue = {
-  id: string;
-  title: string;
-  description: string;
-  icon_key?: string | null;
-  icon?: string | null;
-  iconName?: string | null;
-  icon_name?: string | null;
-  order: number | null;
-};
-
-type AboutTimeline = {
-  id: string;
-  year: string;
-  title: string;
-  description: string;
-  order: number | null;
-};
-
-type AboutTeam = {
-  id: string;
-  name: string;
-  position: string;
-  image_url: string;
-  description: string;
-  order: number | null;
-};
+import {
+  getAboutSettings,
+  getAboutStats,
+  getAboutValues,
+  getAboutTimeline,
+  getAboutTeam,
+  type AboutSettings,
+  type AboutStat,
+  type AboutValue,
+  type AboutTimeline,
+  type AboutTeam
+} from '../lib/aboutApi';
 
 /* =========================
    Icon Resolver (robust)
@@ -66,28 +28,8 @@ const ICONS: Record<string, LucideIcon> = {
   globe: Globe,
 };
 
-function pickIconKey(obj: any): string {
-  return (
-    obj?.icon_key ??
-    obj?.icon ??
-    obj?.iconName ??
-    obj?.icon_name ??
-    ''
-  ).toString();
-}
-
-function normalizeIconKey(key: string): string {
-  // example inputs: "Heart", "heart", "heart-icon", "HEART ", "Icon:Heart"
-  return key
-    .toLowerCase()
-    .replace(/[^a-z]/g, ' ')    // keep letters only
-    .trim()
-    .split(/\s+/)               // split words
-    .pop() || '';               // take the last word (most specific)
-}
-
-function resolveIcon(keyRaw: string): LucideIcon {
-  const key = normalizeIconKey(keyRaw);
+function resolveIcon(iconKey: string): LucideIcon {
+  const key = iconKey.toLowerCase();
   return ICONS[key] ?? Award; // Award is sane fallback
 }
 
@@ -197,49 +139,19 @@ const AboutUsPage: React.FC = () => {
       try {
         setLoading(true);
 
-        const [
-          settingsRes,
-          statsRes,
-          valuesRes,
-          timelineRes,
-          teamRes,
-        ] = await Promise.all([
-          supabase.from('about_settings').select('*').limit(1).maybeSingle(),
-          supabase.from('about_stats').select('*').order('order', { ascending: true }),
-          supabase.from('about_values').select('*').order('order', { ascending: true }),
-          supabase.from('about_timeline').select('*').order('order', { ascending: true }),
-          supabase.from('about_team').select('*').order('order', { ascending: true }),
+        const [settingsData, statsData, valuesData, timelineData, teamData] = await Promise.all([
+          getAboutSettings().catch(() => null),
+          getAboutStats().catch(() => []),
+          getAboutValues().catch(() => []),
+          getAboutTimeline().catch(() => []),
+          getAboutTeam().catch(() => [])
         ]);
 
-        setSettings(
-          settingsRes.error || !settingsRes.data
-            ? FALLBACK_SETTINGS
-            : (settingsRes.data as AboutSettings)
-        );
-
-        setStats(
-          statsRes.error || !statsRes.data || statsRes.data.length === 0
-            ? FALLBACK_STATS
-            : (statsRes.data as AboutStat[])
-        );
-
-        setValues(
-          valuesRes.error || !valuesRes.data || valuesRes.data.length === 0
-            ? FALLBACK_VALUES
-            : (valuesRes.data as AboutValue[])
-        );
-
-        setTimeline(
-          timelineRes.error || !timelineRes.data || timelineRes.data.length === 0
-            ? FALLBACK_TIMELINE
-            : (timelineRes.data as AboutTimeline[])
-        );
-
-        setTeam(
-          teamRes.error || !teamRes.data || teamRes.data.length === 0
-            ? FALLBACK_TEAM
-            : (teamRes.data as AboutTeam[])
-        );
+        setSettings(settingsData || FALLBACK_SETTINGS);
+        setStats(statsData.length > 0 ? statsData : FALLBACK_STATS);
+        setValues(valuesData.length > 0 ? valuesData : FALLBACK_VALUES);
+        setTimeline(timelineData.length > 0 ? timelineData : FALLBACK_TIMELINE);
+        setTeam(teamData.length > 0 ? teamData : FALLBACK_TEAM);
       } finally {
         setLoading(false);
       }
@@ -283,7 +195,7 @@ const AboutUsPage: React.FC = () => {
               </p>
               <div className="grid grid-cols-2 gap-6">
                 {statsArr.slice(0, 2).map((stat) => {
-                  const Icon = resolveIcon(pickIconKey(stat));
+                  const Icon = resolveIcon(stat.icon);
                   return (
                     <div key={stat.id} className="text-center">
                       <Icon className="w-8 h-8 mx-auto mb-2 text-yellow-300" />
@@ -327,7 +239,7 @@ const AboutUsPage: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {valuesArr.map((value) => {
-              const Icon = resolveIcon(pickIconKey(value));
+              const Icon = resolveIcon(value.icon);
               return (
                 <div key={value.id} className="text-center group">
                   <div className="w-16 h-16 bg-brand-turquoise rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-brand-navy transition-colors">
