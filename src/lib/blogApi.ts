@@ -1,6 +1,75 @@
 // src/lib/blogApi.ts
 import { supabase } from './supabaseClient';
 
+import type { BlogPost } from './types';
+
+type GetBlogPostsOpts = {
+  status?: 'draft' | 'published' | 'archived';
+  categoryId?: string;   // ID (preferred) — pass resolved id from slug
+  tagId?: string;        // optional
+  search?: string;       // optional
+  limit?: number;
+  offset?: number;
+};
+
+export async function getBlogPosts(opts: GetBlogPostsOpts = {}): Promise<BlogPost[]> {
+  const {
+    status = 'published',
+    categoryId,
+    tagId,
+    search,
+    limit = 24,
+    offset = 0,
+  } = opts;
+
+  // Base select including category + tags
+  let q = supabase
+    .from('blog_posts')
+    .select(`
+      *,
+      category:blog_categories(*),
+      tags:blog_post_tags(
+        tag:blog_tags(*)
+      )
+    `)
+    .eq('status', status)
+    .order('published_at', { ascending: false })
+    .range(offset, offset + limit - 1);
+
+  if (categoryId) {
+    q = q.eq('category_id', categoryId);
+  }
+
+  // Tag filter (fetch post_ids by tag first, then filter with .in)
+  if (tagId) {
+    const { data: linkRows, error: tagErr } = await supabase
+      .from('blog_post_tags')
+      .select('post_id')
+      .eq('tag_id', tagId);
+
+    if (tagErr) throw tagErr;
+    const ids = (linkRows ?? []).map(r => r.post_id);
+    if (ids.length === 0) return []; // no matches
+    q = q.in('id', ids);
+  }
+
+  // Simple search (title/excerpt/content)
+  if (search?.trim()) {
+    const s = `%${search.trim()}%`;
+    q = q.or(`title.ilike.${s},excerpt.ilike.${s},content.ilike.${s}`);
+  }
+
+  const { data, error } = await q;
+  if (error) throw error;
+
+  // Flatten tags array (blog_post_tags -> tag objects)
+  return (data ?? []).map(p => ({
+    ...p,
+    tags: (p as any).tags?.map((t: any) => t.tag) ?? [],
+  })) as BlogPost[];
+}
+
+
 /**
  * Minimal types. If you already have these in `types.ts`,
  * feel free to import from there instead.
@@ -132,7 +201,7 @@ export async function getBlogTags(): Promise<BlogTag[]> {
 type GetBlogPostsParams = {
   status?: BlogStatus;            // default: 'published'
   limit?: number;                 // optional
-  categorySlug?: string;          // optional
+  categorySlug?: string;          // optional - filter by category slug
   tagSlug?: string;               // optional
   search?: string;                // optional (title/excerpt/content)
   featuredOnly?: boolean;         // optional
@@ -162,7 +231,7 @@ export async function getBlogPosts(params: GetBlogPostsParams = {}): Promise<Blo
     if (featuredOnly) query = query.eq('is_featured', true);
     if (limit) query = query.limit(limit);
 
-    // We’ll post-filter categorySlug/tagSlug/search in JS after hydrating
+    // We'll post-filter categorySlug/tagSlug/search in JS after hydrating
     const { data: postsRaw, error: postsErr } = await query;
     if (postsErr) throw postsErr;
 
