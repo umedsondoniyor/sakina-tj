@@ -16,6 +16,26 @@ const useDebounced = (val: string, delay = 350) => {
   return v;
 };
 
+// BlogPage.tsx – inside load effect where you set posts
+const data = await getBlogPosts({
+  status: 'published',
+  categoryId,          // resolved ID (we already compute this in the component)
+  tagId,               // resolved ID
+  search: debouncedSearch || undefined,
+  limit: 24,
+});
+
+// extra client-side guards (keeps UI correct even if backend doesn’t filter)
+let filtered = data;
+if (categoryId) {
+  filtered = filtered.filter(p => p.category?.id === categoryId);
+}
+if (tagId) {
+  filtered = filtered.filter(p => p.tags?.some(t => t.id === tagId));
+}
+setPosts(filtered);
+
+
 const BlogPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
