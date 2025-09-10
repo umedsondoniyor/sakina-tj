@@ -3,6 +3,8 @@ import {
   Award, Users, Heart, Target, Clock, Globe,
   type Icon as LucideIcon
 } from 'lucide-react';
+import LoadingSpinner from './common/LoadingSpinner';
+import ErrorBoundary from './common/ErrorBoundary';
 import {
   getAboutSettings,
   getAboutStats,
