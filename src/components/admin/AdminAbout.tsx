@@ -5,7 +5,7 @@ import { aboutApi } from '../../lib/aboutApi';
 import { AboutSettings, AboutStat, AboutValue, AboutTimelineItem, AboutTeamMember } from '../../lib/types';
 import { validateAboutSettings, validateAboutStat, validateAboutValue, validateAboutTimelineItem, validateAboutTeamMember } from '../../lib/validation';
 import  AboutSettingsForm  from './forms/AboutSettingsForm';
-import { ImageUploadField } from './ImageUploadField';
+import  ImageUploadField  from './ImageUploadField';
 
 const AdminAbout: React.FC = () => {
   const { data, loading, error, refetch } = useAboutData();
