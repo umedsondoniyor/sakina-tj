@@ -1,438 +1,231 @@
+// src/lib/blogApi.ts
 import { supabase } from './supabaseClient';
-import type { BlogPost, BlogCategory, BlogTag } from './types';
 
-// Static fallback data
-const FALLBACK_POSTS: BlogPost[] = [
-  {
-    id: '1',
-    title: 'Влияние здорового сна на организм',
-    slug: 'healthy-sleep-impact',
-    excerpt: '😴 Здоровый сон - это один из важнейших факторов здоровья нашего организма.',
-    featured_image: 'https://ik.imagekit.io/3js0rb3pk/cover.png?updatedAt=1744149464470',
-    status: 'published',
-    is_featured: true,
-    reading_time: 5,
-    view_count: 0,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: '2',
-    title: 'Последствия нарушения сна',
-    slug: 'sleep-disorders-consequences',
-    excerpt: 'Хотим обсудить с вами очень важную тему - последствия нарушения сна.',
-    featured_image: 'https://ik.imagekit.io/3js0rb3pk/cover1.png?updatedAt=1744149464740',
-    status: 'published',
-    is_featured: false,
-    reading_time: 4,
-    view_count: 0,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: '3',
-    title: 'Как спать и высыпаться?',
-    slug: 'how-to-sleep-well',
-    excerpt: 'Привет, друзья! Сегодня мы хотим поделиться с вами советом от специалиста',
-    featured_image: 'https://ik.imagekit.io/3js0rb3pk/cover2.png?updatedAt=1744149464181',
-    status: 'published',
-    is_featured: false,
-    reading_time: 6,
-    view_count: 0,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: '4',
-    title: 'Матрас – залог вашего крепкого и здорового сна',
-    slug: 'mattress-healthy-sleep',
-    excerpt: 'Качество сна напрямую влияет на наше здоровье, настроение и продуктивность.',
-    featured_image: 'https://ik.imagekit.io/3js0rb3pk/cover3.png?updatedAt=1744149462628',
-    status: 'published',
-    is_featured: false,
-    reading_time: 7,
-    view_count: 0,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  }
-];
+export type BlogStatus = 'draft' | 'published' | 'archived';
 
-// Blog Posts API
-export async function getBlogPosts(options?: {
-  status?: 'draft' | 'published' | 'archived';
-  featured?: boolean;
-  categoryId?: string;
-  limit?: number;
-  offset?: number;
-}): Promise<BlogPost[]> {
-  try {
-    // Check if blog tables exist by trying a simple query
-    const { error: testError } = await supabase
-      .from('blog_posts')
-      .select('id')
-      .limit(1);
-    
-    if (testError && testError.code === '42P01') {
-      // Table doesn't exist, return fallback data
-      console.warn('Blog tables not found, using fallback data');
-      return FALLBACK_POSTS.filter(post => {
-        if (options?.status && post.status !== options.status) return false;
-        if (options?.featured !== undefined && post.is_featured !== options.featured) return false;
-        return true;
-      }).slice(0, options?.limit || FALLBACK_POSTS.length);
-    }
-
-  // First, fetch all categories and tags for mapping
-  const [categoriesResult, tagsResult] = await Promise.all([
-    supabase.from('blog_categories').select('*'),
-    supabase.from('blog_tags').select('*')
-  ]);
-
-  const categories = categoriesResult.data || [];
-  const allTags = tagsResult.data || [];
-
-  // Fetch blog posts
-  let query = supabase
-    .from('blog_posts')
-    .select('*');
-
-  if (options?.status) {
-    query = query.eq('status', options.status);
-  }
-
-  if (options?.featured !== undefined) {
-    query = query.eq('is_featured', options.featured);
-  }
-
-  if (options?.categoryId) {
-    query = query.eq('category_id', options.categoryId);
-  }
-
-  query = query.order('published_at', { ascending: false, nullsFirst: false });
-
-  if (options?.limit) {
-    query = query.limit(options.limit);
-  }
-
-  if (options?.offset) {
-    query = query.range(options.offset, (options.offset + (options?.limit || 10)) - 1);
-  }
-
-  const { data: posts, error } = await query;
-
-  if (error) throw error;
-
-  if (!posts) return [];
-
-  // Fetch post tags for all posts
-  const postIds = posts.map(post => post.id);
-  const { data: postTags } = await supabase
-    .from('blog_post_tags')
-    .select('post_id, tag_id')
-    .in('post_id', postIds);
-
-  // Fetch user profiles for authors
-  const authorIds = [...new Set(posts.map(post => post.author_id).filter(Boolean))];
-  const { data: authors } = await supabase
-    .from('user_profiles')
-    .select('id, full_name, email')
-    .in('id', authorIds);
-
-  // Map the data manually
-  return posts.map(post => {
-    const category = categories.find(cat => cat.id === post.category_id) || null;
-    const author = authors?.find(auth => auth.id === post.author_id) || null;
-    const postTagIds = postTags?.filter(pt => pt.post_id === post.id).map(pt => pt.tag_id) || [];
-    const tags = allTags.filter(tag => postTagIds.includes(tag.id));
-
-    return {
-      ...post,
-      category,
-      author,
-      tags
-    };
-  });
-  } catch (error) {
-    console.warn('Error fetching blog posts, using fallback:', error);
-    return FALLBACK_POSTS.slice(0, options?.limit || FALLBACK_POSTS.length);
-  }
+export interface BlogCategory {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+  color?: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
-export async function getBlogPost(slug: string): Promise<BlogPost | null> {
-  try {
-    // Check if blog tables exist
-    const { error: testError } = await supabase
-      .from('blog_posts')
-      .select('id')
-      .limit(1);
-    
-    if (testError && testError.code === '42P01') {
-      // Table doesn't exist, return fallback data
-      return FALLBACK_POSTS.find(post => post.slug === slug) || null;
-    }
+export interface BlogTag {
+  id: string;
+  name: string;
+  slug: string;
+  color?: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
 
-  // First, fetch all categories and tags for mapping
-  const [categoriesResult, tagsResult] = await Promise.all([
-    supabase.from('blog_categories').select('*'),
-    supabase.from('blog_tags').select('*')
-  ]);
+export interface BlogPost {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  content: string | null;
+  featured_image: string | null;
+  category_id: string | null;
+  author_id: string | null;
+  status: BlogStatus;
+  is_featured: boolean;
+  published_at: string | null;
+  reading_time: number | null;
+  view_count: number;
+  created_at: string;
+  updated_at: string;
+  // hydrated fields
+  category?: BlogCategory | null;
+  tags?: BlogTag[];
+}
 
-  const categories = categoriesResult.data || [];
-  const allTags = tagsResult.data || [];
+const TABLE_NOT_FOUND = '42P01';
 
-  const { data: post, error } = await supabase
-    .from('blog_posts')
-    .select('*')
-    .eq('slug', slug)
-    .eq('status', 'published')
-    .single();
-
+async function safeSelect<T>(fn: () => Promise<{ data: T | null; error: any }>, context: string): Promise<T | null> {
+  const { data, error } = await fn();
   if (error) {
-    if (error.code === 'PGRST116') return null;
+    if (error.code === TABLE_NOT_FOUND) {
+      console.warn(`[blogApi] Table missing during "${context}". Returning null.`);
+      return null;
+    }
     throw error;
   }
+  return data;
+}
 
+/** PUBLIC: fetch published posts for the site */
+export async function fetchPublishedPosts(limit = 10): Promise<BlogPost[]> {
+  // base posts
+  const posts = await safeSelect<BlogPost[]>(() =>
+    supabase
+      .from('blog_posts')
+      .select('*')
+      .eq('status', 'published')
+      .lte('published_at', new Date().toISOString())
+      .order('published_at', { ascending: false })
+      .limit(limit),
+    'fetchPublishedPosts:posts'
+  ) ?? [];
+
+  if (posts.length === 0) return [];
+
+  // categories
+  const categoryIds = [...new Set(posts.map(p => p.category_id).filter(Boolean))] as string[];
+  const categories = categoryIds.length
+    ? await safeSelect<BlogCategory[]>(() =>
+        supabase.from('blog_categories').select('*').in('id', categoryIds),
+        'fetchPublishedPosts:categories'
+      )
+    : null;
+
+  // post-tag rows
+  const postIds = posts.map(p => p.id);
+  const postTags = await safeSelect<{ post_id: string; tag_id: string }[]>(() =>
+    supabase
+      .from('blog_post_tags')
+      .select('post_id, tag_id')
+      .in('post_id', postIds),
+    'fetchPublishedPosts:post_tags'
+  ) ?? [];
+
+  const tagIds = [...new Set(postTags.map(pt => pt.tag_id))];
+  const tags = tagIds.length
+    ? await safeSelect<BlogTag[]>(() =>
+        supabase.from('blog_tags').select('*').in('id', tagIds),
+        'fetchPublishedPosts:tags'
+      )
+    : null;
+
+  const categoryMap = new Map((categories ?? []).map(c => [c.id, c]));
+  const tagMap = new Map((tags ?? []).map(t => [t.id, t]));
+
+  // attach related
+  const tagBucket = new Map<string, BlogTag[]>();
+  for (const pt of postTags) {
+    if (!tagBucket.has(pt.post_id)) tagBucket.set(pt.post_id, []);
+    const tag = tagMap.get(pt.tag_id);
+    if (tag) tagBucket.get(pt.post_id)!.push(tag);
+  }
+
+  return posts.map(p => ({
+    ...p,
+    category: p.category_id ? categoryMap.get(p.category_id) ?? null : null,
+    tags: tagBucket.get(p.id) ?? []
+  }));
+}
+
+/** PUBLIC: fetch one post by slug (published only) */
+export async function fetchPostBySlug(slug: string): Promise<BlogPost | null> {
+  const post = await safeSelect<BlogPost>(() =>
+    supabase
+      .from('blog_posts')
+      .select('*')
+      .eq('slug', slug)
+      .eq('status', 'published')
+      .lte('published_at', new Date().toISOString())
+      .maybeSingle(),
+    'fetchPostBySlug:post'
+  );
   if (!post) return null;
 
-  // Increment view count
-  await supabase
-    .from('blog_posts')
-    .update({ view_count: (post.view_count || 0) + 1 })
-    .eq('id', post.id);
+  const [category, postTags] = await Promise.all([
+    post.category_id
+      ? safeSelect<BlogCategory>(() =>
+          supabase.from('blog_categories').select('*').eq('id', post.category_id!).maybeSingle(),
+          'fetchPostBySlug:category'
+        )
+      : Promise.resolve(null),
+    safeSelect<{ tag_id: string }[]>(() =>
+      supabase.from('blog_post_tags').select('tag_id').eq('post_id', post.id),
+      'fetchPostBySlug:post_tags'
+    )
+  ]);
 
-  // Fetch post tags
-  const { data: postTags } = await supabase
-    .from('blog_post_tags')
-    .select('tag_id')
-    .eq('post_id', post.id);
+  const tagIds = (postTags ?? []).map(t => t.tag_id);
+  const tags = tagIds.length
+    ? await safeSelect<BlogTag[]>(() =>
+        supabase.from('blog_tags').select('*').in('id', tagIds),
+        'fetchPostBySlug:tags'
+      )
+    : [];
 
-  // Fetch author
-  const { data: author } = post.author_id ? await supabase
-    .from('user_profiles')
-    .select('id, full_name, email')
-    .eq('id', post.author_id)
-    .single() : { data: null };
-
-  // Map the data manually
-  const category = categories.find(cat => cat.id === post.category_id) || null;
-  const postTagIds = postTags?.map(pt => pt.tag_id) || [];
-  const tags = allTags.filter(tag => postTagIds.includes(tag.id));
-
-  return {
-    ...post,
-    category,
-    author,
-    tags
-  };
-  } catch (error) {
-    console.warn('Error fetching blog post, using fallback:', error);
-    return FALLBACK_POSTS.find(post => post.slug === slug) || null;
-  }
+  return { ...post, category, tags: tags ?? [] };
 }
 
-export async function createBlogPost(post: Partial<BlogPost>): Promise<BlogPost> {
+/** ADMIN: list posts (any status) */
+export async function adminListPosts(): Promise<BlogPost[]> {
+  const data = await safeSelect<BlogPost[]>(() =>
+    supabase.from('blog_posts').select('*').order('created_at', { ascending: false }),
+    'adminListPosts'
+  );
+  return data ?? [];
+}
+
+/** ADMIN: upsert post */
+export async function adminUpsertPost(payload: Partial<BlogPost> & { id?: string }): Promise<BlogPost> {
   const { data, error } = await supabase
     .from('blog_posts')
-    .insert([{
-      ...post,
-      slug: post.slug || generateSlug(post.title || ''),
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    }])
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
-}
-
-export async function updateBlogPost(id: string, updates: Partial<BlogPost>): Promise<BlogPost> {
-  const { data, error } = await supabase
-    .from('blog_posts')
-    .update({
-      ...updates,
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', id)
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
-}
-
-export async function deleteBlogPost(id: string): Promise<void> {
-  const { error } = await supabase
-    .from('blog_posts')
-    .delete()
-    .eq('id', id);
-
-  if (error) throw error;
-}
-
-// Blog Categories API
-export async function getBlogCategories(): Promise<BlogCategory[]> {
-  try {
-    const { error: testError } = await supabase
-      .from('blog_categories')
-      .select('id')
-      .limit(1);
-    
-    if (testError && testError.code === '42P01') return [];
-
-  const { data, error } = await supabase
-    .from('blog_categories')
+    .upsert(payload)
     .select('*')
-    .eq('is_active', true)
-    .order('name');
-
-  if (error) throw error;
-  return data || [];
-  } catch (error) {
-    console.warn('Error fetching blog categories:', error);
-    return [];
-  }
-}
-
-export async function createBlogCategory(category: Partial<BlogCategory>): Promise<BlogCategory> {
-  const { data, error } = await supabase
-    .from('blog_categories')
-    .insert([{
-      ...category,
-      slug: category.slug || generateSlug(category.name || ''),
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    }])
-    .select()
     .single();
-
   if (error) throw error;
-  return data;
+  return data as BlogPost;
 }
 
-export async function updateBlogCategory(id: string, updates: Partial<BlogCategory>): Promise<BlogCategory> {
-  const { data, error } = await supabase
-    .from('blog_categories')
-    .update({
-      ...updates,
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', id)
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
-}
-
-export async function deleteBlogCategory(id: string): Promise<void> {
-  const { error } = await supabase
-    .from('blog_categories')
-    .delete()
-    .eq('id', id);
-
+/** ADMIN: delete post */
+export async function adminDeletePost(id: string): Promise<void> {
+  const { error } = await supabase.from('blog_posts').delete().eq('id', id);
   if (error) throw error;
 }
 
-// Blog Tags API
-export async function getBlogTags(): Promise<BlogTag[]> {
-  try {
-    const { error: testError } = await supabase
-      .from('blog_tags')
-      .select('id')
-      .limit(1);
-    
-    if (testError && testError.code === '42P01') return [];
-
-  const { data, error } = await supabase
-    .from('blog_tags')
-    .select('*')
-    .eq('is_active', true)
-    .order('name');
-
-  if (error) throw error;
-  return data || [];
-  } catch (error) {
-    console.warn('Error fetching blog tags:', error);
-    return [];
-  }
+/** ADMIN: categories */
+export async function adminListCategories(): Promise<BlogCategory[]> {
+  const data = await safeSelect<BlogCategory[]>(() =>
+    supabase.from('blog_categories').select('*').order('name'),
+    'adminListCategories'
+  );
+  return data ?? [];
 }
-
-export async function createBlogTag(tag: Partial<BlogTag>): Promise<BlogTag> {
-  const { data, error } = await supabase
-    .from('blog_tags')
-    .insert([{
-      ...tag,
-      slug: tag.slug || generateSlug(tag.name || ''),
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    }])
-    .select()
-    .single();
-
+export async function adminUpsertCategory(payload: Partial<BlogCategory> & { id?: string }) {
+  const { data, error } = await supabase.from('blog_categories').upsert(payload).select('*').single();
   if (error) throw error;
-  return data;
+  return data as BlogCategory;
 }
-
-export async function updateBlogTag(id: string, updates: Partial<BlogTag>): Promise<BlogTag> {
-  const { data, error } = await supabase
-    .from('blog_tags')
-    .update({
-      ...updates,
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', id)
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
-}
-
-export async function deleteBlogTag(id: string): Promise<void> {
-  const { error } = await supabase
-    .from('blog_tags')
-    .delete()
-    .eq('id', id);
-
+export async function adminDeleteCategory(id: string) {
+  const { error } = await supabase.from('blog_categories').delete().eq('id', id);
   if (error) throw error;
 }
 
-// Post Tags Management
-export async function updatePostTags(postId: string, tagIds: string[]): Promise<void> {
-  // Remove existing tags
-  await supabase
-    .from('blog_post_tags')
-    .delete()
-    .eq('post_id', postId);
-
-  // Add new tags
-  if (tagIds.length > 0) {
-    const { error } = await supabase
-      .from('blog_post_tags')
-      .insert(
-        tagIds.map(tagId => ({
-          post_id: postId,
-          tag_id: tagId,
-          created_at: new Date().toISOString()
-        }))
-      );
-
-    if (error) throw error;
-  }
+/** ADMIN: tags */
+export async function adminListTags(): Promise<BlogTag[]> {
+  const data = await safeSelect<BlogTag[]>(() =>
+    supabase.from('blog_tags').select('*').order('name'),
+    'adminListTags'
+  );
+  return data ?? [];
+}
+export async function adminUpsertTag(payload: Partial<BlogTag> & { id?: string }) {
+  const { data, error } = await supabase.from('blog_tags').upsert(payload).select('*').single();
+  if (error) throw error;
+  return data as BlogTag;
+}
+export async function adminDeleteTag(id: string) {
+  const { error } = await supabase.from('blog_tags').delete().eq('id', id);
+  if (error) throw error;
 }
 
-// Utility functions
-export function generateSlug(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, '') // Remove special characters
-    .replace(/[\s_-]+/g, '-') // Replace spaces and underscores with hyphens
-    .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
-}
-
-export function calculateReadingTime(content: string): number {
-  const wordsPerMinute = 200;
-  const words = content.trim().split(/\s+/).length;
-  return Math.max(1, Math.ceil(words / wordsPerMinute));
+/** ADMIN: attach/detach tags for a post */
+export async function adminSetPostTags(postId: string, tagIds: string[]) {
+  // delete old
+  await supabase.from('blog_post_tags').delete().eq('post_id', postId);
+  if (tagIds.length === 0) return;
+  const rows = tagIds.map(tid => ({ post_id: postId, tag_id: tid }));
+  const { error } = await supabase.from('blog_post_tags').insert(rows);
+  if (error) throw error;
 }
