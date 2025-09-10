@@ -26,7 +26,7 @@ const BlogPage: React.FC = () => {
       const [postsData, categoriesData, tagsData] = await Promise.all([
         getBlogPosts({ 
           status: 'published',
-          categoryId: selectedCategory || undefined,
+          categorySlug: selectedCategory || undefined,
           limit: 20
         }),
         getBlogCategories(),
@@ -54,11 +54,11 @@ const BlogPage: React.FC = () => {
     setSearchParams(params);
   };
 
-  const handleCategoryFilter = (categoryId: string) => {
-    setSelectedCategory(categoryId);
+  const handleCategoryFilter = (categorySlug: string) => {
+    setSelectedCategory(categorySlug);
     const params = new URLSearchParams(searchParams);
-    if (categoryId) {
-      params.set('category', categoryId);
+    if (categorySlug) {
+      params.set('category', categorySlug);
     } else {
       params.delete('category');
     }
@@ -151,12 +151,12 @@ const BlogPage: React.FC = () => {
               {categories.map(category => (
                 <button
                   key={category.id}
-                  onClick={() => handleCategoryFilter(category.id)}
+                  onClick={() => handleCategoryFilter(category.slug)}
                   className={`px-3 py-1 rounded-full text-sm transition-colors ${
-                    selectedCategory === category.id ? 'text-white' : 'text-gray-700 hover:bg-gray-200'
+                    selectedCategory === category.slug ? 'text-white' : 'text-gray-700 hover:bg-gray-200'
                   }`}
                   style={{
-                    backgroundColor: selectedCategory === category.id ? category.color : '#f3f4f6'
+                    backgroundColor: selectedCategory === category.slug ? category.color : '#f3f4f6'
                   }}
                 >
                   {category.name}
