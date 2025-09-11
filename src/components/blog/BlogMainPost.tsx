@@ -16,7 +16,7 @@ const BlogMainPost: React.FC<BlogMainPostProps> = ({ post }) => {
 
   return (
     <div className="md:col-span-2 group cursor-pointer" onClick={handleClick}>
-      <div className="aspect-[14/9] mb-4 overflow-hidden rounded-lg">
+      <div className="aspect-[10/9] mb-4 overflow-hidden rounded-lg">
         <img
           src={post.featured_image || 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=800&q=80'}
           alt={post.title}
