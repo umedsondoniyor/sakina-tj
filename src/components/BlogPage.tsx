@@ -241,7 +241,7 @@ const BlogPage: React.FC = () => {
                 onClick={() => handlePostClick(post)}
               >
                 {/* Image */}
-                <div className="relative aspect-[10/9] bg-gray-100">
+                <div className="relative aspect-[9/9] bg-gray-100">
                   <img
                     src={
                       post.featured_image ||
