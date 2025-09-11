@@ -3,72 +3,6 @@ import { supabase } from './supabaseClient';
 
 import type { BlogPost } from './types';
 
-type GetBlogPostsOpts = {
-  status?: 'draft' | 'published' | 'archived';
-  categoryId?: string;   // ID (preferred) — pass resolved id from slug
-  tagId?: string;        // optional
-  search?: string;       // optional
-  limit?: number;
-  offset?: number;
-};
-
-export async function getBlogPosts(opts: GetBlogPostsOpts = {}): Promise<BlogPost[]> {
-  const {
-    status = 'published',
-    categoryId,
-    tagId,
-    search,
-    limit = 24,
-    offset = 0,
-  } = opts;
-
-  // Base select including category + tags
-  let q = supabase
-    .from('blog_posts')
-    .select(`
-      *,
-      category:blog_categories(*),
-      tags:blog_post_tags(
-        tag:blog_tags(*)
-      )
-    `)
-    .eq('status', status)
-    .order('published_at', { ascending: false })
-    .range(offset, offset + limit - 1);
-
-  if (categoryId) {
-    q = q.eq('category_id', categoryId);
-  }
-
-  // Tag filter (fetch post_ids by tag first, then filter with .in)
-  if (tagId) {
-    const { data: linkRows, error: tagErr } = await supabase
-      .from('blog_post_tags')
-      .select('post_id')
-      .eq('tag_id', tagId);
-
-    if (tagErr) throw tagErr;
-    const ids = (linkRows ?? []).map(r => r.post_id);
-    if (ids.length === 0) return []; // no matches
-    q = q.in('id', ids);
-  }
-
-  // Simple search (title/excerpt/content)
-  if (search?.trim()) {
-    const s = `%${search.trim()}%`;
-    q = q.or(`title.ilike.${s},excerpt.ilike.${s},content.ilike.${s}`);
-  }
-
-  const { data, error } = await q;
-  if (error) throw error;
-
-  // Flatten tags array (blog_post_tags -> tag objects)
-  return (data ?? []).map(p => ({
-    ...p,
-    tags: (p as any).tags?.map((t: any) => t.tag) ?? [],
-  })) as BlogPost[];
-}
-
 
 /**
  * Minimal types. If you already have these in `types.ts`,
@@ -198,123 +132,97 @@ export async function getBlogTags(): Promise<BlogTag[]> {
 
 /* ---------------------------------- posts -------------------------------- */
 
+// Keep only this ONE function in blogApi.ts
 type GetBlogPostsParams = {
-  status?: BlogStatus;            // default: 'published'
-  limit?: number;                 // optional
-  categorySlug?: string;          // optional - filter by category slug
-  tagSlug?: string;               // optional
-  search?: string;                // optional (title/excerpt/content)
-  featuredOnly?: boolean;         // optional
+  status?: 'draft' | 'published' | 'archived';
+  categoryId?: string;
+  tagId?: string;
+  search?: string;
+  limit?: number;
+  offset?: number;
 };
 
-/**
- * Fetch posts, then hydrate category + tags manually (no FK joins).
- */
 export async function getBlogPosts(params: GetBlogPostsParams = {}): Promise<BlogPost[]> {
   const {
     status = 'published',
-    limit,
-    categorySlug,
-    tagSlug,
+    categoryId,
+    tagId,
     search,
-    featuredOnly,
+    limit = 24,
+    offset = 0,
   } = params;
 
-  try {
-    // 1) Start with posts by status (and optional featured/limit)
-    let query = supabase
-      .from('blog_posts')
-      .select('*')
-      .eq('status', status)
-      .order('published_at', { ascending: false });
+  // Base posts
+  let postsQuery = supabase
+    .from('blog_posts')
+    .select('*')
+    .eq('status', status)
+    .order('published_at', { ascending: false })
+    .range(offset, offset + limit - 1);
 
-    if (featuredOnly) query = query.eq('is_featured', true);
-    if (limit) query = query.limit(limit);
+  if (categoryId) postsQuery = postsQuery.eq('category_id', categoryId);
 
-    // We'll post-filter categorySlug/tagSlug/search in JS after hydrating
-    const { data: postsRaw, error: postsErr } = await query;
-    if (postsErr) throw postsErr;
-
-    const posts: BlogPost[] = postsRaw ?? [];
-    if (posts.length === 0) return [];
-
-    // 2) Collect IDs for hydration
-    const categoryIds = Array.from(new Set(posts.map(p => p.category_id).filter(Boolean))) as string[];
-
-    // 3) Fetch categories
-    let categoriesMap = new Map<string, BlogCategory>();
-    if (categoryIds.length) {
-      const { data: cats, error: catsErr } = await supabase
-        .from('blog_categories')
-        .select('*')
-        .in('id', categoryIds);
-      if (catsErr) throw catsErr;
-      (cats ?? []).forEach(c => categoriesMap.set(c.id, c));
-    }
-
-    // 4) Fetch tags per post via junction table, then hydrate
-    const postIds = posts.map(p => p.id);
-    const { data: postTags, error: ptErr } = await supabase
-      .from('blog_post_tags')
-      .select('post_id, tag_id')
-      .in('post_id', postIds);
-    if (ptErr) throw ptErr;
-
-    const tagIds = Array.from(new Set((postTags ?? []).map(pt => pt.tag_id)));
-    let tagsMap = new Map<string, BlogTag>();
-    if (tagIds.length) {
-      const { data: tags, error: tagsErr } = await supabase
-        .from('blog_tags')
-        .select('*')
-        .in('id', tagIds);
-      if (tagsErr) throw tagsErr;
-      (tags ?? []).forEach(t => tagsMap.set(t.id, t));
-    }
-
-    // 5) Hydrate each post
-    const hydrated: BlogPost[] = posts.map(p => {
-      const tagsForPost = (postTags ?? [])
-        .filter(pt => pt.post_id === p.id)
-        .map(pt => tagsMap.get(pt.tag_id))
-        .filter(Boolean) as BlogTag[];
-
-      return {
-        ...p,
-        category: p.category_id ? categoriesMap.get(p.category_id) ?? null : null,
-        tags: tagsForPost,
-      };
-    });
-
-    // 6) Optional client-side filters
-    let filtered = hydrated;
-
-    if (categorySlug) {
-      filtered = filtered.filter(p => p.category?.slug === categorySlug);
-    }
-
-    if (tagSlug) {
-      filtered = filtered.filter(p => p.tags?.some(t => t.slug === tagSlug));
-    }
-
-    if (search) {
-      const q = search.toLowerCase();
-      filtered = filtered.filter(p =>
-        (p.title?.toLowerCase().includes(q)) ||
-        (p.excerpt?.toLowerCase().includes(q)) ||
-        (p.content?.toLowerCase().includes(q))
-      );
-    }
-
-    return filtered;
-  } catch (err: any) {
-    if (isMissingTable(err)) {
-      console.warn('[blogApi] blog tables missing, returning empty posts');
-      return [];
-    }
-    console.error('[blogApi] getBlogPosts error:', err);
-    throw err;
+  // Simple search
+  if (search?.trim()) {
+    const s = `%${search.trim()}%`;
+    postsQuery = postsQuery.or(`title.ilike.${s},excerpt.ilike.${s},content.ilike.${s}`);
   }
+
+  const { data: posts, error: postsErr } = await postsQuery;
+  if (postsErr) throw postsErr;
+  if (!posts || posts.length === 0) return [];
+
+  // Tag filter (client-side if requested)
+  let filtered = posts;
+  if (tagId) {
+    const { data: linkRows, error: linkErr } = await supabase
+      .from('blog_post_tags')
+      .select('post_id')
+      .eq('tag_id', tagId);
+    if (linkErr) throw linkErr;
+    const allowed = new Set((linkRows ?? []).map(r => r.post_id));
+    filtered = posts.filter(p => allowed.has(p.id));
+    if (filtered.length === 0) return [];
+  }
+
+  // Hydrate categories
+  const categoryIds = Array.from(new Set(filtered.map(p => p.category_id).filter(Boolean)));
+  const { data: categories } = await supabase
+    .from('blog_categories')
+    .select('*')
+    .in('id', categoryIds.length ? categoryIds : ['00000000-0000-0000-0000-000000000000']); // safe no-op
+
+  const categoryById = new Map((categories ?? []).map(c => [c.id, c]));
+
+  // Hydrate tags
+  const postIds = filtered.map(p => p.id);
+  const { data: postTagLinks } = await supabase
+    .from('blog_post_tags')
+    .select('post_id, tag_id')
+    .in('post_id', postIds);
+  const tagIds = Array.from(new Set((postTagLinks ?? []).map(pt => pt.tag_id)));
+  const { data: tags } = await supabase
+    .from('blog_tags')
+    .select('*')
+    .in('id', tagIds.length ? tagIds : ['00000000-0000-0000-0000-000000000000']);
+  const tagById = new Map((tags ?? []).map(t => [t.id, t]));
+
+  const tagsByPostId = new Map<string, any[]>();
+  (postTagLinks ?? []).forEach(pt => {
+    const arr = tagsByPostId.get(pt.post_id) ?? [];
+    const tag = tagById.get(pt.tag_id);
+    if (tag) arr.push(tag);
+    tagsByPostId.set(pt.post_id, arr);
+  });
+
+  // Final shape
+  return filtered.map(p => ({
+    ...p,
+    category: p.category_id ? categoryById.get(p.category_id) : null,
+    tags: tagsByPostId.get(p.id) ?? [],
+  })) as BlogPost[];
 }
+
 
 /**
  * Fetch single post by slug and hydrate category + tags.
