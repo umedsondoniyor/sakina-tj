@@ -236,7 +236,7 @@ const BlogPostPage: React.FC = () => {
                   className="bg-white rounded-lg shadow overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
                   onClick={() => navigate(`/blog/${relatedPost.slug}`)}
                 >
-                  <div className="aspect-[14/9]">
+                  <div className="aspect-[10/9]">
                     <img
                       src={relatedPost.featured_image || 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=400&q=80'}
                       alt={relatedPost.title}
