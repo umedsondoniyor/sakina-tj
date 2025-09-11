@@ -30,6 +30,17 @@ const AdminBlog: React.FC = () => {
 
   useEffect(() => {
     loadData();
+    const [postsData, categoriesData, tagsData] = await Promise.all([
+  getBlogPosts({ 
+    status: 'published',
+    categoryId: selectedCategory || undefined,   // ✅ FIX
+    tagId: selectedTag || undefined,
+    limit: 20
+  }),
+  getBlogCategories(),
+  getBlogTags()
+]);
+
   }, []);
 
   const loadData = async () => {
