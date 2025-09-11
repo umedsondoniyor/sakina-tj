@@ -203,12 +203,45 @@ const BlogPostPage: React.FC = () => {
               </p>
             )}
 
-            {/* Content */}
-            <div className="prose prose-lg prose-gray max-w-none mb-8">
-              <div className="whitespace-pre-wrap leading-relaxed">
-                {post.content}
-              </div>
-            </div>
+{/* Content */}
+<div className="prose prose-lg prose-gray max-w-none mb-8">
+  <ReactMarkdown
+    // GitHub-flavored Markdown: tables, strikethrough, task lists, autolinks
+    remarkPlugins={[remarkGfm]}
+    // Allow limited inline HTML, but keep it safe
+    rehypePlugins={[rehypeRaw, rehypeSanitize]}
+    components={{
+      code({ inline, className, children, ...props }) {
+        const match = /language-(\w+)/.exec(className || '');
+        if (!inline) {
+          return (
+            <SyntaxHighlighter language={match?.[1] || 'plaintext'} PreTag="div" {...props}>
+              {String(children).replace(/\n$/, '')}
+            </SyntaxHighlighter>
+          );
+        }
+        return <code className={className} {...props}>{children}</code>;
+      },
+      a({ children, ...props }) {
+        return (
+          <a
+            {...props}
+            className="text-teal-600 hover:text-teal-700 underline"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {children}
+          </a>
+        );
+      },
+      img({ ...props }) {
+        return <img {...props} className="rounded-lg max-w-full h-auto" />;
+      },
+    }}
+  >
+    {post.content || ''}
+  </ReactMarkdown>
+</div>
 
             {/* Share Button */}
             <div className="flex items-center justify-between pt-8 border-t">
