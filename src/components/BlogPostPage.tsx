@@ -4,6 +4,11 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Calendar, Clock, User, Tag, ArrowLeft, Share2, Eye } from 'lucide-react';
 import { getBlogPost, getBlogPosts } from '../lib/blogApi';
 import type { BlogPost } from '../lib/types';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
+import rehypeSanitize from 'rehype-sanitize';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 
 const BlogPostPage: React.FC = () => {
   const { slug } = useParams();
