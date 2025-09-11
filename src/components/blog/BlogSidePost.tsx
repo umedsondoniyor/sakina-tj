@@ -16,7 +16,7 @@ const BlogSidePost: React.FC<BlogSidePostProps> = ({ post }) => {
 
   return (
     <div className="flex space-x-4 group cursor-pointer" onClick={handleClick}>
-      <div className="w-24 h-24 md:w-36 md:h-64 flex-shrink-0">
+      <div className="w-24 h-64 md:w-36 md:h-64 flex-shrink-0">
         <img
           src={post.featured_image || 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=300&q=80'}
           alt={post.title}
