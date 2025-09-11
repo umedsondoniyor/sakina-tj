@@ -125,7 +125,7 @@ const BlogPostPage: React.FC = () => {
         {/* Article Header */}
         <article className="bg-white rounded-lg shadow overflow-hidden">
           {post.featured_image && (
-            <div className="aspect-[13/9]">
+            <div className="aspect-[10/9]">
               <img
                 src={post.featured_image}
                 alt={post.title}
