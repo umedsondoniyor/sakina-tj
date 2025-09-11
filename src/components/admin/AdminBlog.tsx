@@ -29,10 +29,9 @@ const AdminBlog: React.FC = () => {
   const [editingTag, setEditingTag] = useState<BlogTag | null>(null);
 
   useEffect(() => {
-    loadData();
-]);
+  loadData();
+}, []);
 
-  }, []);
 
   const loadData = async () => {
     try {
