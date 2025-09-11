@@ -6,11 +6,7 @@ const ManufacturingProcess = () => {
     <div className="max-w-7xl mx-auto px-4 py-8 md:py-12">
       <div className="relative">
         <div className="aspect-[21/9] md:aspect-[21/9] rounded-2xl overflow-hidden">
-          <img
-            src="https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=2000&q=80"
-            alt="Manufacturing Process"
-            className="w-full h-full object-cover"
-          />
+<iframe width="560" height="315" src="https://www.youtube.com/embed/62pbhdQ-c1M?si=l-9tSqovfmUhN2mK" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
           <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
             <button className="w-16 h-16 md:w-20 md:h-20 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm hover:bg-white/30 transition-colors group">
               <Play size={32} className="text-white ml-1.5 md:ml-2" />
