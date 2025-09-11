@@ -5,12 +5,6 @@ import toast from 'react-hot-toast';
 import type { BlogPost, BlogCategory, BlogTag } from '../../lib/types';
 import { generateSlug, calculateReadingTime } from '../../lib/blogApi';
 
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import rehypeRaw from 'rehype-raw';
-import rehypeSanitize from 'rehype-sanitize';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-
 interface BlogPostModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -301,41 +295,6 @@ const BlogPostModal: React.FC<BlogPostModalProps> = ({
                     Content
                   </label>
                   {/* Content */}
-<div className="prose prose-lg prose-gray max-w-none mb-8">
-  <ReactMarkdown
-    // GitHub-flavored Markdown: tables, strikethrough, task lists, autolinks
-    remarkPlugins={[remarkGfm]}
-    // Allow limited inline HTML, but keep it safe
-    rehypePlugins={[rehypeRaw, rehypeSanitize]}
-    components={{
-      code({ inline, className, children, ...props }) {
-        const match = /language-(\w+)/.exec(className || '');
-        if (!inline) {
-          return (
-            <SyntaxHighlighter language={match?.[1] || 'plaintext'} PreTag="div" {...props}>
-              {String(children).replace(/\n$/, '')}
-            </SyntaxHighlighter>
-          );
-        }
-        return <code className={className} {...props}>{children}</code>;
-      },
-      a({ children, ...props }) {
-        return (
-          <a
-            {...props}
-            className="text-teal-600 hover:text-teal-700 underline"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {children}
-          </a>
-        );
-      },
-      img({ ...props }) {
-        return <img {...props} className="rounded-lg max-w-full h-auto" />;
-      },
-    }}
-  >
                   <textarea
                     value={formData.content}
                     onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
@@ -343,8 +302,6 @@ const BlogPostModal: React.FC<BlogPostModalProps> = ({
                     className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Write your post content here..."
                   />
-      </ReactMarkdown>
-</div>
                   <p className="mt-1 text-xs text-gray-500">
                     Estimated reading time: {calculateReadingTime(formData.content)} min
                   </p>
