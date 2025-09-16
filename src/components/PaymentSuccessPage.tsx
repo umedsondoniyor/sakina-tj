@@ -180,6 +180,26 @@ const PaymentSuccessPage: React.FC = () => {
               )}
             </div>
 
+            {/* Order Information */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-xl font-semibold mb-4">Информация о заказе</h2>
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Номер заказа:</span>
+                  <span className="font-mono text-xs break-all">#{orderId || '—'}</span>
+                </div>
+
+                {paymentId && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">ID платежа:</span>
+                    <span className="font-mono text-xs break-all">{paymentId}</span>
+                  </div>
+                )}
+
+              </div>
+            </div>
+          </div>
+
           {/* Next Steps */}
           <div className="space-y-6">
             <div className="bg-white rounded-lg shadow p-6">
