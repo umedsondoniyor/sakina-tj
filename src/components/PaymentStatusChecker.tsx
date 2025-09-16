@@ -39,27 +39,22 @@ const PaymentStatusChecker: React.FC<PaymentStatusCheckerProps> = ({
     setError(null);
 
     try {
-      // Be tolerant to "not yet created" and "multiple attempts"
       const { data, error: dbError } = await supabase
         .from('payments')
         .select('*')
         .eq('alif_order_id', orderId)
-        .order('created_at', { ascending: false }) // or 'insert_dttm'
+        .order('created_at', { ascending: false }) // latest first
         .limit(1)
         .maybeSingle<PaymentStatus>();
 
-      if (dbError) {
-        // e.g. network hiccup or genuine SQL error
-        throw new Error(dbError.message || 'Failed to fetch payment status');
-      }
+      if (dbError) throw new Error(dbError.message || 'Failed to fetch payment status');
 
       setLastChecked(new Date());
 
       if (!data) {
-        // No row yet → treat as pending; do not toast
+        // show a lightweight pending shell until the row appears
         if (!payment) {
           setPayment({
-            // minimal pending shell so UI shows “waiting”
             id: 'pending',
             alif_order_id: orderId,
             amount: 0,
@@ -73,9 +68,7 @@ const PaymentStatusChecker: React.FC<PaymentStatusCheckerProps> = ({
       }
 
       setPayment(prev => {
-        if (onStatusChange && data.status !== prev?.status) {
-          onStatusChange(data.status);
-        }
+        if (onStatusChange && data.status !== prev?.status) onStatusChange(data.status);
         return data;
       });
     } catch (err) {
@@ -88,41 +81,22 @@ const PaymentStatusChecker: React.FC<PaymentStatusCheckerProps> = ({
     }
   };
 
-  // Initial load + manual visibility re-check (helps mobile/safari)
+  // Initial load + re-check on tab focus (helps mobile/Safari)
   useEffect(() => {
     if (!orderId) return;
 
     checkPaymentStatus(true);
 
     const onVis = () => {
-      if (document.visibilityState === 'visible') {
-        checkPaymentStatus(false);
-      }
+      if (document.visibilityState === 'visible') checkPaymentStatus(false);
     };
     document.addEventListener('visibilitychange', onVis);
-
-    return () => {
-      document.removeEventListener('visibilitychange', onVis);
-    };
-    // only when orderId changes
+    return () => document.removeEventListener('visibilitychange', onVis);
   }, [orderId]);
 
-  // Polling loop (kept independent so we don't recreate every status change)
+  // Polling loop (don’t depend on status to avoid recreate loops)
   useEffect(() => {
     if (!autoRefresh) return;
-
-    const start = () => {
-      stop(); // clear if any
-      const tick = async () => {
-        // only poll while pending/processing or we still have no data
-        const status = payment?.status ?? 'pending';
-        if (status === 'pending' || status === 'processing' || !payment) {
-          await checkPaymentStatus(false);
-          intervalRef.current = window.setTimeout(tick, refreshInterval);
-        }
-      };
-      tick();
-    };
 
     const stop = () => {
       if (intervalRef.current) {
@@ -131,52 +105,51 @@ const PaymentStatusChecker: React.FC<PaymentStatusCheckerProps> = ({
       }
     };
 
-    start();
+    const tick = async () => {
+      const status = payment?.status ?? 'pending';
+      if (status === 'pending' || status === 'processing' || !payment) {
+        await checkPaymentStatus(false);
+        intervalRef.current = window.setTimeout(tick, refreshInterval);
+      } else {
+        stop();
+      }
+    };
+
+    tick();
     return stop;
-  }, [autoRefresh, refreshInterval, /* do NOT depend on payment.status here */ orderId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoRefresh, refreshInterval, orderId]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'completed':
-        return <CheckCircle className="text-green-500" size={24} />;
+      case 'completed': return <CheckCircle className="text-green-500" size={20} />;
       case 'failed':
-      case 'cancelled':
-        return <XCircle className="text-red-500" size={24} />;
+      case 'cancelled': return <XCircle className="text-red-500" size={20} />;
       case 'pending':
       case 'processing':
-      default:
-        return <Clock className="text-yellow-500" size={24} />;
+      default:          return <Clock className="text-yellow-500" size={20} />;
     }
   };
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'completed':
-        return 'Оплачено';
-      case 'failed':
-        return 'Ошибка оплаты';
-      case 'cancelled':
-        return 'Отменено';
-      case 'pending':
-        return 'Ожидает оплаты';
-      case 'processing':
-        return 'Обрабатывается';
-      default:
-        return 'Неизвестный статус';
+      case 'completed':  return 'Оплачено';
+      case 'failed':     return 'Ошибка оплаты';
+      case 'cancelled':  return 'Отменено';
+      case 'pending':    return 'Ожидает оплаты';
+      case 'processing': return 'Обрабатывается';
+      default:           return 'Неизвестный статус';
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed':
-        return 'text-green-700 bg-green-50 border-green-200';
+      case 'completed':  return 'text-green-700 bg-green-50 border-green-200';
       case 'failed':
-      case 'cancelled':
-        return 'text-red-700 bg-red-50 border-red-200';
+      case 'cancelled':  return 'text-red-700 bg-red-50 border-red-200';
       case 'pending':
       case 'processing':
-      default:
-        return 'text-yellow-700 bg-yellow-50 border-yellow-200';
+      default:           return 'text-yellow-700 bg-yellow-50 border-yellow-200';
     }
   };
 
@@ -197,7 +170,11 @@ const PaymentStatusChecker: React.FC<PaymentStatusCheckerProps> = ({
             <XCircle size={20} className="mr-2" />
             <span>{error}</span>
           </div>
-          <button onClick={() => checkPaymentStatus(true)} className="text-red-600 hover:text-red-800">
+          <button
+            onClick={() => checkPaymentStatus(true)}
+            className="p-1 hover:bg-black/10 rounded"
+            aria-label="Обновить статус"
+          >
             <RefreshCw size={16} />
           </button>
         </div>
@@ -215,24 +192,38 @@ const PaymentStatusChecker: React.FC<PaymentStatusCheckerProps> = ({
 
   return (
     <div className={`p-4 border rounded-lg ${getStatusColor(payment.status)}`}>
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center">
-          {getStatusIcon(payment.status)}
-          <div className="ml-3">
-            <h3 className="font-semibold">{getStatusText(payment.status)}</h3>
-            <p className="text-sm opacity-75">Заказ #{payment.alif_order_id}</p>
-          </div>
+      {/* Centered header; icon AFTER text; refresh neatly inside on the right */}
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center mb-3">
+        <div />{/* left spacer to balance the right button */}
+
+        <div className="justify-self-center text-center">
+          <h3 className="font-semibold flex items-center justify-center">
+            {getStatusText(payment.status)}
+            <span className="ml-2">{getStatusIcon(payment.status)}</span>
+          </h3>
+          <p className="text-sm opacity-75 mt-0.5">
+            <span
+              className="font-mono text-xs inline-block max-w-[260px] truncate align-top"
+              title={`Заказ #${payment.alif_order_id}`}
+            >
+              Заказ #{payment.alif_order_id}
+            </span>
+          </p>
         </div>
-        <button
-          onClick={() => checkPaymentStatus(true)}
-          disabled={loading}
-          className="p-1 hover:bg-black hover:bg-opacity-10 rounded"
-          aria-label="Обновить статус"
-        >
-          <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-        </button>
+
+        <div className="justify-self-end">
+          <button
+            onClick={() => checkPaymentStatus(true)}
+            disabled={loading}
+            className="p-1 hover:bg-black/10 rounded"
+            aria-label="Обновить статус"
+          >
+            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+          </button>
+        </div>
       </div>
 
+      {/* Details */}
       <div className="space-y-2 text-sm">
         <div className="flex justify-between">
           <span>Сумма:</span>
