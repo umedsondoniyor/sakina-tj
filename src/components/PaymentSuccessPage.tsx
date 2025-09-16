@@ -33,7 +33,6 @@ function useResolvedParam(paramNames: string[], storageKeys: string[] = []) {
     setValue(cleaned);
   }, [searchParams, paramNames.join('|'), storageKeys.join('|')]);
 
-  // also react to hash changes (iOS/mobile redirects sometimes set later)
   useEffect(() => {
     const onHash = () => {
       const hashQs = new URLSearchParams(window.location.hash.split('?')[1] || '');
@@ -63,7 +62,6 @@ const PaymentSuccessPage: React.FC = () => {
   const navigate = useNavigate();
   const { clearCart } = useCart();
 
-  // Robustly resolve params
   const orderId = useResolvedParam(['order_id', 'orderId', 'alif_order_id'], ['sakina_order_id']);
   const paymentId = useResolvedParam(['payment_id', 'paymentId'], ['sakina_payment_id']);
 
@@ -71,7 +69,6 @@ const PaymentSuccessPage: React.FC = () => {
   const [paymentStatus, setPaymentStatus] = useState<string>('pending');
   const [latestRow, setLatestRow] = useState<PaymentRow | null>(null);
 
-  // Clear storage once we’ve resolved IDs
   useEffect(() => {
     if (orderId) {
       try {
@@ -167,7 +164,6 @@ const PaymentSuccessPage: React.FC = () => {
             <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-xl font-semibold mb-4">Статус платежа</h2>
 
-              {/* If orderId still not resolved, show a friendly hint instead of blank */}
               {orderId ? (
                 <PaymentStatusChecker
                   orderId={orderId}
@@ -190,19 +186,19 @@ const PaymentSuccessPage: React.FC = () => {
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Номер заказа:</span>
-                  <span className="font-medium">#{orderId || '—'}</span>
+                  <span className="font-mono text-xs break-all">#{orderId || '—'}</span>
                 </div>
 
                 {paymentId && (
                   <div className="flex justify-between">
                     <span className="text-gray-600">ID платежа:</span>
-                    <span className="font-mono text-sm">{paymentId}</span>
+                    <span className="font-mono text-xs break-all">{paymentId}</span>
                   </div>
                 )}
 
                 <div className="flex justify-between">
                   <span className="text-gray-600">Дата создания:</span>
-                  <span>{createdAtStr ?? <span className="opacity-60">ожидаем подтверждение…</span>}</span>
+                  <span>{createdAtStr ?? '—'}</span>
                 </div>
               </div>
             </div>
