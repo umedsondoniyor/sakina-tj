@@ -89,7 +89,6 @@ const PaymentSuccessPage: React.FC = () => {
     if (status === 'completed' && !orderCleared) {
       clearCart();
       setOrderCleared(true);
-      toast.success('Платеж успешно завершен!');
     } else if (status === 'failed' || status === 'cancelled') {
       toast.error('Платеж не был завершен');
     }
