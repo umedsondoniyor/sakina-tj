@@ -1,218 +1,289 @@
-import React, { useEffect, useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
-import { CheckCircle, ArrowRight, Package, Home } from 'lucide-react';
-import PaymentStatusChecker from './PaymentStatusChecker';
-import { useCart } from '../contexts/CartContext';
+import React, { useEffect, useRef, useState } from 'react';
+import { CheckCircle, XCircle, Clock, Loader2, RefreshCw } from 'lucide-react';
+import { supabase } from '../lib/supabaseClient';
 import toast from 'react-hot-toast';
 
-const PaymentSuccessPage = () => {
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
-  const { clearCart } = useCart();
-  const [orderCleared, setOrderCleared] = useState(false);
-  const [paymentStatus, setPaymentStatus] = useState<string>('pending');
+interface PaymentStatusCheckerProps {
+  orderId: string;
+  onStatusChange?: (status: string) => void;
+  onPaymentUpdate?: (row: PaymentStatus | null) => void; // optional; useful for parent pages
+  autoRefresh?: boolean;
+  refreshInterval?: number;
+}
 
-  // Get order ID from URL params or session storage
-  const orderId = searchParams.get('order_id') || sessionStorage.getItem('sakina_order_id');
-  const paymentId = searchParams.get('payment_id') || sessionStorage.getItem('sakina_payment_id');
+interface PaymentStatus {
+  id: string;
+  alif_order_id: string;
+  amount: number;
+  currency: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled' | string;
+  alif_transaction_id?: string;
+  created_at: string;
+  updated_at: string;
+}
 
-  useEffect(() => {
-    if (!orderId) {
-      toast.error('Информация о заказе не найдена');
-      navigate('/');
-      return;
-    }
+const PaymentStatusChecker: React.FC<PaymentStatusCheckerProps> = ({
+  orderId,
+  onStatusChange,
+  onPaymentUpdate,
+  autoRefresh = true,
+  refreshInterval = 3000,
+}) => {
+  const [payment, setPayment] = useState<PaymentStatus | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [lastChecked, setLastChecked] = useState<Date | null>(null);
+  const pollRef = useRef<number | null>(null);
 
-    // Clear session storage
-    sessionStorage.removeItem('sakina_order_id');
-    sessionStorage.removeItem('sakina_payment_id');
-  }, [orderId, navigate]);
+  const checkPaymentStatus = async (showLoading = true) => {
+    if (!orderId) return;
+    if (showLoading) setLoading(true);
+    setError(null);
 
-  const handleStatusChange = (status: string) => {
-    setPaymentStatus(status);
-    if (status === 'completed' && !orderCleared) {
-      // Clear cart only when payment is confirmed as completed
-      clearCart();
-      setOrderCleared(true);
-      toast.success('Платеж успешно завершен!');
-    } else if (status === 'failed' || status === 'cancelled') {
-      toast.error('Платеж не был завершен');
+    try {
+      const { data, error: dbError } = await supabase
+        .from('payments')
+        .select('*')
+        .eq('alif_order_id', orderId)
+        .order('created_at', { ascending: false }) // latest attempt first
+        .limit(1)
+        .maybeSingle<PaymentStatus>();
+
+      if (dbError) throw new Error(dbError.message || 'Failed to fetch payment status');
+
+      setLastChecked(new Date());
+
+      if (!data) {
+        // Not yet created — keep UI in pending and continue polling, no toast
+        if (!payment) {
+          setPayment({
+            id: 'pending',
+            alif_order_id: orderId,
+            amount: 0,
+            currency: '',
+            status: 'pending',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          } as PaymentStatus);
+        }
+        onPaymentUpdate?.(null);
+        return;
+      }
+
+      setPayment(prev => {
+        if (onStatusChange && data.status !== prev?.status) onStatusChange(data.status);
+        return data;
+      });
+      onPaymentUpdate?.(data);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to check payment status';
+      console.error('Payment status check error:', err);
+      setError(msg);
+      if (showLoading) toast.error(msg);
+    } finally {
+      if (showLoading) setLoading(false);
     }
   };
 
-  const getHeaderContent = () => {
-    switch (paymentStatus) {
+  // Initial load + refresh on tab focus (helps mobile)
+  useEffect(() => {
+    if (!orderId) return;
+
+    checkPaymentStatus(true);
+
+    const onVis = () => {
+      if (document.visibilityState === 'visible') checkPaymentStatus(false);
+    };
+    document.addEventListener('visibilitychange', onVis);
+    return () => document.removeEventListener('visibilitychange', onVis);
+  }, [orderId]);
+
+  // Poll loop (only depends on settings/orderId)
+  useEffect(() => {
+    if (!autoRefresh) return;
+
+    const stop = () => {
+      if (pollRef.current) {
+        window.clearTimeout(pollRef.current);
+        pollRef.current = null;
+      }
+    };
+
+    const tick = async () => {
+      const status = payment?.status ?? 'pending';
+      // poll while pending/processing or while we still have no server row
+      if (status === 'pending' || status === 'processing' || !payment || payment.id === 'pending') {
+        await checkPaymentStatus(false);
+        pollRef.current = window.setTimeout(tick, refreshInterval);
+      } else {
+        stop();
+      }
+    };
+
+    tick();
+    return stop;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoRefresh, refreshInterval, orderId]); // intentionally not depending on payment.status
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
       case 'completed':
-        return {
-          icon: <div className="flex justify-center mb-4"><CheckCircle className="text-green-500" size={64} /></div>,
-          title: 'Спасибо за заказ!',
-          subtitle: 'Ваш платеж успешно обработан'
-        };
+        return <CheckCircle className="text-green-500" size={20} />;
       case 'failed':
       case 'cancelled':
-        return {
-          icon: <div className="flex justify-center mb-4"><div className="text-red-500"><svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg></div></div>,
-          title: 'Платеж не завершен',
-          subtitle: 'Возникла проблема с обработкой платежа'
-        };
-      default: // pending, processing
-        return {
-          icon: <div className="flex justify-center mb-4"><div className="text-yellow-500"><svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg></div></div>,
-          title: 'Обработка платежа',
-          subtitle: 'Ваш заказ принят и обрабатывается'
-        };
+        return <XCircle className="text-red-500" size={20} />;
+      case 'pending':
+      case 'processing':
+      default:
+        return <Clock className="text-yellow-500" size={20} />;
     }
   };
 
-  const headerContent = getHeaderContent();
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return 'Оплачено';
+      case 'failed':
+        return 'Ошибка оплаты';
+      case 'cancelled':
+        return 'Отменено';
+      case 'pending':
+        return 'Ожидает оплаты';
+      case 'processing':
+        return 'Обрабатывается';
+      default:
+        return 'Неизвестный статус';
+    }
+  };
 
-  if (!orderId) {
-    return null;
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return 'text-green-700 bg-green-50 border-green-200';
+      case 'failed':
+      case 'cancelled':
+        return 'text-red-700 bg-red-50 border-red-200';
+      case 'pending':
+      case 'processing':
+      default:
+        return 'text-yellow-700 bg-yellow-50 border-yellow-200';
+    }
+  };
+
+  if (loading && !payment) {
+    return (
+      <div className="flex items-center justify-center p-4">
+        <Loader2 className="animate-spin mr-2" size={20} />
+        <span>Проверка статуса платежа...</span>
+      </div>
+    );
+  }
+
+  if (error && !payment) {
+    return (
+      <div className="p-4 border border-red-200 rounded-lg bg-red-50">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center text-red-700">
+            <XCircle size={20} className="mr-2" />
+            <span>{error}</span>
+          </div>
+          <button
+            onClick={() => checkPaymentStatus(true)}
+            className="p-1 hover:bg-black/10 rounded"
+            aria-label="Обновить статус"
+          >
+            <RefreshCw size={16} />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!payment) {
+    return (
+      <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
+        <span className="text-gray-600">Платеж не найден</span>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm">
-        <div className="max-w-4xl mx-auto px-4 py-6">
-          <div className="text-center">
-            {headerContent.icon}
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              {headerContent.title}
-            </h1>
-            <p className="text-gray-600">
-              {headerContent.subtitle}
-            </p>
-          </div>
+    <div className={`p-4 border rounded-lg ${getStatusColor(payment.status)}`}>
+      {/* Header with centered text+order, icon after text, refresh inside on the right */}
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center mb-3">
+        <div /> {/* left spacer to balance the right button */}
+
+        <div className="justify-self-center text-center">
+          <h3 className="font-semibold flex items-center justify-center">
+            {getStatusText(payment.status)}
+            <span className="ml-2">{getStatusIcon(payment.status)}</span>
+          </h3>
+          <p className="text-sm opacity-75 mt-0.5">
+            <span
+              className="font-mono text-xs md:text-sm inline-block max-w-[260px] truncate align-top"
+              title={`Заказ #${payment.alif_order_id}`}
+            >
+              Заказ #{payment.alif_order_id}
+            </span>
+          </p>
+        </div>
+
+        <div className="justify-self-end">
+          <button
+            onClick={() => checkPaymentStatus(true)}
+            disabled={loading}
+            className="p-1 hover:bg-black/10 rounded"
+            aria-label="Обновить статус"
+          >
+            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+          </button>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Payment Status */}
-          <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold mb-4">Статус платежа</h2>
-              <PaymentStatusChecker
-                orderId={orderId}
-                onStatusChange={handleStatusChange}
-                autoRefresh={true}
-                refreshInterval={5000}
-              />
-            </div>
+      {/* Details */}
+      <div className="space-y-2 text-sm">
+        <div className="flex justify-between">
+          <span>Сумма:</span>
+          <span className="font-medium">
+            {payment.amount?.toLocaleString?.() ?? '—'} {payment.currency || ''}
+          </span>
+        </div>
 
-            {/* Order Information */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold mb-4">Информация о заказе</h2>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Номер заказа:</span>
-                  <span className="font-medium">#{orderId}</span>
-                </div>
-                {paymentId && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">ID платежа:</span>
-                    <span className="font-mono text-sm">{paymentId}</span>
-                  </div>
-                )}
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Дата создания:</span>
-                  <span>{new Date().toLocaleDateString('ru-RU')}</span>
-                </div>
-              </div>
-            </div>
+        {payment.alif_transaction_id && (
+          <div className="flex justify-between">
+            <span>ID транзакции:</span>
+            <span className="font-mono text-xs">{payment.alif_transaction_id}</span>
           </div>
+        )}
 
-          {/* Next Steps */}
-          <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold mb-4">Что дальше?</h2>
-              <div className="space-y-4">
-                <div className="flex items-start space-x-3">
-                  <div className="w-8 h-8 bg-teal-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-teal-600 font-semibold text-sm">1</span>
-                  </div>
-                  <div>
-                    <h3 className="font-medium">Подтверждение оплаты</h3>
-                    <p className="text-sm text-gray-600">
-                      Мы проверим статус вашего платежа и подтвердим заказ
-                    </p>
-                  </div>
-                </div>
+        <div className="flex justify-between">
+          <span>Создан:</span>
+          <span>{payment.created_at ? new Date(payment.created_at).toLocaleString('ru-RU') : '—'}</span>
+        </div>
 
-                <div className="flex items-start space-x-3">
-                  <div className="w-8 h-8 bg-teal-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-teal-600 font-semibold text-sm">2</span>
-                  </div>
-                  <div>
-                    <h3 className="font-medium">Обработка заказа</h3>
-                    <p className="text-sm text-gray-600">
-                      Наш менеджер свяжется с вами для уточнения деталей доставки
-                    </p>
-                  </div>
-                </div>
+        <div className="flex justify-between">
+          <span>Обновлен:</span>
+          <span>{payment.updated_at ? new Date(payment.updated_at).toLocaleString('ru-RU') : '—'}</span>
+        </div>
 
-                <div className="flex items-start space-x-3">
-                  <div className="w-8 h-8 bg-teal-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-teal-600 font-semibold text-sm">3</span>
-                  </div>
-                  <div>
-                    <h3 className="font-medium">Доставка</h3>
-                    <p className="text-sm text-gray-600">
-                      Мы доставим ваш заказ в указанное время и место
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
+        {lastChecked && (
+          <div className="flex justify-between text-xs opacity-75">
+            <span>Последняя проверка:</span>
+            <span>{lastChecked.toLocaleTimeString('ru-RU')}</span>
+          </div>
+        )}
+      </div>
 
-            {/* Contact Information */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold mb-4">Нужна помощь?</h2>
-              <div className="space-y-3">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center">
-                    <Package size={20} className="text-teal-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-medium">Служба поддержки</h3>
-                    <p className="text-sm text-gray-600">+992 90 533 9595</p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center">
-                    <Home size={20} className="text-teal-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-medium">Email поддержка</h3>
-                    <p className="text-sm text-gray-600">support@sakina.tj</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="space-y-3">
-              <button
-                onClick={() => navigate('/products')}
-                className="w-full bg-teal-500 text-white py-3 rounded-lg hover:bg-teal-600 transition-colors flex items-center justify-center"
-              >
-                Продолжить покупки
-                <ArrowRight size={20} className="ml-2" />
-              </button>
-              
-              <button
-                onClick={() => navigate('/')}
-                className="w-full border border-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                На главную
-              </button>
-            </div>
+      {(payment.status === 'pending' || payment.status === 'processing') && autoRefresh && (
+        <div className="mt-3 text-xs opacity-75">
+          <div className="flex items-center">
+            <div className="w-2 h-2 bg-current rounded-full animate-pulse mr-2"></div>
+            Статус обновляется автоматически (callback от Alif Bank)
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
 
-export default PaymentSuccessPage;
+export default PaymentStatusChecker;
