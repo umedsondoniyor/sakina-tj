@@ -209,10 +209,7 @@ const PaymentStatusChecker: React.FC<PaymentStatusCheckerProps> = ({
               Заказ #{payment.alif_order_id}
             </span>
           </p>
-        </div>
-
-        <div className="justify-self-end">
-          <button
+                    <button
             onClick={() => checkPaymentStatus(true)}
             disabled={loading}
             className="p-1 hover:bg-black/10 rounded"
