@@ -4,9 +4,9 @@ import { supabase } from '../lib/supabaseClient';
 import toast from 'react-hot-toast';
 
 interface PaymentStatusCheckerProps {
-  orderId: string;
+  orderId: string | null | undefined;
   onStatusChange?: (status: string) => void;
-  onPaymentUpdate?: (row: PaymentStatus | null) => void; // optional; useful for parent pages
+  onPaymentUpdate?: (row: PaymentStatus | null) => void;
   autoRefresh?: boolean;
   refreshInterval?: number;
 }
@@ -35,8 +35,17 @@ const PaymentStatusChecker: React.FC<PaymentStatusCheckerProps> = ({
   const [lastChecked, setLastChecked] = useState<Date | null>(null);
   const pollRef = useRef<number | null>(null);
 
+  const missingOrderId = !orderId || (typeof orderId === 'string' && orderId.trim() === '');
+
   const checkPaymentStatus = async (showLoading = true) => {
-    if (!orderId) return;
+    if (missingOrderId) {
+      // IMPORTANT: clear spinner if orderId is missing
+      if (showLoading) setLoading(false);
+      setError('ID заказа не передан');
+      onPaymentUpdate?.(null);
+      return;
+    }
+
     if (showLoading) setLoading(true);
     setError(null);
 
@@ -44,8 +53,8 @@ const PaymentStatusChecker: React.FC<PaymentStatusCheckerProps> = ({
       const { data, error: dbError } = await supabase
         .from('payments')
         .select('*')
-        .eq('alif_order_id', orderId)
-        .order('created_at', { ascending: false }) // latest attempt first
+        .eq('alif_order_id', orderId as string)
+        .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle<PaymentStatus>();
 
@@ -54,11 +63,11 @@ const PaymentStatusChecker: React.FC<PaymentStatusCheckerProps> = ({
       setLastChecked(new Date());
 
       if (!data) {
-        // Not yet created — keep UI in pending and continue polling, no toast
+        // Not yet created → show pending shell (but only if we actually have an orderId)
         if (!payment) {
           setPayment({
             id: 'pending',
-            alif_order_id: orderId,
+            alif_order_id: orderId as string,
             amount: 0,
             currency: '',
             status: 'pending',
@@ -79,26 +88,22 @@ const PaymentStatusChecker: React.FC<PaymentStatusCheckerProps> = ({
       const msg = err instanceof Error ? err.message : 'Failed to check payment status';
       console.error('Payment status check error:', err);
       setError(msg);
-      if (showLoading) toast.error(msg);
+      toast.error(msg);
     } finally {
       if (showLoading) setLoading(false);
     }
   };
 
-  // Initial load + refresh on tab focus (helps mobile)
+  // Initial load + refresh on tab focus
   useEffect(() => {
-    if (!orderId) return;
-
     checkPaymentStatus(true);
-
-    const onVis = () => {
-      if (document.visibilityState === 'visible') checkPaymentStatus(false);
-    };
+    const onVis = () => document.visibilityState === 'visible' && checkPaymentStatus(false);
     document.addEventListener('visibilitychange', onVis);
     return () => document.removeEventListener('visibilitychange', onVis);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId]);
 
-  // Poll loop (only depends on settings/orderId)
+  // Polling
   useEffect(() => {
     if (!autoRefresh) return;
 
@@ -111,7 +116,6 @@ const PaymentStatusChecker: React.FC<PaymentStatusCheckerProps> = ({
 
     const tick = async () => {
       const status = payment?.status ?? 'pending';
-      // poll while pending/processing or while we still have no server row
       if (status === 'pending' || status === 'processing' || !payment || payment.id === 'pending') {
         await checkPaymentStatus(false);
         pollRef.current = window.setTimeout(tick, refreshInterval);
@@ -123,7 +127,7 @@ const PaymentStatusChecker: React.FC<PaymentStatusCheckerProps> = ({
     tick();
     return stop;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoRefresh, refreshInterval, orderId]); // intentionally not depending on payment.status
+  }, [autoRefresh, refreshInterval, orderId]); // don't depend on status to avoid loop churn
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -141,38 +145,41 @@ const PaymentStatusChecker: React.FC<PaymentStatusCheckerProps> = ({
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'completed':
-        return 'Оплачено';
-      case 'failed':
-        return 'Ошибка оплаты';
-      case 'cancelled':
-        return 'Отменено';
-      case 'pending':
-        return 'Ожидает оплаты';
-      case 'processing':
-        return 'Обрабатывается';
-      default:
-        return 'Неизвестный статус';
+      case 'completed': return 'Оплачено';
+      case 'failed':    return 'Ошибка оплаты';
+      case 'cancelled': return 'Отменено';
+      case 'pending':   return 'Ожидает оплаты';
+      case 'processing':return 'Обрабатывается';
+      default:          return 'Неизвестный статус';
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed':
-        return 'text-green-700 bg-green-50 border-green-200';
+      case 'completed': return 'text-green-700 bg-green-50 border-green-200';
       case 'failed':
-      case 'cancelled':
-        return 'text-red-700 bg-red-50 border-red-200';
+      case 'cancelled': return 'text-red-700 bg-red-50 border-red-200';
       case 'pending':
       case 'processing':
-      default:
-        return 'text-yellow-700 bg-yellow-50 border-yellow-200';
+      default:          return 'text-yellow-700 bg-yellow-50 border-yellow-200';
     }
   };
 
+  // === UI states ===
+  if (missingOrderId) {
+    return (
+      <div className="p-4 border border-red-200 rounded-lg bg-red-50">
+        <div className="flex items-center text-red-700">
+          <XCircle size={20} className="mr-2" />
+          <span>Не указан номер заказа. Вернитесь на сайт магазина и повторите оплату.</span>
+        </div>
+      </div>
+    );
+  }
+
   if (loading && !payment) {
     return (
-      <div className="flex items-center justify-center p-4">
+      <div className="flex items-center justify-center p-6">
         <Loader2 className="animate-spin mr-2" size={20} />
         <span>Проверка статуса платежа...</span>
       </div>
@@ -207,12 +214,12 @@ const PaymentStatusChecker: React.FC<PaymentStatusCheckerProps> = ({
     );
   }
 
+  // === Main card ===
   return (
     <div className={`p-4 border rounded-lg ${getStatusColor(payment.status)}`}>
-      {/* Header with centered text+order, icon after text, refresh inside on the right */}
+      {/* centered header; icon AFTER text; refresh inside on right */}
       <div className="grid grid-cols-[1fr_auto_1fr] items-center mb-3">
-        <div /> {/* left spacer to balance the right button */}
-
+        <div />
         <div className="justify-self-center text-center">
           <h3 className="font-semibold flex items-center justify-center">
             {getStatusText(payment.status)}
@@ -227,7 +234,6 @@ const PaymentStatusChecker: React.FC<PaymentStatusCheckerProps> = ({
             </span>
           </p>
         </div>
-
         <div className="justify-self-end">
           <button
             onClick={() => checkPaymentStatus(true)}
@@ -240,7 +246,7 @@ const PaymentStatusChecker: React.FC<PaymentStatusCheckerProps> = ({
         </div>
       </div>
 
-      {/* Details */}
+      {/* details */}
       <div className="space-y-2 text-sm">
         <div className="flex justify-between">
           <span>Сумма:</span>
@@ -248,24 +254,20 @@ const PaymentStatusChecker: React.FC<PaymentStatusCheckerProps> = ({
             {payment.amount?.toLocaleString?.() ?? '—'} {payment.currency || ''}
           </span>
         </div>
-
         {payment.alif_transaction_id && (
           <div className="flex justify-between">
             <span>ID транзакции:</span>
             <span className="font-mono text-xs">{payment.alif_transaction_id}</span>
           </div>
         )}
-
         <div className="flex justify-between">
           <span>Создан:</span>
           <span>{payment.created_at ? new Date(payment.created_at).toLocaleString('ru-RU') : '—'}</span>
         </div>
-
         <div className="flex justify-between">
           <span>Обновлен:</span>
           <span>{payment.updated_at ? new Date(payment.updated_at).toLocaleString('ru-RU') : '—'}</span>
         </div>
-
         {lastChecked && (
           <div className="flex justify-between text-xs opacity-75">
             <span>Последняя проверка:</span>
