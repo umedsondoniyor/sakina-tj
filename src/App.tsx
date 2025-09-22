@@ -36,6 +36,7 @@ import AdminOneClickOrders from './components/admin/AdminOneClickOrders';
 import AdminUsers from './components/admin/AdminUsers';
 import AdminRoute from './components/admin/AdminRoute';
 import AdminLogin from './components/admin/AdminLogin';
+import AdminSmsTemplates from './components/admin/AdminSmsTemplates';
 import Mattresses from './components/Mattresses';
 import CheckoutPage from './components/CheckoutPage';
 import OrderConfirmationPage from './components/OrderConfirmationPage';
@@ -72,6 +73,7 @@ function App() {
             
             {/* 👇 NEW: /admin/about */}
             <Route path="about" element={<AdminAbout />} />
+            <Route path="sms-templates" element={<AdminSmsTemplates />} />
           </Route>
 
           {/* Public Routes */}
