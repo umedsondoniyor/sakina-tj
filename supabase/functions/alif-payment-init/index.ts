@@ -24,6 +24,14 @@ Deno.serve(async (req)=>{
     if (!orderData?.customerInfo?.email) throw new Error('Customer email is required');
     if (!orderData?.customerInfo?.name) throw new Error('Customer name is required');
     if (!orderData?.customerInfo?.phone) throw new Error('Customer phone is required');
+
+    // Extract product title from items
+    const productTitle = orderData.items?.length > 0 
+      ? orderData.items.length === 1 
+        ? orderData.items[0].name
+        : `${orderData.items[0].name} и еще ${orderData.items.length - 1} товар(ов)`
+      : 'Заказ';
+
     const orderId = `SAKINA_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const callbackUrl = `${supabaseUrl}/functions/v1/alif-payment-callback`;
     const returnUrl = `${returnSiteUrl}/payment/success?order_id=${orderId}`;
@@ -104,7 +112,22 @@ Deno.serve(async (req)=>{
       currency,
       status: 'pending',
       order_data: orderData,
-      user_id: null
+      user_id: null,
+      product_title: productTitle,
+      customer_name: orderData.customerInfo.name,
+      customer_phone: orderData.customerInfo.phone,
+      customer_email: orderData.customerInfo.email,
+      delivery_type: orderData.deliveryInfo?.type || 'home',
+      delivery_address: orderData.deliveryInfo?.address || null,
+      payment_gateway: gate,
+      order_summary: {
+        items: orderData.items,
+        total_amount: amount,
+        currency: currency,
+        customer_info: orderData.customerInfo,
+        delivery_info: orderData.deliveryInfo,
+        timestamp: new Date().toISOString()
+      }
     }).select().single();
     if (dbError) {
       return new Response(JSON.stringify({

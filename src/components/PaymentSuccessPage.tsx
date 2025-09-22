@@ -54,6 +54,13 @@ type PaymentRow = {
   currency: string;
   status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled' | string;
   alif_transaction_id?: string;
+  product_title?: string;
+  customer_name?: string;
+  customer_phone?: string;
+  customer_email?: string;
+  delivery_type?: string;
+  delivery_address?: string;
+  payment_gateway?: string;
   created_at?: string;
   updated_at?: string;
 };

@@ -45,37 +45,40 @@ const PaymentStatusChecker: React.FC<PaymentStatusCheckerProps> = ({
         .eq('alif_order_id', orderId)
         .order('created_at', { ascending: false }) // latest first
         .limit(1)
-        .maybeSingle<PaymentStatus>();
+        .maybeSingle();
 
       if (dbError) throw new Error(dbError.message || 'Failed to fetch payment status');
 
       setLastChecked(new Date());
 
       if (!data) {
-        // show a lightweight pending shell until the row appears
-        if (!payment) {
-          setPayment({
-            id: 'pending',
-            alif_order_id: orderId,
-            amount: 0,
-            currency: '',
-            status: 'pending',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          } as PaymentStatus);
-        }
+        // Payment record not found yet - show pending state
+        setPayment({
+          id: 'pending',
+          alif_order_id: orderId,
+          amount: 0,
+          currency: 'TJS',
+          status: 'pending',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        } as PaymentStatus);
         return;
       }
 
       setPayment(prev => {
-        if (onStatusChange && data.status !== prev?.status) onStatusChange(data.status);
-        return data;
+        if (onStatusChange && data.status !== prev?.status) {
+          onStatusChange(data.status);
+        }
+        return data as PaymentStatus;
       });
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to check payment status';
       console.error('Payment status check error:', err);
       setError(msg);
-      if (showLoading) toast.error(msg);
+      // Only show toast error if it's not a "no rows" issue
+      if (showLoading && !msg.includes('JSON object requested')) {
+        toast.error(msg);
+      }
     } finally {
       if (showLoading) setLoading(false);
     }
