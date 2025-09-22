@@ -185,6 +185,49 @@ const PaymentSuccessPage: React.FC = () => {
                 </div>
               )}
             </div>
+
+            {/* Order Details */}
+            {latestRow && latestRow.id !== 'pending' && (
+              <div className="bg-white rounded-lg shadow p-6">
+                <h2 className="text-xl font-semibold mb-4">Детали заказа</h2>
+                <div className="space-y-3 text-sm">
+                  {latestRow.product_title && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Товар:</span>
+                      <span className="font-medium">{latestRow.product_title}</span>
+                    </div>
+                  )}
+                  {latestRow.customer_name && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Покупатель:</span>
+                      <span className="font-medium">{latestRow.customer_name}</span>
+                    </div>
+                  )}
+                  {latestRow.customer_phone && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Телефон:</span>
+                      <span className="font-medium">{latestRow.customer_phone}</span>
+                    </div>
+                  )}
+                  {latestRow.delivery_type && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Доставка:</span>
+                      <span className="font-medium">
+                        {latestRow.delivery_type === 'home' ? 'Доставка на дом' : 'Самовывоз'}
+                      </span>
+                    </div>
+                  )}
+                  {latestRow.payment_gateway && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Способ оплаты:</span>
+                      <span className="font-medium">
+                        {latestRow.payment_gateway === 'alif_bank' ? 'Alif Bank' : latestRow.payment_gateway}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
             
           </div>
 
