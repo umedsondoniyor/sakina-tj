@@ -42,7 +42,7 @@ const AdminDashboard = () => {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className="w-full mx-auto px-4 py-6">
         <div className="flex gap-6 items-start">
           {/* Sidebar */}
           <nav className="w-56 bg-white rounded-lg shadow p-4 flex-shrink-0">
