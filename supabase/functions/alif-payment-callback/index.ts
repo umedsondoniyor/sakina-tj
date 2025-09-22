@@ -28,13 +28,11 @@ Deno.serve(async (req)=>{
     }
     const supabase = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');
     const body = await req.json();
-    // Log with token redacted
     console.log('🔁 Alif callback received:', {
       ...body,
       token: body.token ? '[HIDDEN]' : undefined
     });
     const { orderId, status, transactionId, token } = body;
-    // Basic field presence
     if (!orderId || !status || !transactionId || !token) {
       return new Response(JSON.stringify({
         success: false,
@@ -82,7 +80,7 @@ Deno.serve(async (req)=>{
       });
     }
     console.log('✅ Token verified');
-    // Fetch the payment by alif_order_id
+    // Fetch payment
     const { data: payment, error: findErr } = await supabase.from('payments').select('*').eq('alif_order_id', orderId).single();
     if (findErr || !payment) {
       console.error('❌ Payment not found for orderId', orderId, findErr);
@@ -97,7 +95,7 @@ Deno.serve(async (req)=>{
         status: 404
       });
     }
-    // Map Alif status → internal status
+    // Map Alif status → internal
     let mapped = 'failed';
     switch((status || '').toLowerCase()){
       case 'ok':
@@ -118,14 +116,10 @@ Deno.serve(async (req)=>{
       case 'cancelled':
         mapped = 'cancelled';
         break;
-      case 'failed':
-      case 'error':
-      case 'declined':
-      case 'rejected':
       default:
         mapped = 'failed';
     }
-    // Update minimal known-good columns
+    // Update payment
     const { error: updateErr } = await supabase.from('payments').update({
       status: mapped,
       alif_transaction_id: transactionId,
@@ -144,6 +138,41 @@ Deno.serve(async (req)=>{
         },
         status: 500
       });
+    }
+    // --- SMS notifications (only if payment completed) ---
+    if (mapped === 'completed') {
+      const orderTitle = payment.order_title || `Заказ №${orderId}`;
+      const bulkMessages = [
+        {
+          PhoneNumber: payment.buyer_phone ?? "+992936337785",
+          Text: `✅ Оплата прошла успешно! Ваш заказ: «${orderTitle}». Спасибо, что выбрали Sakina.tj 🙏`,
+          SenderAddress: "SAKINA",
+          Priority: 1,
+          SmsType: 2
+        },
+        {
+          PhoneNumber: "+992936337785",
+          Text: `💰 Оплачен новый заказ: «${orderTitle}». Покупатель подтвердил оплату.`,
+          SenderAddress: "SAKINA",
+          Priority: 1,
+          SmsType: 2
+        },
+        {
+          PhoneNumber: payment.delivery_phone ?? "+992936337785",
+          Text: `🚚 Новый заказ для доставки: «${orderTitle}». Пожалуйста, свяжитесь с клиентом и доставьте вовремя.`,
+          SenderAddress: "SAKINA",
+          Priority: 1,
+          SmsType: 2
+        }
+      ];
+      fetch("https://sms2.aliftech.net/api/v1/sms/bulk", {
+        method: "POST",
+        headers: {
+          "X-Api-Key": Deno.env.get("SMS_API_KEY"),
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(bulkMessages)
+      }).then((res)=>res.json()).then((data)=>console.log("📲 SMS sent:", data)).catch((err)=>console.error("SMS error:", err));
     }
     return new Response(JSON.stringify({
       success: true,
