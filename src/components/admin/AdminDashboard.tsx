@@ -43,9 +43,9 @@ const AdminDashboard = () => {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="flex gap-6">
+        <div className="flex gap-6 items-start">
           {/* Sidebar */}
-          <nav className="w-64 bg-white rounded-lg shadow p-4">
+          <nav className="w-56 bg-white rounded-lg shadow p-4 flex-shrink-0">
             <div className="space-y-2">
               <NavLink
                 to="/admin/carousel"
@@ -213,7 +213,7 @@ const AdminDashboard = () => {
           </nav>
 
           {/* Main Content */}
-          <main className="w-3/4 flex-1 bg-white rounded-lg shadow p-6">
+          <main className="flex-1 bg-white rounded-lg shadow p-6 min-w-0">
             <Outlet />
           </main>
         </div>
