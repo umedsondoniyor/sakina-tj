@@ -302,7 +302,6 @@ const CheckoutPage = () => {
                 </p>
               </div>
             </div>
-                  delivery_address: formData.address || null,
             {/* Final Payment/Submit */}
             {formData.paymentMethod === 'online' ? (
               <PaymentButton
