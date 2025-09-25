@@ -289,7 +289,7 @@ const SmsTemplateModal: React.FC<SmsTemplateModalProps> = ({
                     .replace(/\{\{payment\.customer_name\}\}/g, 'Умед')
                     .replace(/\{\{payment\.customer_phone\}\}/g, '+992 93 633 77 85')
                     .replace(/\{\{payment\.customer_email\}\}/g, 'umedz@gmail.com')
-                    .replace(/\{\{payment\.delivery_phone\}\}/g, '+992936337785')
+                    .replace(/\{\{payment\.delivery_phone\}\}/g, '+992 93 633 77 85')
                     .replace(/\{\{payment\.amount\}\}/g, '446')
                   }
                 </div>
