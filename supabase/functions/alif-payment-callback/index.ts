@@ -143,6 +143,18 @@ Deno.serve(async (req)=>{
     if (mapped === 'completed') {
       const orderTitle = payment.order_title || `Заказ №${orderId}`;
       
+      // Helper function to clean phone numbers
+      const cleanPhoneNumber = (phone: string): string => {
+        return phone.replace(/[\s\+\-\(\)]/g, '');
+      };
+      
+      // Helper function to add default SMS fields
+      const addDefaultFields = (message: any) => ({
+        ...message,
+        ScheduledAt: new Date().toISOString(),
+        ExpiresIn: 10 // minutes
+      });
+      
       // Get SMS templates from database
       const supabaseClient = createClient(
         Deno.env.get('SUPABASE_URL') ?? '',
@@ -158,9 +170,9 @@ Deno.serve(async (req)=>{
       if (templatesError) {
         console.error('Error fetching SMS templates:', templatesError);
         // Fallback to default messages if templates can't be loaded
-        const bulkMessages = [
+        const fallbackMessages = [
           {
-            PhoneNumber: payment.customer_phone ?? "+992936337785",
+            PhoneNumber: cleanPhoneNumber(payment.customer_phone ?? "+992936337785"),
             Text: `✅ Оплата прошла успешно! Ваш заказ: «${orderTitle}». Спасибо, что выбрали Sakina.tj 🙏`,
             SenderAddress: "SAKINA",
             Priority: 1,
@@ -168,24 +180,28 @@ Deno.serve(async (req)=>{
           }
         ];
         
-        fetch("https://sms2.aliftech.net/api/v1/sms/bulk", {
+        const bulkMessages = fallbackMessages.map(addDefaultFields);
+        
+        console.log('📲 Sending fallback SMS messages:', bulkMessages);
+        
+        await fetch("https://sms2.aliftech.net/api/v1/sms/bulk", {
           method: "POST",
           headers: {
-            "X-Api-Key": Deno.env.get("SMS_API_KEY"),
+            "X-Api-Key": Deno.env.get("SMS_API_KEY") ?? "",
             "Content-Type": "application/json"
           },
           body: JSON.stringify(bulkMessages)
-        }).then((res)=>res.json()).then((data)=>console.log("📲 SMS sent (fallback):", data)).catch((err)=>console.error("SMS error:", err));
+        });
         
         return;
       }
 
       // Process templates and replace variables
-      const bulkMessages = (smsTemplates || []).map(template => {
+      const processedMessages = (smsTemplates || []).map(template => {
         // Replace variables in phone number
         let phoneNumber = template.phone_number
           .replace(/\{\{payment\.customer_phone\}\}/g, payment.customer_phone || "+992936337785")
-          .replace(/\{\{payment\.delivery_phone\}\}/g, payment.delivery_phone || "+992936337785");
+          .replace(/\{\{payment\.delivery_phone\}\}/g, "+992936337785");
 
         // Replace variables in text template
         let messageText = template.text_template
@@ -193,11 +209,11 @@ Deno.serve(async (req)=>{
           .replace(/\{\{payment\.customer_name\}\}/g, payment.customer_name || 'Клиент')
           .replace(/\{\{payment\.customer_phone\}\}/g, payment.customer_phone || '')
           .replace(/\{\{payment\.customer_email\}\}/g, payment.customer_email || '')
-          .replace(/\{\{payment\.delivery_phone\}\}/g, payment.delivery_phone || '')
+          .replace(/\{\{payment\.delivery_phone\}\}/g, "+992936337785")
           .replace(/\{\{payment\.amount\}\}/g, payment.amount?.toString() || '0');
 
         return {
-          PhoneNumber: phoneNumber,
+          PhoneNumber: cleanPhoneNumber(phoneNumber),
           Text: messageText,
           SenderAddress: template.sender_address,
           Priority: template.priority,
@@ -205,14 +221,18 @@ Deno.serve(async (req)=>{
         };
       });
 
-      fetch("https://sms2.aliftech.net/api/v1/sms/bulk", {
+      const bulkMessages = processedMessages.map(addDefaultFields);
+      
+      console.log('📲 Sending SMS messages from templates:', bulkMessages);
+      
+      await fetch("https://sms2.aliftech.net/api/v1/sms/bulk", {
         method: "POST",
         headers: {
-          "X-Api-Key": Deno.env.get("SMS_API_KEY"),
+          "X-Api-Key": Deno.env.get("SMS_API_KEY") ?? "",
           "Content-Type": "application/json"
         },
         body: JSON.stringify(bulkMessages)
-      }).then((res)=>res.json()).then((data)=>console.log("📲 SMS sent:", data)).catch((err)=>console.error("SMS error:", err));
+      });
     }
     return new Response(JSON.stringify({
       success: true,
