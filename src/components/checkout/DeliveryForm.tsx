@@ -42,8 +42,13 @@ const DeliveryForm: React.FC<DeliveryFormProps> = ({
             <div className="flex items-center">
               <input
                 type="radio"
+                name="deliveryType"
                 checked={formData.deliveryType === 'home'}
-                onChange={() => onInputChange('deliveryType', 'home')}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    onInputChange('deliveryType', 'home');
+                  }
+                }}
                 className="mr-3"
               />
               <div>
@@ -64,8 +69,13 @@ const DeliveryForm: React.FC<DeliveryFormProps> = ({
           <div className="flex items-center">
             <input
               type="radio"
+              name="deliveryType"
               checked={formData.deliveryType === 'pickup'}
-              onChange={() => onInputChange('deliveryType', 'pickup')}
+              onChange={(e) => {
+                if (e.target.checked) {
+                  onInputChange('deliveryType', 'pickup');
+                }
+              }}
               className="mr-3"
             />
             <div>
