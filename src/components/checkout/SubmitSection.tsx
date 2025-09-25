@@ -2,6 +2,18 @@ import React from 'react';
 import { Loader2 } from 'lucide-react';
 import PaymentButton from '../PaymentButton';
 import type { CartItem } from '../../lib/types';
+import { buildDeliveryAddress } from '../../lib/utils'; // add import
+
+deliveryInfo: {
+  delivery_type: formData.deliveryType,
+  delivery_address: buildDeliveryAddress(formData),
+  city: formData.city || 'Душанбе',
+  apartment: formData.apartment,
+  entrance: formData.entrance,
+  floor: formData.floor,
+  intercom: formData.intercom
+},
+
 
 interface SubmitSectionProps {
   paymentMethod: 'online' | 'cash';
@@ -12,6 +24,11 @@ interface SubmitSectionProps {
     phone: string;
     deliveryType: 'home' | 'pickup';
     address: string;
+    city?: string;
+    apartment?: string;
+    entrance?: string;
+    floor?: string;
+    intercom?: string;
   };
   calculateFinalTotal: () => number;
   onPaymentSuccess: (paymentId: string) => void;
@@ -54,8 +71,8 @@ const SubmitSection: React.FC<SubmitSectionProps> = ({
             },
             deliveryInfo: {
               delivery_type: formData.deliveryType,
-              delivery_address: formData.address || null,
-              city: formData.city,
+              delivery_address: buildDeliveryAddress(formData),
+              city: formData.city || 'Душанбе',
               apartment: formData.apartment,
               entrance: formData.entrance,
               floor: formData.floor,
