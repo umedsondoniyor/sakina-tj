@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CreditCard, Loader2, AlertCircle } from 'lucide-react';
+import { CreditCard, Loader as Loader2, CircleAlert as AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import toast from 'react-hot-toast';
 
@@ -91,22 +91,6 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
           name: orderData.customerInfo.name,
           email: orderData.customerInfo.email,
           phone: orderData.customerInfo.phone
-        },
-        deliveryInfo: {
-          delivery_type: orderData.deliveryInfo.delivery_type,
-          delivery_address: buildDeliveryAddress({
-            deliveryType: orderData.deliveryInfo.delivery_type as 'home' | 'pickup',
-            address: orderData.deliveryInfo.delivery_address || '',
-            apartment: orderData.deliveryInfo.apartment,
-            entrance: orderData.deliveryInfo.entrance,
-            floor: orderData.deliveryInfo.floor,
-            intercom: orderData.deliveryInfo.intercom
-          }),
-          city: orderData.deliveryInfo.city,
-          apartment: orderData.deliveryInfo.apartment,
-          entrance: orderData.deliveryInfo.entrance,
-          floor: orderData.deliveryInfo.floor,
-          intercom: orderData.deliveryInfo.intercom
         },
         items: orderData.items.map(item => ({
           name: item.name,

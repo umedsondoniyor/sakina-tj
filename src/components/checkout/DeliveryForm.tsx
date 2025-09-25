@@ -1,5 +1,5 @@
 import React from 'react';
-import { Truck, MapPin, ChevronDown, AlertCircle } from 'lucide-react';
+import { Truck, MapPin, ChevronDown, CircleAlert as AlertCircle } from 'lucide-react';
 
 interface DeliveryFormProps {
   formData: {
