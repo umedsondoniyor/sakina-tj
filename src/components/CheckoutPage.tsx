@@ -323,8 +323,13 @@ const CheckoutPage = () => {
                     phone: formData.phone
                   },
                   deliveryInfo: {
-                    type: formData.deliveryType,
-                    address: formData.deliveryType === 'home' ? formData.address : undefined
+                    delivery_type: formData.deliveryType,
+                    delivery_address: formData.deliveryType === 'home' ? formData.address : null,
+                    city: formData.city,
+                    apartment: formData.apartment,
+                    entrance: formData.entrance,
+                    floor: formData.floor,
+                    intercom: formData.intercom
                   },
                   invoices: {
                     invoices: items.map(item => ({

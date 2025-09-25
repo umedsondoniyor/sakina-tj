@@ -53,8 +53,8 @@ const SubmitSection: React.FC<SubmitSectionProps> = ({
               phone: formData.phone
             },
             deliveryInfo: {
-              type: formData.deliveryType,
-              address: formData.deliveryType === 'home' ? formData.address : undefined
+              delivery_type: formData.deliveryType,
+              delivery_address: formData.deliveryType === 'home' ? formData.address : null
             },
             invoices: {
               invoices: items.map(item => ({

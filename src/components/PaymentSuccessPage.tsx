@@ -213,8 +213,16 @@ const PaymentSuccessPage: React.FC = () => {
                     <div className="flex justify-between">
                       <span className="text-gray-600">Доставка:</span>
                       <span className="font-medium">
-                        {latestRow.delivery_type === 'home' ? 'Доставка на дом' : 'Самовывоз'}
+                        {latestRow.delivery_type === 'home' ? 'Доставка на дом' : 
+                         latestRow.delivery_type === 'pickup' ? 'Самовывоз' : 
+                         latestRow.delivery_type}
                       </span>
+                    </div>
+                  )}
+                  {latestRow.delivery_address && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Адрес:</span>
+                      <span className="font-medium">{latestRow.delivery_address}</span>
                     </div>
                   )}
                   {latestRow.payment_gateway && (

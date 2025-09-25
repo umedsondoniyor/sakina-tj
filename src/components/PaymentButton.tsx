@@ -20,8 +20,13 @@ interface PaymentButtonProps {
       phone: string;
     };
     deliveryInfo: {
-      type: string;
-      address?: string;
+      delivery_type: string;
+      delivery_address?: string | null;
+      city?: string;
+      apartment?: string;
+      entrance?: string;
+      floor?: string;
+      intercom?: string;
     };
     invoices?: {
       is_hold_required?: boolean;

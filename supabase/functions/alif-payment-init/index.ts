@@ -117,8 +117,8 @@ Deno.serve(async (req)=>{
       customer_name: orderData.customerInfo.name,
       customer_phone: orderData.customerInfo.phone,
       customer_email: orderData.customerInfo.email,
-      delivery_type: orderData.deliveryInfo?.type || 'home',
-      delivery_address: orderData.deliveryInfo?.address || null,
+      delivery_type: orderData.deliveryInfo?.delivery_type || 'home',
+      delivery_address: orderData.deliveryInfo?.delivery_address || null,
       payment_gateway: gate,
       order_summary: {
         items: orderData.items,
