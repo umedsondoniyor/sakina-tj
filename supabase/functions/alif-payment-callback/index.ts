@@ -6,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-application-name',
   'Access-Control-Allow-Methods': 'POST, OPTIONS'
 };
-Deno.serve(async (req)=>{
+Deno.serve(async (req) => {
   // Preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', {
@@ -97,7 +97,7 @@ Deno.serve(async (req)=>{
     }
     // Map Alif status → internal
     let mapped = 'failed';
-    switch((status || '').toLowerCase()){
+    switch ((status || '').toLowerCase()) {
       case 'ok':
       case 'success':
       case 'approved':
@@ -143,15 +143,15 @@ Deno.serve(async (req)=>{
     if (mapped === 'completed') {
       const orderTitle = payment.product_title || `Заказ №${orderId}`;
       // Helper function to clean phone numbers
-      const cleanPhoneNumber = (phone)=>{
+      const cleanPhoneNumber = (phone) => {
         return phone.replace(/[\s\+\-\(\)]/g, '');
       };
       // Helper function to add default SMS fields
-      const addDefaultFields = (message)=>({
-          ...message,
-          ScheduledAt: new Date().toISOString(),
-          ExpiresIn: 10 // minutes
-        });
+      const addDefaultFields = (message) => ({
+        ...message,
+        ScheduledAt: new Date().toISOString(),
+        ExpiresIn: 10 // minutes
+      });
       // Get SMS templates from database
       const supabaseClient = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');
       const { data: smsTemplates, error: templatesError } = await supabaseClient.from('sms_templates').select('*').eq('is_active', true).order('order_index', {
@@ -182,11 +182,26 @@ Deno.serve(async (req)=>{
         return;
       }
       // Process templates and replace variables
-      const processedMessages = (smsTemplates || []).map((template)=>{
+      const processedMessages = (smsTemplates || []).map((template) => {
         // Replace variables in phone number
         let phoneNumber = template.phone_number.replace(/\{\{payment\.customer_phone\}\}/g, payment.customer_phone || "+992936337785").replace(/\{\{payment\.delivery_phone\}\}/g, "+992936337785");
         // Replace variables in text template
-        let messageText = template.text_template.replace(/\{\{orderTitle\}\}/g, orderTitle).replace(/\{\{payment\.customer_name\}\}/g, payment.customer_name || 'Клиент').replace(/\{\{payment\.customer_phone\}\}/g, payment.customer_phone || '').replace(/\{\{payment\.customer_email\}\}/g, payment.customer_email || '').replace(/\{\{payment\.delivery_phone\}\}/g, "+992936337785").replace(/\{\{payment\.amount\}\}/g, payment.amount?.toString() || '0');
+        // Replace variables in text template
+        let messageText = template.text_template
+          .replace(/\{\{orderTitle\}\}/g, orderTitle)
+          .replace(/\{\{payment\.customer_name\}\}/g, payment.customer_name || 'Клиент')
+          .replace(/\{\{payment\.customer_phone\}\}/g, payment.customer_phone || '')
+          .replace(/\{\{payment\.customer_email\}\}/g, payment.customer_email || '')
+          .replace(/\{\{payment\.delivery_phone\}\}/g, payment.delivery_phone || '+992936337785')
+          .replace(/\{\{payment\.amount\}\}/g, payment.amount?.toString() || '0')
+          .replace(/\{\{payment\.currency\}\}/g, payment.currency || 'TJS')
+          .replace(/\{\{payment\.status\}\}/g, mapped) // use internal mapped status
+          .replace(/\{\{payment\.alif_transaction_id\}\}/g, payment.alif_transaction_id || transactionId || '')
+          .replace(/\{\{payment\.delivery_type\}\}/g, payment.delivery_type || '')
+          .replace(/\{\{payment\.delivery_address\}\}/g, payment.delivery_address || '')
+          .replace(/\{\{payment\.payment_gateway\}\}/g, payment.payment_gateway || 'Alif')
+          .replace(/\{\{payment\.order_summary\}\}/g, payment.order_summary ? JSON.stringify(payment.order_summary) : '');
+
         return {
           PhoneNumber: cleanPhoneNumber(phoneNumber),
           Text: messageText,
