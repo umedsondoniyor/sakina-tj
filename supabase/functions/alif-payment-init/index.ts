@@ -25,6 +25,14 @@ Deno.serve(async (req)=>{
     if (!orderData?.customerInfo?.name) throw new Error('Customer name is required');
     if (!orderData?.customerInfo?.phone) throw new Error('Customer phone is required');
 
+    // Debug logging for delivery info
+    console.log('📦 Delivery info received:', {
+      delivery_type: orderData?.deliveryInfo?.delivery_type,
+      delivery_address: orderData?.deliveryInfo?.delivery_address,
+      city: orderData?.deliveryInfo?.city,
+      apartment: orderData?.deliveryInfo?.apartment
+    });
+
     // Extract product title from items
     const productTitle = orderData.items?.length > 0 
       ? orderData.items.length === 1 
@@ -117,8 +125,8 @@ Deno.serve(async (req)=>{
       customer_name: orderData.customerInfo.name,
       customer_phone: orderData.customerInfo.phone,
       customer_email: orderData.customerInfo.email,
-      delivery_type: orderData.deliveryInfo?.delivery_type || 'home',
-      delivery_address: orderData.deliveryInfo?.delivery_address || null,
+      delivery_type: orderData.deliveryInfo?.delivery_type || 'pickup',
+      delivery_address: orderData.deliveryInfo?.delivery_address,
       payment_gateway: gate,
       order_summary: {
         items: orderData.items,

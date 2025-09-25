@@ -54,7 +54,12 @@ const SubmitSection: React.FC<SubmitSectionProps> = ({
             },
             deliveryInfo: {
               delivery_type: formData.deliveryType,
-              delivery_address: formData.deliveryType === 'home' ? formData.address : null
+              delivery_address: formData.address || null,
+              city: formData.city,
+              apartment: formData.apartment,
+              entrance: formData.entrance,
+              floor: formData.floor,
+              intercom: formData.intercom
             },
             invoices: {
               invoices: items.map(item => ({
