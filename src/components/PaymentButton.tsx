@@ -86,11 +86,27 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
 
 
       // Prepare simplified order data that matches working Postman payload
-      const simplifiedOrderData = {
+      const orderDataWithDelivery = {
         customerInfo: {
           name: orderData.customerInfo.name,
           email: orderData.customerInfo.email,
           phone: orderData.customerInfo.phone
+        },
+        deliveryInfo: {
+          delivery_type: orderData.deliveryInfo.delivery_type,
+          delivery_address: buildDeliveryAddress({
+            deliveryType: orderData.deliveryInfo.delivery_type as 'home' | 'pickup',
+            address: orderData.deliveryInfo.delivery_address || '',
+            apartment: orderData.deliveryInfo.apartment,
+            entrance: orderData.deliveryInfo.entrance,
+            floor: orderData.deliveryInfo.floor,
+            intercom: orderData.deliveryInfo.intercom
+          }),
+          city: orderData.deliveryInfo.city,
+          apartment: orderData.deliveryInfo.apartment,
+          entrance: orderData.deliveryInfo.entrance,
+          floor: orderData.deliveryInfo.floor,
+          intercom: orderData.deliveryInfo.intercom
         },
         items: orderData.items.map(item => ({
           name: item.name,
@@ -100,7 +116,11 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
         }))
       };
 
-      console.log('📋 Simplified order data prepared');
+      console.log('📋 Order data with delivery info prepared:', {
+        deliveryType: orderDataWithDelivery.deliveryInfo.delivery_type,
+        deliveryAddress: orderDataWithDelivery.deliveryInfo.delivery_address,
+        customerInfo: orderDataWithDelivery.customerInfo
+      });
 
       // Call Supabase Edge Function to initialize payment
       console.log('🔄 Calling Edge Function: alif-payment-init');
@@ -109,7 +129,7 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
         amount: amount,
         currency: currency,
         gate: gate,
-        orderData: simplifiedOrderData
+        orderData: orderDataWithDelivery
       };
 
       console.log('📦 Payload:', JSON.stringify(paymentPayload));

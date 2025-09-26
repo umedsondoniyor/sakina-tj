@@ -143,24 +143,24 @@ Deno.serve(async (req) => {
     if (mapped === 'completed') {
       const orderTitle = payment.product_title || `Заказ №${orderId}`;
       
-      // Helper function to clean phone numbers (remove +, spaces, dashes, parentheses)
       // Helper function to clean phone numbers
       const cleanPhoneNumber = (phone) => {
         return phone.replace(/[\s\+\-\(\)]/g, '');
       };
       
       // Helper function to add default SMS fields
-      // Helper function to add default SMS fields
       const addDefaultFields = (message) => ({
         ...message,
         ScheduledAt: new Date().toISOString(),
         ExpiresIn: 10 // minutes  
       });
+
       // Get SMS templates from database
       const supabaseClient = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');
       const { data: smsTemplates, error: templatesError } = await supabaseClient.from('sms_templates').select('*').eq('is_active', true).order('order_index', {
         ascending: true
       });
+
       if (templatesError) {
         console.error('Error fetching SMS templates:', templatesError);
         // Fallback to default messages if templates can't be loaded
@@ -206,58 +206,59 @@ Deno.serve(async (req) => {
         if (!smsResponse.ok) {
           console.error('📲 SMS API error:', await smsResponse.text());
         }
+      } else {
+        // Process templates and replace variables
+        const processedMessages = (smsTemplates || []).map((template) => {
+          // Replace variables in phone number field
+          let phoneNumber = template.phone_number
+            .replace(/\{\{payment\.customer_phone\}\}/g, payment.customer_phone || "+992936337785")
+            .replace(/\{\{payment\.delivery_phone\}\}/g, "+992936337785");
+          
+          // Replace variables in text template
+          let messageText = template.text_template
+            .replace(/\{\{orderTitle\}\}/g, orderTitle)
+            .replace(/\{\{payment\.customer_name\}\}/g, payment.customer_name || 'Клиент')
+            .replace(/\{\{payment\.customer_phone\}\}/g, payment.customer_phone || '')
+            .replace(/\{\{payment\.customer_email\}\}/g, payment.customer_email || '')
+            .replace(/\{\{payment\.delivery_phone\}\}/g, "+992936337785")
+            .replace(/\{\{payment\.amount\}\}/g, payment.amount?.toString() || '0')
+            .replace(/\{\{payment\.currency\}\}/g, payment.currency || 'TJS')
+            .replace(/\{\{payment\.status\}\}/g, mapped)
+            .replace(/\{\{payment\.alif_transaction_id\}\}/g, payment.alif_transaction_id || transactionId || '')
+            .replace(/\{\{payment\.delivery_type\}\}/g, payment.delivery_type || '')
+            .replace(/\{\{payment\.delivery_address\}\}/g, payment.delivery_address || '')
+            .replace(/\{\{payment\.payment_gateway\}\}/g, payment.payment_gateway || 'Alif');
+
+          // Return properly structured SMS object
+          return {
+            PhoneNumber: cleanPhoneNumber(phoneNumber),
+            Text: messageText,
+            SenderAddress: template.sender_address,
+            Priority: template.priority,
+            SmsType: template.sms_type
+          };
+        });
+        
+        // Add default fields and send
+        const bulkMessages = processedMessages.map(addDefaultFields);
+        
+        console.log('📲 Sending SMS messages from templates (array of objects):', JSON.stringify(bulkMessages, null, 2));
+        
+        const smsResponse = await fetch("https://sms2.aliftech.net/api/v1/sms/bulk", {
+          method: "POST",
+          headers: {
+            "X-Api-Key": Deno.env.get("SMS_API_KEY") ?? "",
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(bulkMessages)
+        });
+        
+        console.log('📲 SMS API response status:', smsResponse.status);
+        if (!smsResponse.ok) {
+          console.error('📲 SMS API error:', await smsResponse.text());
+        }
       }
       // Process templates and replace variables
-      const processedMessages = (smsTemplates || []).map((template) => {
-        // Replace variables in phone number field
-        let phoneNumber = template.phone_number
-          .replace(/\{\{payment\.customer_phone\}\}/g, payment.customer_phone || "+992936337785")
-          .replace(/\{\{payment\.delivery_phone\}\}/g, "+992936337785");
-        
-        // Replace variables in text template
-        let messageText = template.text_template
-          .replace(/\{\{orderTitle\}\}/g, orderTitle)
-          .replace(/\{\{payment\.customer_name\}\}/g, payment.customer_name || 'Клиент')
-          .replace(/\{\{payment\.customer_phone\}\}/g, payment.customer_phone || '')
-          .replace(/\{\{payment\.customer_email\}\}/g, payment.customer_email || '')
-          .replace(/\{\{payment\.delivery_phone\}\}/g, payment.delivery_phone || '+992936337785')
-          .replace(/\{\{payment\.amount\}\}/g, payment.amount?.toString() || '0')
-          .replace(/\{\{payment\.currency\}\}/g, payment.currency || 'TJS')
-          .replace(/\{\{payment\.status\}\}/g, mapped)
-          .replace(/\{\{payment\.alif_transaction_id\}\}/g, payment.alif_transaction_id || transactionId || '')
-          .replace(/\{\{payment\.delivery_type\}\}/g, payment.delivery_type || '')
-          .replace(/\{\{payment\.delivery_address\}\}/g, payment.delivery_address || '')
-          .replace(/\{\{payment\.payment_gateway\}\}/g, payment.payment_gateway || 'Alif')
-          .replace(/\{\{payment\.order_summary\}\}/g, payment.order_summary ? JSON.stringify(payment.order_summary) : '');
-
-        // Return properly structured SMS object
-        return {
-          PhoneNumber: cleanPhoneNumber(phoneNumber), // Clean phone number (remove +, spaces, etc.)
-          Text: messageText,
-          SenderAddress: template.sender_address,
-          Priority: template.priority,
-          SmsType: template.sms_type
-        };
-      });
-      
-      // Add default fields (ScheduledAt, ExpiresIn) to each message
-      const bulkMessages = processedMessages.map(addDefaultFields);
-      
-      console.log('📲 Sending SMS messages from templates (array of objects):', JSON.stringify(bulkMessages, null, 2));
-      
-      const smsResponse = await fetch("https://sms2.aliftech.net/api/v1/sms/bulk", {
-        method: "POST",
-        headers: {
-          "X-Api-Key": Deno.env.get("SMS_API_KEY") ?? "",
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(bulkMessages)
-      });
-      
-      console.log('📲 SMS API response status:', smsResponse.status);
-      if (!smsResponse.ok) {
-        console.error('📲 SMS API error:', await smsResponse.text());
-      }
     }
     return new Response(JSON.stringify({
       success: true,
