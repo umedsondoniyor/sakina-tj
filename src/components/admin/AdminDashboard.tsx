@@ -13,7 +13,8 @@ import {
   Users,
   Target,
   FileText,
-  MessageSquare
+  MessageSquare,
+  CreditCard
 } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import Logo from '../Logo';
@@ -198,6 +199,20 @@ const AdminDashboard = () => {
               >
                 <MessageSquare size={20} />
                 <span>SMS Шаблоны</span>
+              </NavLink>
+
+              <NavLink
+                to="/admin/payments"
+                className={({ isActive }) =>
+                  `flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                    isActive
+                      ? 'bg-teal-500 text-white'
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`
+                }
+              >
+                <CreditCard size={20} />
+                <span>Платежи</span>
               </NavLink>
 
               <a

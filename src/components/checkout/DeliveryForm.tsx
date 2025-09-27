@@ -37,18 +37,15 @@ const DeliveryForm: React.FC<DeliveryFormProps> = ({
         {/* Home Delivery */}
         <div className={`border rounded-lg p-4 cursor-pointer transition-colors ${
           formData.deliveryType === 'home' ? 'border-teal-500 bg-teal-50' : 'border-gray-300'
-        }`} onClick={() => onInputChange('deliveryType', 'home')}>
+        }`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <input
                 type="radio"
                 name="deliveryType"
+                value="home"
                 checked={formData.deliveryType === 'home'}
-                onChange={(e) => {
-                  if (e.target.checked) {
-                    onInputChange('deliveryType', 'home');
-                  }
-                }}
+                onChange={() => onInputChange('deliveryType', 'home')}
                 className="mr-3"
               />
               <div>
@@ -65,17 +62,14 @@ const DeliveryForm: React.FC<DeliveryFormProps> = ({
         {/* Pickup */}
         <div className={`border rounded-lg p-4 cursor-pointer transition-colors ${
           formData.deliveryType === 'pickup' ? 'border-teal-500 bg-teal-50' : 'border-gray-300'
-        }`} onClick={() => onInputChange('deliveryType', 'pickup')}>
+        }`}>
           <div className="flex items-center">
             <input
               type="radio"
               name="deliveryType"
+              value="pickup"
               checked={formData.deliveryType === 'pickup'}
-              onChange={(e) => {
-                if (e.target.checked) {
-                  onInputChange('deliveryType', 'pickup');
-                }
-              }}
+              onChange={() => onInputChange('deliveryType', 'pickup')}
               className="mr-3"
             />
             <div>

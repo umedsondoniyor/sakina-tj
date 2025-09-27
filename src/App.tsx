@@ -47,6 +47,7 @@ import AboutUsPage from './components/AboutUsPage';
 import AdminAbout from './components/admin/AdminAbout';
 import BlogPage from './components/BlogPage';
 import BlogPostPage from './components/BlogPostPage';
+import AdminPayments from './components/admin/AdminPayments';
 
 
 function App() {
@@ -74,6 +75,7 @@ function App() {
             {/* 👇 NEW: /admin/about */}
             <Route path="about" element={<AdminAbout />} />
             <Route path="sms-templates" element={<AdminSmsTemplates />} />
+            <Route path="payments" element={<AdminPayments />} />
           </Route>
 
           {/* Public Routes */}

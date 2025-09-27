@@ -94,14 +94,7 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
         },
         deliveryInfo: {
           delivery_type: orderData.deliveryInfo.delivery_type,
-          delivery_address: buildDeliveryAddress({
-            deliveryType: orderData.deliveryInfo.delivery_type as 'home' | 'pickup',
-            address: orderData.deliveryInfo.delivery_address || '',
-            apartment: orderData.deliveryInfo.apartment,
-            entrance: orderData.deliveryInfo.entrance,
-            floor: orderData.deliveryInfo.floor,
-            intercom: orderData.deliveryInfo.intercom
-          }),
+          delivery_address: orderData.deliveryInfo.delivery_address,
           city: orderData.deliveryInfo.city,
           apartment: orderData.deliveryInfo.apartment,
           entrance: orderData.deliveryInfo.entrance,

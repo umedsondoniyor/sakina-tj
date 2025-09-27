@@ -6,21 +6,22 @@ export const buildDeliveryAddress = (formData: {
   floor?: string;
   intercom?: string;
 }) => {
-  // Only build address string for home delivery
-  if (formData.deliveryType !== 'home') return null;
+  // **FIX**: Always build address string if main address is provided, regardless of delivery type
+  // This ensures we capture address information for record-keeping purposes
   
   // If no main address provided, return null
-  if (!formData.address?.trim()) return null;
+  const mainAddress = formData.address?.trim();
+  if (!mainAddress) return null;
 
-  // Build concatenated address string in the required format
-  // Format: "Адрес доставки, Квартира, Подъезд, Этаж, Домофон"
-  return [
-    formData.address,
-    formData.apartment?.trim() ? `Кв. ${formData.apartment.trim()}` : '',
-    formData.entrance?.trim() ? `Подъезд ${formData.entrance.trim()}` : '',
-    formData.floor?.trim() ? `Этаж ${formData.floor.trim()}` : '',
-    formData.intercom?.trim() ? `Домофон ${formData.intercom.trim()}` : ''
-  ]
-    .filter(Boolean)
-    .join(', ');
+  // **FIX**: Improved concatenation logic with better null/empty handling
+  // Format: "Адрес доставки, Кв. 123, Подъезд 2, Этаж 5, Домофон 456"
+  const addressParts = [
+    mainAddress, // Main address (required)
+    formData.apartment?.trim() ? `Кв. ${formData.apartment.trim()}` : null,
+    formData.entrance?.trim() ? `Подъезд ${formData.entrance.trim()}` : null,
+    formData.floor?.trim() ? `Этаж ${formData.floor.trim()}` : null,
+    formData.intercom?.trim() ? `Домофон ${formData.intercom.trim()}` : null
+  ].filter(Boolean); // Remove null/empty values
+
+  return addressParts.join(', ');
 };

@@ -52,7 +52,7 @@ const CheckoutPage = () => {
     phone: '',
     name: '',
     email: '',
-    deliveryType: 'pickup', // FIX: Set default to match what's actually selected in UI
+    deliveryType: 'home', // **FIX**: Changed back to 'home' as default to match UI expectations
     city: 'Душанбе',
     address: '',
     apartment: '',
@@ -60,7 +60,7 @@ const CheckoutPage = () => {
     floor: '',
     intercom: '',
     paymentMethod: 'online',
-    selectedGateway: 'alif_bank', // FIX: Match the actual gateway being used
+    selectedGateway: 'alif_bank', // **FIX**: Ensure consistent gateway selection
     comments: '',
     sameAsBilling: true
   });
