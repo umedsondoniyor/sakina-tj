@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../../lib/supabaseClient';
-import { Search, Filter, Download, Eye, RefreshCw, Calendar, CreditCard, Wallet, Building, CircleCheck as CheckCircle, Circle as XCircle, Clock, CircleAlert as AlertCircle, DollarSign, TrendingUp, Users, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Search, Filter, Download, Eye, RefreshCw, Calendar, CreditCard, Wallet, Building, CircleCheck as CheckCircle, Circle as XCircle, Clock, CircleAlert as AlertCircle, DollarSign, TrendingUp, Users, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, X, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface Payment {
@@ -344,6 +344,31 @@ const AdminPayments: React.FC = () => {
   const viewPaymentDetails = (payment: Payment) => {
     setSelectedPayment(payment);
     setShowDetailModal(true);
+  };
+
+  const handleDeletePayment = async (paymentId: string) => {
+    if (!confirm('Are you sure you want to delete this payment? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('payments')
+        .delete()
+        .eq('id', paymentId);
+
+      if (error) throw error;
+
+      // Update local state to remove the deleted payment
+      setPayments(prev => prev.filter(p => p.id !== paymentId));
+      setShowDetailModal(false);
+      setSelectedPayment(null);
+      
+      toast.success('Payment deleted successfully');
+    } catch (error) {
+      console.error('Error deleting payment:', error);
+      toast.error('Failed to delete payment');
+    }
   };
 
   const getSortIcon = (field: SortField) => {
@@ -751,6 +776,7 @@ const AdminPayments: React.FC = () => {
       {showDetailModal && selectedPayment && (
         <PaymentDetailModal
           payment={selectedPayment}
+          onDelete={handleDeletePayment}
           onClose={() => {
             setShowDetailModal(false);
             setSelectedPayment(null);
@@ -764,19 +790,29 @@ const AdminPayments: React.FC = () => {
 // Payment Detail Modal Component
 const PaymentDetailModal: React.FC<{
   payment: Payment;
+  onDelete: (paymentId: string) => void;
   onClose: () => void;
-}> = ({ payment, onClose }) => {
+}> = ({ payment, onDelete, onClose }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b">
           <h2 className="text-xl font-semibold">Payment Details</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
-          >
-            <X size={24} />
-          </button>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => onDelete(payment.id)}
+              className="flex items-center px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            >
+              <Trash2 size={16} className="mr-1" />
+              Delete
+            </button>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <X size={24} />
+            </button>
+          </div>
         </div>
 
         <div className="p-6 space-y-6">
