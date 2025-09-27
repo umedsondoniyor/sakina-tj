@@ -40,7 +40,7 @@ type SortField = 'created_at' | 'amount' | 'status' | 'customer_name';
 type SortDirection = 'asc' | 'desc';
 
 const AdminPayments: React.FC = () => {
-  // State management
+  // State
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -61,26 +61,22 @@ const AdminPayments: React.FC = () => {
     completedTransactions: 0,
     pendingTransactions: 0,
     failedTransactions: 0,
-    todayRevenue: 0
+    todayRevenue: 0,
   });
 
-  // Data fetching
+  // Data fetching + realtime
   useEffect(() => {
     fetchPayments();
-    
-    // Set up real-time subscription
+
     const subscription = supabase
       .channel('payments_changes')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'payments' },
-        () => {
-          fetchPayments();
-        }
-      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'payments' }, () => {
+        fetchPayments();
+      })
       .subscribe();
 
     return () => {
-      subscription.unsubscribe();
+      supabase.removeChannel(subscription);
     };
   }, []);
 
@@ -93,12 +89,12 @@ const AdminPayments: React.FC = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      
+
       setPayments(data || []);
       calculateStats(data || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching payments:', error);
-      toast.error('Failed to load payments');
+      toast.error(`Failed to load payments: ${error.message || error}`);
     } finally {
       setLoading(false);
     }
@@ -106,23 +102,23 @@ const AdminPayments: React.FC = () => {
 
   const calculateStats = (paymentsData: Payment[]) => {
     const today = new Date().toISOString().split('T')[0];
-    
+
     const newStats: PaymentStatsData = {
       totalRevenue: 0,
       totalTransactions: paymentsData.length,
       completedTransactions: 0,
       pendingTransactions: 0,
       failedTransactions: 0,
-      todayRevenue: 0
+      todayRevenue: 0,
     };
 
-    paymentsData.forEach(payment => {
+    paymentsData.forEach((payment) => {
       const amount = Number(payment.amount) || 0;
-      
+
       if (payment.status === 'completed') {
         newStats.totalRevenue += amount;
         newStats.completedTransactions++;
-        
+
         if (payment.created_at.startsWith(today)) {
           newStats.todayRevenue += amount;
         }
@@ -136,36 +132,33 @@ const AdminPayments: React.FC = () => {
     setStats(newStats);
   };
 
-  // Filtering and sorting
+  // Filtering
   const filteredPayments = useMemo(() => {
     let filtered = [...payments];
 
-    // Search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(payment =>
-        payment.customer_name?.toLowerCase().includes(query) ||
-        payment.customer_email?.toLowerCase().includes(query) ||
-        payment.customer_phone?.includes(query) ||
-        payment.alif_order_id.toLowerCase().includes(query) ||
-        payment.product_title?.toLowerCase().includes(query)
+      filtered = filtered.filter(
+        (payment) =>
+          payment.customer_name?.toLowerCase().includes(query) ||
+          payment.customer_email?.toLowerCase().includes(query) ||
+          payment.customer_phone?.includes(query) ||
+          payment.alif_order_id.toLowerCase().includes(query) ||
+          payment.product_title?.toLowerCase().includes(query)
       );
     }
 
-    // Status filter
     if (statusFilter !== 'all') {
-      filtered = filtered.filter(payment => payment.status === statusFilter);
+      filtered = filtered.filter((payment) => payment.status === statusFilter);
     }
 
-    // Payment method filter
     if (paymentMethodFilter !== 'all') {
-      filtered = filtered.filter(payment => payment.payment_gateway === paymentMethodFilter);
+      filtered = filtered.filter((payment) => payment.payment_gateway === paymentMethodFilter);
     }
 
-    // Date range filter
     if (dateRangeFilter !== 'all') {
       const now = new Date();
-      let startDate: Date;
+      let startDate: Date | undefined;
 
       switch (dateRangeFilter) {
         case 'today':
@@ -181,26 +174,25 @@ const AdminPayments: React.FC = () => {
           if (customDateFrom) {
             startDate = new Date(customDateFrom);
             const endDate = customDateTo ? new Date(customDateTo) : now;
-            filtered = filtered.filter(payment => {
+            filtered = filtered.filter((payment) => {
               const paymentDate = new Date(payment.created_at);
-              return paymentDate >= startDate && paymentDate <= endDate;
+              return paymentDate >= startDate! && paymentDate <= endDate;
             });
           }
           break;
-        default:
-          break;
       }
 
-      if (dateRangeFilter !== 'custom' && startDate!) {
-        filtered = filtered.filter(payment => new Date(payment.created_at) >= startDate);
+      if (dateRangeFilter !== 'custom' && startDate) {
+        filtered = filtered.filter((payment) => new Date(payment.created_at) >= startDate!);
       }
     }
 
     return filtered;
   }, [payments, searchQuery, statusFilter, paymentMethodFilter, dateRangeFilter, customDateFrom, customDateTo]);
 
+  // Sorting
   const sortedPayments = useMemo(() => {
-    const sorted = [...filteredPayments].sort((a, b) => {
+    return [...filteredPayments].sort((a, b) => {
       let aValue: any = a[sortField];
       let bValue: any = b[sortField];
 
@@ -215,16 +207,11 @@ const AdminPayments: React.FC = () => {
         bValue = String(bValue || '').toLowerCase();
       }
 
-      if (sortDirection === 'asc') {
-        return aValue > bValue ? 1 : -1;
-      } else {
-        return aValue < bValue ? 1 : -1;
-      }
+      return sortDirection === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
     });
-
-    return sorted;
   }, [filteredPayments, sortField, sortDirection]);
 
+  // Pagination
   const paginatedPayments = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     return sortedPayments.slice(startIndex, startIndex + itemsPerPage);
@@ -232,7 +219,7 @@ const AdminPayments: React.FC = () => {
 
   const totalPages = Math.ceil(sortedPayments.length / itemsPerPage);
 
-  // Event handlers
+  // Handlers
   const handleSort = (field: SortField) => {
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
@@ -242,42 +229,34 @@ const AdminPayments: React.FC = () => {
     }
   };
 
-  const handleDeletePayment = useCallback(async (paymentId: string) => {
-    if (!confirm('Are you sure you want to delete this payment? This action cannot be undone.')) {
-      return;
-    }
+  const handleDeletePayment = useCallback(
+    async (paymentId: string) => {
+      if (!confirm('Are you sure you want to delete this payment? This action cannot be undone.')) return;
 
-    // Optimistic UI update
-    const originalPayments = payments;
-    setPayments(prev => prev.filter(p => p.id !== paymentId));
-    setShowDetailModal(false);
-    setSelectedPayment(null);
-    toast.success('Payment deleted successfully');
+      const originalPayments = payments;
+      setPayments((prev) => prev.filter((p) => p.id !== paymentId));
+      setShowDetailModal(false);
+      setSelectedPayment(null);
+      toast.success('Payment deleted successfully');
 
-    try {
-      const { error } = await supabase
-        .from('payments')
-        .delete()
-        .eq('id', paymentId);
+      try {
+        const { error } = await supabase.from('payments').delete().eq('id', paymentId);
+        if (error) throw error;
+      } catch (error) {
+        setPayments(originalPayments);
+        console.error('Error deleting payment:', error);
+        toast.error('Failed to delete payment');
+      }
+    },
+    [payments]
+  );
 
-      if (error) throw error;
-    } catch (error) {
-      // Revert optimistic update on error
-      setPayments(originalPayments);
-      console.error('Error deleting payment:', error);
-      toast.error('Failed to delete payment');
-    }
-  }, [payments]);
+  const exportToCSV = (all = true) => {
+    const dataset = all ? sortedPayments : paginatedPayments;
 
-  const viewPaymentDetails = (payment: Payment) => {
-    setSelectedPayment(payment);
-    setShowDetailModal(true);
-  };
-
-  const exportToCSV = () => {
     const headers = [
       'Payment ID',
-      'Order ID', 
+      'Order ID',
       'Customer Name',
       'Customer Email',
       'Customer Phone',
@@ -290,10 +269,10 @@ const AdminPayments: React.FC = () => {
       'Delivery Address',
       'Transaction ID',
       'Created At',
-      'Updated At'
+      'Updated At',
     ];
 
-    const csvData = sortedPayments.map(payment => [
+    const csvData = dataset.map((payment) => [
       payment.id,
       payment.alif_order_id,
       payment.customer_name || '',
@@ -308,11 +287,11 @@ const AdminPayments: React.FC = () => {
       payment.delivery_address || '',
       payment.alif_transaction_id || '',
       payment.created_at,
-      payment.updated_at
+      payment.updated_at,
     ]);
 
     const csvContent = [headers, ...csvData]
-      .map(row => row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(','))
+      .map((row) => row.map((field) => `"${String(field).replace(/"/g, '""')}"`).join(','))
       .join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -320,12 +299,11 @@ const AdminPayments: React.FC = () => {
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
     link.setAttribute('download', `payments_export_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
-    toast.success('Payments exported to CSV');
+
+    toast.success(all ? 'All payments exported' : 'Current page exported');
   };
 
   return (
@@ -338,7 +316,7 @@ const AdminPayments: React.FC = () => {
         </div>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats */}
       <PaymentStats stats={stats} loading={loading} />
 
       {/* Filters */}
@@ -361,35 +339,40 @@ const AdminPayments: React.FC = () => {
         pendingCount={stats.pendingTransactions}
         failedCount={stats.failedTransactions}
         onRefresh={fetchPayments}
-        onExport={exportToCSV}
+        onExportAll={() => exportToCSV(true)}
+        onExportPage={() => exportToCSV(false)}
         loading={loading}
       />
 
-      {/* Payments Table */}
+      {/* Table */}
       <PaymentsTable
         payments={paginatedPayments}
         loading={loading}
         sortField={sortField}
         sortDirection={sortDirection}
         onSort={handleSort}
-        onViewDetails={viewPaymentDetails}
+        onViewDetails={(p) => {
+          setSelectedPayment(p);
+          setShowDetailModal(true);
+        }}
         currentPage={currentPage}
         totalPages={totalPages}
         itemsPerPage={itemsPerPage}
         onPageChange={setCurrentPage}
-        onJumpToPage={setCurrentPage}
       />
 
-      {/* Payment Detail Modal */}
-      <PaymentDetailModal
-        payment={selectedPayment!}
-        onDelete={handleDeletePayment}
-        onClose={() => {
-          setShowDetailModal(false);
-          setSelectedPayment(null);
-        }}
-        isOpen={showDetailModal && !!selectedPayment}
-      />
+      {/* Modal */}
+      {showDetailModal && selectedPayment && (
+        <PaymentDetailModal
+          payment={selectedPayment}
+          onDelete={handleDeletePayment}
+          onClose={() => {
+            setShowDetailModal(false);
+            setSelectedPayment(null);
+          }}
+          isOpen
+        />
+      )}
     </div>
   );
 };
