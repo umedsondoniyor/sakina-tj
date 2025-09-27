@@ -1,11 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../../lib/supabaseClient';
-import { 
-  Search, Filter, Download, Eye, RefreshCw, Calendar,
-  CreditCard, Wallet, Building, CheckCircle, XCircle, 
-  Clock, AlertCircle, DollarSign, TrendingUp, Users,
-  ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown
-} from 'lucide-react';
+import { Search, Filter, Download, Eye, RefreshCw, Calendar, CreditCard, Wallet, Building, CircleCheck as CheckCircle, Circle as XCircle, Clock, CircleAlert as AlertCircle, DollarSign, TrendingUp, Users, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface Payment {

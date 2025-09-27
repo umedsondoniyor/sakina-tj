@@ -1,21 +1,6 @@
 import React from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { 
-  Image,
-  Star, 
-  Package,
-  Layers,
-  HelpCircle,
-  LogOut,
-  Home,
-  Navigation,
-  MousePointer,
-  Users,
-  Target,
-  FileText,
-  MessageSquare,
-  CreditCard
-} from 'lucide-react';
+import { Image, Star, Package, Layers, CircleHelp as HelpCircle, LogOut, Home, Navigation, MousePointer, Users, Target, FileText, MessageSquare, CreditCard } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import Logo from '../Logo';
 
