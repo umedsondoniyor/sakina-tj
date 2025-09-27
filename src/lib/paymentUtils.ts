@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle, XCircle, Clock, AlertCircle, CreditCard, Wallet, Building } from 'lucide-react';
+import { CircleCheck as CheckCircle, Circle as XCircle, Clock, CircleAlert as AlertCircle, CreditCard, Wallet, Building } from 'lucide-react';
 
 export const getStatusIcon = (status: string) => {
   switch (status) {

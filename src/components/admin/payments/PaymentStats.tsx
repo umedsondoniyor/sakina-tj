@@ -1,5 +1,5 @@
 import React from 'react';
-import { DollarSign, TrendingUp, Users, CheckCircle } from 'lucide-react';
+import { DollarSign, TrendingUp, Users, CircleCheck as CheckCircle } from 'lucide-react';
 
 interface PaymentStatsData {
   totalRevenue: number;
