@@ -38,14 +38,20 @@ const PaymentStats: React.FC<PaymentStatsProps> = ({ stats, loading = false }) =
     ? Math.round((stats.completedTransactions / stats.totalTransactions) * 100)
     : 0;
 
+  // Динамический цвет для Success Rate
+  const successColor =
+    successRate >= 80 ? "text-teal-600" :
+    successRate >= 50 ? "text-yellow-600" :
+    "text-red-600";
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       <div className="bg-white rounded-lg shadow p-6">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-gray-600">Total Revenue</p>
+            <p className="text-sm font-medium text-gray-600">Всего доход</p>
             <p className="text-2xl font-bold text-green-600">
-              {stats.totalRevenue.toLocaleString()} TJS
+              {stats.totalRevenue.toLocaleString('ru-RU')} TJS
             </p>
           </div>
           <DollarSign className="text-green-600" size={24} />
@@ -55,9 +61,9 @@ const PaymentStats: React.FC<PaymentStatsProps> = ({ stats, loading = false }) =
       <div className="bg-white rounded-lg shadow p-6">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-gray-600">Today's Revenue</p>
+            <p className="text-sm font-medium text-gray-600">Доход за сегодня</p>
             <p className="text-2xl font-bold text-blue-600">
-              {stats.todayRevenue.toLocaleString()} TJS
+              {stats.todayRevenue.toLocaleString('ru-RU')} TJS
             </p>
           </div>
           <TrendingUp className="text-blue-600" size={24} />
@@ -67,7 +73,7 @@ const PaymentStats: React.FC<PaymentStatsProps> = ({ stats, loading = false }) =
       <div className="bg-white rounded-lg shadow p-6">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-gray-600">Total Transactions</p>
+            <p className="text-sm font-medium text-gray-600">Всего транзакций</p>
             <p className="text-2xl font-bold text-gray-900">{stats.totalTransactions}</p>
           </div>
           <Users className="text-gray-600" size={24} />
@@ -77,10 +83,10 @@ const PaymentStats: React.FC<PaymentStatsProps> = ({ stats, loading = false }) =
       <div className="bg-white rounded-lg shadow p-6">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-gray-600">Success Rate</p>
-            <p className="text-2xl font-bold text-teal-600">{successRate}%</p>
+            <p className="text-sm font-medium text-gray-600">Успешные платежи</p>
+            <p className={`text-2xl font-bold ${successColor}`}>{successRate}%</p>
           </div>
-          <CheckCircle className="text-teal-600" size={24} />
+          <CheckCircle className={successColor} size={24} />
         </div>
       </div>
     </div>
