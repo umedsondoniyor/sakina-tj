@@ -394,9 +394,10 @@ const PaymentsTable: React.FC<PaymentsTableProps> = ({
               </nav>
             </div>
           </div>
-        )}
-      </div>
-    );
-  };
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default PaymentsTable;
