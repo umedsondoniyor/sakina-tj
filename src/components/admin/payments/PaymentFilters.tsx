@@ -20,7 +20,8 @@ interface PaymentFiltersProps {
   pendingCount: number;
   failedCount: number;
   onRefresh: () => void;
-  onExport: () => void;
+  onExportAll: () => void;
+  onExportPage: () => void;
   loading?: boolean;
 }
 
@@ -43,129 +44,138 @@ const PaymentFilters: React.FC<PaymentFiltersProps> = ({
   pendingCount,
   failedCount,
   onRefresh,
-  onExport,
+  onExportAll,
+  onExportPage,
   loading = false
 }) => {
   return (
     <div className="bg-white rounded-lg shadow p-6">
-      {/* Header with actions */}
+      {/* Заголовок и действия */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <h2 className="text-lg font-semibold">Filters & Search</h2>
+        <h2 className="text-lg font-semibold">Фильтры и поиск</h2>
         <div className="flex items-center space-x-3">
           <button
             onClick={onRefresh}
             disabled={loading}
             className="flex items-center px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
-            aria-label="Refresh payments data"
+            aria-label="Обновить список платежей"
           >
             <RefreshCw size={16} className={`mr-2 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
+            Обновить
           </button>
-          <button
-            onClick={onExport}
-            className="flex items-center px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-            aria-label="Export payments to CSV"
-          >
-            <Download size={16} className="mr-2" />
-            Export CSV
-          </button>
+          <div className="flex space-x-2">
+            <button
+              onClick={onExportAll}
+              className="flex items-center px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              aria-label="Экспортировать все платежи"
+            >
+              <Download size={16} className="mr-2" />
+              Экспорт (все)
+            </button>
+            <button
+              onClick={onExportPage}
+              className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              aria-label="Экспортировать текущую страницу"
+            >
+              <Download size={16} className="mr-2" />
+              Экспорт (страница)
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Filter controls */}
+      {/* Фильтры */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-        {/* Search */}
+        {/* Поиск */}
         <div className="relative">
           <Search className="absolute left-3 top-3 text-gray-400" size={20} />
           <input
             type="text"
-            placeholder="Search payments..."
+            placeholder="Поиск по имени, email, телефону или заказу..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-            aria-label="Search payments by customer name, email, phone, or order ID"
+            aria-label="Поиск по платежам"
           />
         </div>
 
-        {/* Status Filter */}
+        {/* Статус */}
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
           className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-          aria-label="Filter by payment status"
+          aria-label="Фильтр по статусу"
         >
-          <option value="all">All Status</option>
-          <option value="completed">Completed</option>
-          <option value="pending">Pending</option>
-          <option value="processing">Processing</option>
-          <option value="failed">Failed</option>
-          <option value="cancelled">Cancelled</option>
+          <option value="all">Все статусы</option>
+          <option value="completed">Завершён</option>
+          <option value="pending">Ожидает</option>
+          <option value="processing">В обработке</option>
+          <option value="failed">Ошибка</option>
+          <option value="cancelled">Отменён</option>
         </select>
 
-        {/* Payment Method Filter */}
+        {/* Метод оплаты */}
         <select
           value={paymentMethodFilter}
           onChange={(e) => setPaymentMethodFilter(e.target.value)}
           className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-          aria-label="Filter by payment method"
+          aria-label="Фильтр по методу оплаты"
         >
-          <option value="all">All Methods</option>
+          <option value="all">Все методы</option>
           <option value="alif_bank">Alif Bank</option>
-          <option value="wallet">Wallet</option>
-          <option value="cash">Cash</option>
+          <option value="wallet">Кошелёк</option>
+          <option value="cash">Наличные</option>
         </select>
 
-        {/* Date Range Filter */}
+        {/* Диапазон дат */}
         <select
           value={dateRangeFilter}
           onChange={(e) => setDateRangeFilter(e.target.value)}
           className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-          aria-label="Filter by date range"
+          aria-label="Фильтр по дате"
         >
-          <option value="all">All Time</option>
-          <option value="today">Today</option>
-          <option value="week">Last 7 Days</option>
-          <option value="month">This Month</option>
-          <option value="custom">Custom Range</option>
+          <option value="all">За всё время</option>
+          <option value="today">Сегодня</option>
+          <option value="week">Последние 7 дней</option>
+          <option value="month">Этот месяц</option>
+          <option value="custom">Выбрать даты</option>
         </select>
       </div>
 
-      {/* Custom Date Range */}
+      {/* Кастомные даты */}
       {dateRangeFilter === 'custom' && (
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">From Date</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">С даты</label>
             <input
               type="date"
               value={customDateFrom}
               onChange={(e) => setCustomDateFrom(e.target.value)}
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-              aria-label="Start date for custom range"
+              aria-label="Дата начала"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">To Date</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">По дату</label>
             <input
               type="date"
               value={customDateTo}
               onChange={(e) => setCustomDateTo(e.target.value)}
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-              aria-label="End date for custom range"
+              aria-label="Дата окончания"
             />
           </div>
         </div>
       )}
 
-      {/* Results summary */}
+      {/* Сводка */}
       <div className="flex items-center justify-between pt-4 border-t">
         <div className="text-sm text-gray-600">
-          Showing {filteredCount} of {totalCount} payments
+          Показано {filteredCount} из {totalCount} платежей
         </div>
         <div className="flex items-center space-x-4">
           <span className="text-sm text-gray-600">
-            Completed: {completedCount} | 
-            Pending: {pendingCount} | 
-            Failed: {failedCount}
+            Завершён: {completedCount} | Ожидает: {pendingCount} | Ошибка: {failedCount}
           </span>
         </div>
       </div>
