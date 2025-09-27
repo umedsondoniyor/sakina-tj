@@ -40,7 +40,7 @@ type SortField = 'created_at' | 'amount' | 'status' | 'customer_name';
 type SortDirection = 'asc' | 'desc';
 
 const AdminPayments: React.FC = () => {
-  // State
+  // --- state ---
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -64,7 +64,7 @@ const AdminPayments: React.FC = () => {
     todayRevenue: 0,
   });
 
-  // Data fetching + realtime
+  // --- fetch + realtime ---
   useEffect(() => {
     fetchPayments();
 
@@ -93,8 +93,8 @@ const AdminPayments: React.FC = () => {
       setPayments(data || []);
       calculateStats(data || []);
     } catch (error: any) {
-      console.error('Error fetching payments:', error);
-      toast.error(`Failed to load payments: ${error.message || error}`);
+      console.error('Ошибка загрузки платежей:', error);
+      toast.error(`Не удалось загрузить платежи: ${error.message || error}`);
     } finally {
       setLoading(false);
     }
@@ -132,7 +132,7 @@ const AdminPayments: React.FC = () => {
     setStats(newStats);
   };
 
-  // Filtering
+  // --- filtering, sorting, pagination ---
   const filteredPayments = useMemo(() => {
     let filtered = [...payments];
 
@@ -190,7 +190,6 @@ const AdminPayments: React.FC = () => {
     return filtered;
   }, [payments, searchQuery, statusFilter, paymentMethodFilter, dateRangeFilter, customDateFrom, customDateTo]);
 
-  // Sorting
   const sortedPayments = useMemo(() => {
     return [...filteredPayments].sort((a, b) => {
       let aValue: any = a[sortField];
@@ -211,7 +210,6 @@ const AdminPayments: React.FC = () => {
     });
   }, [filteredPayments, sortField, sortDirection]);
 
-  // Pagination
   const paginatedPayments = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     return sortedPayments.slice(startIndex, startIndex + itemsPerPage);
@@ -219,7 +217,7 @@ const AdminPayments: React.FC = () => {
 
   const totalPages = Math.ceil(sortedPayments.length / itemsPerPage);
 
-  // Handlers
+  // --- handlers ---
   const handleSort = (field: SortField) => {
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
@@ -231,21 +229,21 @@ const AdminPayments: React.FC = () => {
 
   const handleDeletePayment = useCallback(
     async (paymentId: string) => {
-      if (!confirm('Are you sure you want to delete this payment? This action cannot be undone.')) return;
+      if (!confirm('Вы уверены, что хотите удалить этот платёж? Это действие нельзя отменить.')) return;
 
       const originalPayments = payments;
       setPayments((prev) => prev.filter((p) => p.id !== paymentId));
       setShowDetailModal(false);
       setSelectedPayment(null);
-      toast.success('Payment deleted successfully');
+      toast.success('Платёж успешно удалён');
 
       try {
         const { error } = await supabase.from('payments').delete().eq('id', paymentId);
         if (error) throw error;
       } catch (error) {
         setPayments(originalPayments);
-        console.error('Error deleting payment:', error);
-        toast.error('Failed to delete payment');
+        console.error('Ошибка удаления платежа:', error);
+        toast.error('Не удалось удалить платёж');
       }
     },
     [payments]
@@ -255,21 +253,21 @@ const AdminPayments: React.FC = () => {
     const dataset = all ? sortedPayments : paginatedPayments;
 
     const headers = [
-      'Payment ID',
-      'Order ID',
-      'Customer Name',
-      'Customer Email',
-      'Customer Phone',
-      'Amount',
-      'Currency',
-      'Status',
-      'Payment Gateway',
-      'Product Title',
-      'Delivery Type',
-      'Delivery Address',
-      'Transaction ID',
-      'Created At',
-      'Updated At',
+      'ID платежа',
+      'ID заказа',
+      'Имя клиента',
+      'Email клиента',
+      'Телефон клиента',
+      'Сумма',
+      'Валюта',
+      'Статус',
+      'Способ оплаты',
+      'Товар',
+      'Тип доставки',
+      'Адрес доставки',
+      'ID транзакции',
+      'Создано',
+      'Обновлено',
     ];
 
     const csvData = dataset.map((payment) => [
@@ -303,7 +301,7 @@ const AdminPayments: React.FC = () => {
     link.click();
     document.body.removeChild(link);
 
-    toast.success(all ? 'All payments exported' : 'Current page exported');
+    toast.success(all ? 'Все платежи экспортированы' : 'Текущая страница экспортирована');
   };
 
   return (
@@ -311,8 +309,8 @@ const AdminPayments: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Payments Management</h1>
-          <p className="text-gray-600">Track and manage all payment transactions</p>
+          <h1 className="text-2xl font-bold">Управление платежами</h1>
+          <p className="text-gray-600">Просмотр и управление всеми транзакциями</p>
         </div>
       </div>
 
