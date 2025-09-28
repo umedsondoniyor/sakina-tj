@@ -51,6 +51,9 @@ function App() {
         <Toaster position="top-right" />
         <CartModal />
 
+        {/* 👇 This makes every route change start at the top */}
+        <ScrollToTop behavior="smooth" />
+
         {/* Keep suspense if you later lazy-load pages */}
         <Suspense fallback={<div className="p-8">Loading…</div>}>
           <Routes>
