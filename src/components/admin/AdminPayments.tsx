@@ -249,61 +249,6 @@ const AdminPayments: React.FC = () => {
     [payments]
   );
 
-  const exportToCSV = (all = true) => {
-    const dataset = all ? sortedPayments : paginatedPayments;
-
-    const headers = [
-      'ID платежа',
-      'ID заказа',
-      'Имя клиента',
-      'Email клиента',
-      'Телефон клиента',
-      'Сумма',
-      'Валюта',
-      'Статус',
-      'Способ оплаты',
-      'Товар',
-      'Тип доставки',
-      'Адрес доставки',
-      'ID транзакции',
-      'Создано',
-      'Обновлено',
-    ];
-
-    const csvData = dataset.map((payment) => [
-      payment.id,
-      payment.alif_order_id,
-      payment.customer_name || '',
-      payment.customer_email || '',
-      payment.customer_phone || '',
-      payment.amount,
-      payment.currency,
-      payment.status,
-      payment.payment_gateway || '',
-      payment.product_title || '',
-      payment.delivery_type || '',
-      payment.delivery_address || '',
-      payment.alif_transaction_id || '',
-      payment.created_at,
-      payment.updated_at,
-    ]);
-
-    const csvContent = [headers, ...csvData]
-      .map((row) => row.map((field) => `"${String(field).replace(/"/g, '""')}"`).join(','))
-      .join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `payments_export_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    toast.success(all ? 'Все платежи экспортированы' : 'Текущая страница экспортирована');
-  };
-
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -337,8 +282,6 @@ const AdminPayments: React.FC = () => {
         pendingCount={stats.pendingTransactions}
         failedCount={stats.failedTransactions}
         onRefresh={fetchPayments}
-        onExportAll={() => exportToCSV(true)}
-        onExportPage={() => exportToCSV(false)}
         loading={loading}
       />
 
