@@ -1,9 +1,9 @@
 // src/layouts/PublicLayout.tsx
 import React from 'react';
 import { Outlet } from 'react-router-dom';
-import TopHeader from '@/components/TopHeader';
-import MainHeader from '@/components/MainHeader';
-import Footer from '@/components/Footer';
+import TopHeader from '../components/TopHeader';
+import MainHeader from '../components/MainHeader';
+import Footer from '../components/Footer';
 
 const PublicLayout: React.FC = () => {
   return (
