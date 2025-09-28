@@ -20,8 +20,6 @@ interface PaymentFiltersProps {
   pendingCount: number;
   failedCount: number;
   onRefresh: () => void;
-  onExportAll: () => void;
-  onExportPage: () => void;
   loading?: boolean;
 }
 
@@ -44,8 +42,6 @@ const PaymentFilters: React.FC<PaymentFiltersProps> = ({
   pendingCount,
   failedCount,
   onRefresh,
-  onExportAll,
-  onExportPage,
   loading = false
 }) => {
   return (
