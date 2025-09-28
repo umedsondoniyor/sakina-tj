@@ -63,24 +63,6 @@ const PaymentFilters: React.FC<PaymentFiltersProps> = ({
             <RefreshCw size={16} className={`mr-2 ${loading ? 'animate-spin' : ''}`} />
             Обновить
           </button>
-          <div className="flex space-x-2">
-            <button
-              onClick={onExportAll}
-              className="flex items-center px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-              aria-label="Экспортировать все платежи"
-            >
-              <Download size={16} className="mr-2" />
-              Экспорт (все)
-            </button>
-            <button
-              onClick={onExportPage}
-              className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              aria-label="Экспортировать текущую страницу"
-            >
-              <Download size={16} className="mr-2" />
-              Экспорт (страница)
-            </button>
-          </div>
         </div>
       </div>
 
