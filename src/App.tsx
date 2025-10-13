@@ -22,6 +22,7 @@ import OrderConfirmationPage from './components/OrderConfirmationPage';
 import OneClickConfirmationPage from './components/OneClickConfirmationPage';
 import PaymentSuccessPage from './components/PaymentSuccessPage';
 import PaymentCancelPage from './pages/PaymentCancelPage';
+import PaymentFailedPage from './pages/PaymentFailedPage';
 import AboutUsPage from './pages/AboutUsPage';
 import BlogPage from './pages/BlogPage';
 import BlogPostPage from './pages/BlogPostPage';
@@ -78,6 +79,7 @@ function App() {
             <Route path="/one-click-confirmation/:orderId" element={<OneClickConfirmationPage />} />
             <Route path="/payment/success" element={<PaymentSuccessPage />} />
             <Route path="/payment/cancel" element={<PaymentCancelPage />} />
+            <Route path="/payment/failed" element={<PaymentFailedPage />} />
 
             {/* Admin routes (you can also make an AdminLayout + <Outlet />) */}
             <Route path="/admin/login" element={<AdminLogin />} />
