@@ -1,15 +1,28 @@
 import React from 'react';
 import { CheckCircle, Package, Truck, Phone, Mail } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 
 const OrderConfirmationPage = () => {
   const navigate = useNavigate();
-  
   const orderNumber = Math.random().toString(36).substr(2, 9).toUpperCase();
   const estimatedDelivery = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString('ru-RU');
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4">
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4 py-12">
+      <Helmet>
+        <title>Подтверждение заказа | Sakina.tj</title>
+        <meta
+          name="description"
+          content="Ваш заказ успешно оформлен. Спасибо, что выбрали Sakina.tj! Мы свяжемся с вами для подтверждения деталей."
+        />
+        <meta property="og:title" content="Подтверждение заказа | Sakina.tj" />
+        <meta
+          property="og:description"
+          content="Ваш заказ успешно оформлен. Sakina — эксперт в мире качественного сна."
+        />
+      </Helmet>
+      
       <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
         <div className="mb-6">
           <CheckCircle className="mx-auto text-green-500 mb-4" size={64} />
