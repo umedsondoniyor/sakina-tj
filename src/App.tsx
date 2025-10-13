@@ -12,7 +12,6 @@ import PublicLayout from './layouts/PublicLayout';
 import AdminLayout from './layouts/AdminLayout';
 
 // Public pages
-import HomePage from './pages/HomePage';
 import ProductsPage from './components/ProductsPage';
 import ProductPage from './components/ProductPage';
 import Mattresses from './components/Mattresses';
