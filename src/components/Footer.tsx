@@ -1,3 +1,4 @@
+// src/components/Footer.tsx
 import React from 'react';
 import FooterSection from './footer/FooterSection';
 import MobileFooterAccordion from './footer/MobileFooterAccordion';
@@ -7,37 +8,38 @@ const footerLinks = {
   catalog: {
     title: 'Каталог',
     links: [
-      'Матрасы',
-      'Подушки',
-      'Одеяла',
-      'Кровати',
-      'Диваны',
-      'Наматрасники',
-    ]
+      { label: 'Матрасы', href: '/mattresses' },
+      { label: 'Подушки', href: '/products?category=podushki' },
+      { label: 'Одеяла', href: '/products?category=odeyala' },
+      { label: 'Кровати', href: '/products?category=krovati' },
+      { label: 'Диваны', href: '/products?category=divany' },
+      { label: 'Наматрасники', href: '/products?category=namatrasniki' },
+    ],
   },
   company: {
     title: 'О компании',
     links: [
-      'История компании',
-      'Частые вопросы'
-    ]
+      { label: 'История компании', href: '/about' },
+      { label: 'Частые вопросы', href: '/faq' },
+    ],
   },
   health: {
     title: 'О здоровом сне',
     links: [
-      'Блог Sleep Club',
-      'Из чего состоит здоровье',
-      'Сколько нужно спать',
-      'Как улучшить свой сон',
-    ]
+      { label: 'Блог Sleep Club', href: '/blog' },
+      { label: 'Из чего состоит здоровье', href: '/blog?tag=health' },
+      { label: 'Сколько нужно спать', href: '/blog?tag=sleep' },
+      { label: 'Как улучшить свой сон', href: '/blog?tag=better-sleep' },
+    ],
   },
   contacts: {
     title: 'Контакты',
     links: [
-      'Контакты подразделений',
-    ]
+      { label: 'Контакты подразделений', href: '/contacts' },
+    ],
   },
 };
+
 
 const Footer = () => {
   return (
