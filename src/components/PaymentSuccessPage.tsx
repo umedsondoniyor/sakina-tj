@@ -93,6 +93,16 @@ const PaymentSuccessPage: React.FC = () => {
     }
   }, [orderId, paymentId]);
 
+  useEffect(() => {
+  if (paymentStatus === 'completed') {
+    const timeout = setTimeout(() => {
+      navigate('/order-confirmation');
+    }, 3000);
+    return () => clearTimeout(timeout);
+  }
+}, [paymentStatus, navigate]);
+
+
   const handleStatusChange = (status: string) => {
     setPaymentStatus(status);
     if (status === 'completed' && !orderCleared) {
