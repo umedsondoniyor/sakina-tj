@@ -21,7 +21,7 @@ import CheckoutPage from './components/CheckoutPage';
 import OrderConfirmationPage from './components/OrderConfirmationPage';
 import OneClickConfirmationPage from './components/OneClickConfirmationPage';
 import PaymentSuccessPage from './components/PaymentSuccessPage';
-import PaymentCancelPage from './components/PaymentCancelPage';
+import PaymentCancelPage from './pages/PaymentCancelPage';
 import AboutUsPage from './pages/AboutUsPage';
 import BlogPage from './pages/BlogPage';
 import BlogPostPage from './pages/BlogPostPage';
