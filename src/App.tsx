@@ -77,9 +77,10 @@ function App() {
 
             {/* Admin routes (you can also make an AdminLayout + <Outlet />) */}
             <Route path="/admin/login" element={<AdminLogin />} />
+
             <Route
               path="/admin"
-              element={<AdminRoute><AdminDashboard /></AdminRoute>}
+              element={<AdminRoute><AdminLayout /></AdminRoute>}
             >
               <Route index element={<AdminProducts />} />
               <Route path="products" element={<AdminProducts />} />
@@ -95,6 +96,7 @@ function App() {
               <Route path="sms-templates" element={<AdminSmsTemplates />} />
               <Route path="payments" element={<AdminPayments />} />
             </Route>
+
 
             <Route path="*" element={<NotFound />} />
           </Routes>
