@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Calendar, Clock, Tag, ArrowLeft, Share2 } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
-import { getBlogPostBySlug, getRelatedPosts } from '../lib/blogApi';
+import { getBlogPost, getRelatedPosts } from '../lib/blogApi';
 import type { BlogPost } from '../lib/types';
 
 /* ---------- Skeleton while loading ---------- */
@@ -40,7 +40,7 @@ const BlogPostPage: React.FC = () => {
           return;
         }
 
-        const data = await getBlogPostBySlug(slug);
+        const data = await getBlogPost(slug);
         setPost(data);
 
         const relatedPosts = await getRelatedPosts(data.id, data.category?.id);
