@@ -1,4 +1,4 @@
-// src/components/PaymentFailedPage.tsx
+// src/pages/PaymentFailedPage.tsx
 import React, { useEffect, useState } from 'react';
 import { XCircle, RefreshCw, Home, AlertTriangle, ArrowLeft } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
