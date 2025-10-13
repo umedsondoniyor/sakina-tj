@@ -22,7 +22,7 @@ import OrderConfirmationPage from './components/OrderConfirmationPage';
 import OneClickConfirmationPage from './components/OneClickConfirmationPage';
 import PaymentSuccessPage from './components/PaymentSuccessPage';
 import PaymentCancelPage from './components/PaymentCancelPage';
-import AboutUsPage from './components/AboutUsPage';
+import AboutUsPage from './pages/AboutUsPage';
 import BlogPage from './components/BlogPage';
 import BlogPostPage from './components/BlogPostPage';
 
