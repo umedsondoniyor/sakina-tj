@@ -1,3 +1,4 @@
+// src/components/PaymentCancelPage.tsx
 import React from 'react';
 import { XCircle, ArrowLeft, RefreshCw, Home } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
