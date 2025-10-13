@@ -34,11 +34,10 @@ const footerLinks = {
   },
   contacts: {
     title: 'Контакты',
-    links: [
-      { label: 'Контакты подразделений', href: '/contacts' },
-    ],
+    links: [{ label: 'Контакты подразделений', href: '/contacts' }],
   },
 };
+
 
 
 const Footer = () => {
