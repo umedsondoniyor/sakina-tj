@@ -1,3 +1,4 @@
+// src/components/PaymentSuccessPage.tsx
 import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { CheckCircle, ArrowRight, Package, Home } from 'lucide-react';
