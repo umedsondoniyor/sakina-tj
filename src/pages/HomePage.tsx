@@ -28,7 +28,6 @@ const HomePage: React.FC = () => {
       <CustomerReviews />
       <SleepClubBlog />
       <AskonaClub />
-      <AboutUs />
       <ManufacturingProcess />
       <ContactSection />
       <NotificationAlert />
