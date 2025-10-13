@@ -11,7 +11,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import PublicLayout from './layouts/PublicLayout';
 import AdminLayout from './layouts/AdminLayout';
 
-s
+
 // Public pages
 import HomePage from './pages/HomePage';
 import ProductsPage from './components/ProductsPage';
