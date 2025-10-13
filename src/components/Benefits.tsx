@@ -1,3 +1,4 @@
+src/components/Benefits.tsx
 import React, { useState } from 'react';
 import BenefitCard from './benefits/BenefitCard';
 
