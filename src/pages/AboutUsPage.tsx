@@ -233,6 +233,10 @@ const AboutUsPage: React.FC = () => {
   }
 
   const hero = settings ?? FALLBACK_SETTINGS;
+  const statsArr = stats ?? FALLBACK_STATS;
+  const valuesArr = values ?? FALLBACK_VALUES;
+  const timelineArr = timeline ?? FALLBACK_TIMELINE;
+  const teamArr = team ?? FALLBACK_TEAM;
 
   return (
     <div className="min-h-screen bg-white">
