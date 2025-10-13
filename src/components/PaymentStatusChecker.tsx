@@ -1,3 +1,4 @@
+// src/components/PaymentStatusChecker.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { CheckCircle, XCircle, Clock, Loader2, RefreshCw } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
