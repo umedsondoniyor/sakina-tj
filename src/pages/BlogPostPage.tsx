@@ -1,3 +1,4 @@
+// src/pages/BlogPostPage.tsx
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Calendar, Clock, Tag, ArrowLeft, Share2 } from 'lucide-react';
