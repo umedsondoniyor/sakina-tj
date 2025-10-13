@@ -101,6 +101,13 @@ const BlogPage: React.FC = () => {
       } finally {
         setLoading(false);
       }
-    })();
-  // 👇 updated dependencies — include searchParams to react to URL changes
-  }, [selectedCategorySlug, selectedTagSlug, searchQuery, categoryBySlug, tagBySlug, searchParams]);
+    })(); // ✅ closes the async IIFE correctly
+  }, [
+    selectedCategorySlug,
+    selectedTagSlug,
+    searchQuery,
+    categoryBySlug,
+    tagBySlug,
+    searchParams,
+  ]); // ✅ closes the useEffect correctly
+
