@@ -1,3 +1,4 @@
+// src/components/AskonaClub.tsx
 import React, { useState } from 'react';
 import RegistrationModal from './RegistrationModal';
 import ClubBenefits from './club/ClubBenefits';
