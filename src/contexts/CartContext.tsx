@@ -30,6 +30,24 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setTotalItems(newCount);
   }, [items]);
 
+  useEffect(() => {
+  // Load cart items from localStorage when app starts
+  const savedItems = localStorage.getItem('sakina_cart');
+  if (savedItems) {
+    try {
+      setItems(JSON.parse(savedItems));
+    } catch (e) {
+      console.error('Failed to load cart:', e);
+    }
+  }
+}, []);
+
+useEffect(() => {
+  // Save cart items whenever they change
+  localStorage.setItem('sakina_cart', JSON.stringify(items));
+}, [items]);
+
+
   const addItem = (newItem: CartItem) => {
     setItems(currentItems => {
       const existingItem = currentItems.find(
