@@ -78,6 +78,22 @@ const CheckoutPage = () => {
     }
   }, [items, navigate]);
 
+  // Restore saved form
+useEffect(() => {
+  const saved = localStorage.getItem('sakina_checkout_form');
+  if (saved) {
+    try {
+      setFormData(JSON.parse(saved));
+    } catch {}
+  }
+}, []);
+
+// Save form on change
+useEffect(() => {
+  localStorage.setItem('sakina_checkout_form', JSON.stringify(formData));
+}, [formData]);
+
+
   const validateCurrentStep = (): boolean => {
     const newErrors: FormErrors = {};
 
