@@ -11,7 +11,6 @@ import RecommendedProducts from '../components/RecommendedProducts';
 import ProductionStats from '../components/ProductionStats';
 import ManufacturingProcess from '../components/ManufacturingProcess';
 import SleepClubBlog from '../components/SleepClubBlog';
-import AboutUs from '../components/AboutUs';
 import Features from '../components/Features';
 import ContactSection from '../components/ContactSection';
 import NotificationAlert from '../components/NotificationAlert';
