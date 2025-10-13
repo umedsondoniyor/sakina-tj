@@ -2,6 +2,8 @@
 import React from 'react';
 import { XCircle, ArrowLeft, RefreshCw, Home } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
+
 
 const PaymentCancelPage = () => {
   const navigate = useNavigate();
@@ -11,6 +13,21 @@ const PaymentCancelPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4">
+      <Helmet>
+  <title>Платеж отменен | Sakina.tj</title>
+  <meta
+    name="description"
+    content="Платеж был отменен. Вы можете попробовать снова или выбрать другой способ оплаты на Sakina.tj."
+  />
+  <meta property="og:title" content="Платеж отменен | Sakina.tj" />
+  <meta
+    property="og:description"
+    content="Платеж отменен. Попробуйте оплатить снова или выберите другой метод оплаты."
+  />
+  <meta property="og:image" content="/og-payment-cancel.jpg" />
+  <meta property="og:type" content="website" />
+</Helmet>
+
       <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
         <div className="mb-6">
           <XCircle className="mx-auto text-red-500 mb-4" size={64} />
