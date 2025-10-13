@@ -23,8 +23,8 @@ import OneClickConfirmationPage from './components/OneClickConfirmationPage';
 import PaymentSuccessPage from './components/PaymentSuccessPage';
 import PaymentCancelPage from './components/PaymentCancelPage';
 import AboutUsPage from './pages/AboutUsPage';
-import BlogPage from './components/BlogPage';
-import BlogPostPage from './components/BlogPostPage';
+import BlogPage from './pages/BlogPage';
+import BlogPostPage from './pages/BlogPostPage';
 
 // Admin (unchanged here, but you can do an AdminLayout similarly)
 import AdminRoute from './components/admin/AdminRoute';
