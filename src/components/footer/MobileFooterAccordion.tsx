@@ -1,6 +1,6 @@
 // src/components/footer/MobileFooterAccordion.tsx
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 interface FooterLink {
   label: string;
@@ -12,6 +12,8 @@ interface MobileFooterAccordionProps {
 }
 
 const MobileFooterAccordion: React.FC<MobileFooterAccordionProps> = ({ footerLinks }) => {
+  const location = useLocation();
+
   return (
     <div className="md:hidden space-y-4">
       {Object.entries(footerLinks).map(([key, section]) => (
@@ -24,18 +26,26 @@ const MobileFooterAccordion: React.FC<MobileFooterAccordionProps> = ({ footerLin
               </svg>
             </span>
           </summary>
+
           <div className="pl-4 pt-2 pb-4">
             <ul className="space-y-2">
-              {section.links.map((link) => (
-                <li key={link.label}>
-                  <Link
-                    to={link.href}
-                    className="text-sm text-gray-600 hover:text-teal-600 transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
+              {section.links.map((link) => {
+                const isActive = location.pathname + location.search === link.href;
+                return (
+                  <li key={link.label}>
+                    <Link
+                      to={link.href}
+                      className={`text-sm transition-colors ${
+                        isActive
+                          ? 'text-teal-600 font-medium'
+                          : 'text-gray-600 hover:text-teal-600'
+                      }`}
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           </div>
         </details>
