@@ -101,7 +101,7 @@ const BlogPage: React.FC = () => {
       } finally {
         setLoading(false);
       }
-    })(); // ✅ closes the async IIFE correctly
+    })(); 
   }, [
     selectedCategorySlug,
     selectedTagSlug,
@@ -109,5 +109,5 @@ const BlogPage: React.FC = () => {
     categoryBySlug,
     tagBySlug,
     searchParams,
-  ]); // ✅ closes the useEffect correctly
+  ]); 
 
