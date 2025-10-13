@@ -1,3 +1,4 @@
+// src/pages/BlogPage.tsx
 import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Calendar, Clock, Tag, Search } from 'lucide-react';
