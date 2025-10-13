@@ -10,6 +10,13 @@ const PaymentCancelPage = () => {
   const [searchParams] = useSearchParams();
   
   const orderId = searchParams.get('order_id');
+  
+  useEffect(() => {
+  if (orderId) {
+    sessionStorage.setItem('sakina_order_id', orderId);
+  }
+}, [orderId]);
+
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4">
@@ -91,20 +98,21 @@ const PaymentCancelPage = () => {
 
         <div className="mt-6 pt-6 border-t border-gray-200">
           <p className="text-sm text-gray-500 mb-3">Нужна помощь?</p>
-          <div className="flex space-x-4 justify-center">
-            <a
-              href="tel:+992905339595"
-              className="text-teal-600 hover:text-teal-700 text-sm"
-            >
-              Позвонить
-            </a>
-            <a
-              href="mailto:support@sakina.tj"
-              className="text-teal-600 hover:text-teal-700 text-sm"
-            >
-              Написать
-            </a>
-          </div>
+<div className="flex flex-col sm:flex-row justify-center gap-3 mt-4">
+  <a
+    href="tel:+992905339595"
+    className="flex items-center justify-center bg-teal-500 text-white px-4 py-2 rounded-lg hover:bg-teal-600"
+  >
+    📞 Позвонить
+  </a>
+  <a
+    href="mailto:support@sakina.tj"
+    className="flex items-center justify-center bg-gray-100 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-200"
+  >
+    ✉️ Написать
+  </a>
+</div>
+
         </div>
       </div>
     </div>
