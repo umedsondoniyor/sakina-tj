@@ -4,6 +4,7 @@ import { CheckCircle, ArrowRight, Package, Home } from 'lucide-react';
 import PaymentStatusChecker from './PaymentStatusChecker';
 import { useCart } from '../contexts/CartContext';
 import toast from 'react-hot-toast';
+import { Helmet } from 'react-helmet-async';
 
 /** ---------- Helpers: robust param extraction (query, hash, storage) ---------- */
 function useResolvedParam(paramNames: string[], storageKeys: string[] = []) {
@@ -152,6 +153,18 @@ const PaymentSuccessPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+            <Helmet>
+        <title>Платеж успешно выполнен | Sakina.tj</title>
+        <meta
+          name="description"
+          content="Ваш платеж прошел успешно. Благодарим вас за покупку в Sakina.tj!"
+        />
+        <meta property="og:title" content="Платеж успешно выполнен | Sakina.tj" />
+        <meta
+          property="og:description"
+          content="Ваш заказ оплачен. Sakina заботится о вашем комфорте и сне."
+        />
+      </Helmet>
       {/* Header */}
       <div className="bg-white shadow-sm">
         <div className="max-w-4xl mx-auto px-4 py-6">
