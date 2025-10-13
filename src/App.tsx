@@ -8,6 +8,7 @@ import ScrollToTop from './components/ScrollToTop';
 
 // Layouts
 import PublicLayout from './layouts/PublicLayout';
+import AdminLayout from './layouts/AdminLayout';
 
 // Public pages
 import HomePage from './pages/HomePage';
@@ -80,7 +81,7 @@ function App() {
 
             <Route
               path="/admin"
-              element={<AdminRoute><AdminDashboard /></AdminRoute>}
+              element={<AdminRoute><AdminLayout /></AdminRoute>}
             >
               <Route index element={<AdminProducts />} />
               <Route path="products" element={<AdminProducts />} />
