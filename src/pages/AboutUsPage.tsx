@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import {
   Award, Users, Heart, Target, Clock, Globe,
   type Icon as LucideIcon
@@ -18,7 +19,6 @@ type AboutStat = {
   id: string;
   number: string;
   label: string;
-  // icon column may be named differently in DB; we handle that at runtime
   icon_key?: string | null;
   icon?: string | null;
   iconName?: string | null;
@@ -77,18 +77,17 @@ function pickIconKey(obj: any): string {
 }
 
 function normalizeIconKey(key: string): string {
-  // example inputs: "Heart", "heart", "heart-icon", "HEART ", "Icon:Heart"
   return key
     .toLowerCase()
-    .replace(/[^a-z]/g, ' ')    // keep letters only
+    .replace(/[^a-z]/g, ' ')
     .trim()
-    .split(/\s+/)               // split words
-    .pop() || '';               // take the last word (most specific)
+    .split(/\s+/)
+    .pop() || '';
 }
 
 function resolveIcon(keyRaw: string): LucideIcon {
   const key = normalizeIconKey(keyRaw);
-  return ICONS[key] ?? Award; // Award is sane fallback
+  return ICONS[key] ?? Award;
 }
 
 /* =========================
@@ -102,14 +101,14 @@ const FALLBACK_SETTINGS: AboutSettings = {
     'https://images.unsplash.com/photo-1631679706909-1844bbd07221?auto=format&fit=crop&w=1200&q=80',
 };
 
-const FALLBACK_STATS: AboutStat[] = [
+const FALLBACK_STATS = [
   { id: '1', number: '30+', label: 'лет на рынке', icon_key: 'Clock', order: 1 },
   { id: '2', number: '50,000+', label: 'довольных клиентов', icon_key: 'Users', order: 2 },
   { id: '3', number: '100+', label: 'моделей продукции', icon_key: 'Award', order: 3 },
   { id: '4', number: '5', label: 'стран присутствия', icon_key: 'Globe', order: 4 },
 ];
 
-const FALLBACK_VALUES: AboutValue[] = [
+const FALLBACK_VALUES = [
   {
     id: '1',
     icon_key: 'Heart',
@@ -122,7 +121,8 @@ const FALLBACK_VALUES: AboutValue[] = [
     id: '2',
     icon_key: 'Award',
     title: 'Качество превыше всего',
-    description: 'Используем только проверенные материалы и современные технологии производства.',
+    description:
+      'Используем только проверенные материалы и современные технологии производства.',
     order: 2,
   },
   {
@@ -143,7 +143,7 @@ const FALLBACK_VALUES: AboutValue[] = [
   },
 ];
 
-const FALLBACK_TIMELINE: AboutTimeline[] = [
+const FALLBACK_TIMELINE = [
   { id: 't1', year: '1990', title: 'Основание компании', description: 'Начало пути в индустрии здорового сна', order: 1 },
   { id: 't2', year: '2000', title: 'Первая лаборатория', description: 'Открытие собственной лаборатории контроля качества', order: 2 },
   { id: 't3', year: '2010', title: 'Международное признание', description: 'Получение международных сертификатов качества', order: 3 },
@@ -151,7 +151,7 @@ const FALLBACK_TIMELINE: AboutTimeline[] = [
   { id: 't5', year: '2025', title: 'Новые горизонты', description: 'Расширение ассортимента и география присутствия', order: 5 },
 ];
 
-const FALLBACK_TEAM: AboutTeam[] = [
+const FALLBACK_TEAM = [
   {
     id: 'a1',
     name: 'Алексей Иванов',
@@ -197,13 +197,7 @@ const AboutUsPage: React.FC = () => {
       try {
         setLoading(true);
 
-        const [
-          settingsRes,
-          statsRes,
-          valuesRes,
-          timelineRes,
-          teamRes,
-        ] = await Promise.all([
+        const [settingsRes, statsRes, valuesRes, timelineRes, teamRes] = await Promise.all([
           supabase.from('about_settings').select('*').limit(1).maybeSingle(),
           supabase.from('about_stats').select('*').order('order', { ascending: true }),
           supabase.from('about_values').select('*').order('order', { ascending: true }),
@@ -211,35 +205,11 @@ const AboutUsPage: React.FC = () => {
           supabase.from('about_team').select('*').order('order', { ascending: true }),
         ]);
 
-        setSettings(
-          settingsRes.error || !settingsRes.data
-            ? FALLBACK_SETTINGS
-            : (settingsRes.data as AboutSettings)
-        );
-
-        setStats(
-          statsRes.error || !statsRes.data || statsRes.data.length === 0
-            ? FALLBACK_STATS
-            : (statsRes.data as AboutStat[])
-        );
-
-        setValues(
-          valuesRes.error || !valuesRes.data || valuesRes.data.length === 0
-            ? FALLBACK_VALUES
-            : (valuesRes.data as AboutValue[])
-        );
-
-        setTimeline(
-          timelineRes.error || !timelineRes.data || timelineRes.data.length === 0
-            ? FALLBACK_TIMELINE
-            : (timelineRes.data as AboutTimeline[])
-        );
-
-        setTeam(
-          teamRes.error || !teamRes.data || teamRes.data.length === 0
-            ? FALLBACK_TEAM
-            : (teamRes.data as AboutTeam[])
-        );
+        setSettings(settingsRes.error || !settingsRes.data ? FALLBACK_SETTINGS : settingsRes.data as AboutSettings);
+        setStats(statsRes.error || !statsRes.data || statsRes.data.length === 0 ? FALLBACK_STATS : statsRes.data as AboutStat[]);
+        setValues(valuesRes.error || !valuesRes.data || valuesRes.data.length === 0 ? FALLBACK_VALUES : valuesRes.data as AboutValue[]);
+        setTimeline(timelineRes.error || !timelineRes.data || timelineRes.data.length === 0 ? FALLBACK_TIMELINE : timelineRes.data as AboutTimeline[]);
+        setTeam(teamRes.error || !teamRes.data || teamRes.data.length === 0 ? FALLBACK_TEAM : teamRes.data as AboutTeam[]);
       } finally {
         setLoading(false);
       }
@@ -263,13 +233,24 @@ const AboutUsPage: React.FC = () => {
   }
 
   const hero = settings ?? FALLBACK_SETTINGS;
-  const statsArr = stats ?? FALLBACK_STATS;
-  const valuesArr = values ?? FALLBACK_VALUES;
-  const timelineArr = timeline ?? FALLBACK_TIMELINE;
-  const teamArr = team ?? FALLBACK_TEAM;
 
   return (
     <div className="min-h-screen bg-white">
+            {/* ✅ SEO metadata */}
+      <Helmet>
+        <title>О компании Sakina | История, команда и ценности</title>
+        <meta
+          name="description"
+          content="Узнайте о компании Sakina — лидере рынка товаров для сна. История бренда, ценности, команда профессионалов и стремление к совершенству."
+        />
+        <meta property="og:title" content="О компании Sakina | История, команда и ценности" />
+        <meta
+          property="og:description"
+          content="Sakina — производитель матрасов и товаров для сна, заботящийся о здоровье и комфорте своих клиентов более 30 лет."
+        />
+        <meta property="og:image" content={hero.hero_image_url || FALLBACK_SETTINGS.hero_image_url!} />
+        <meta property="og:type" content="website" />
+      </Helmet>
       {/* Hero */}
       <div className="relative bg-gradient-to-r from-brand-turquoise to-brand-navy text-white py-16 md:py-24">
         <div className="max-w-7xl mx-auto px-4">
