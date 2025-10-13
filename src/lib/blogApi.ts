@@ -279,6 +279,74 @@ export async function getBlogPost(slug: string): Promise<BlogPost | null> {
   }
 }
 
+/** Fetch related posts (same category, excluding current post) */
+export async function getRelatedPosts(postId: string, categoryId?: string) {
+  try {
+    let query = supabase
+      .from('blog_posts')
+      .select('id, title, slug, excerpt, featured_image, published_at')
+      .eq('status', 'published')
+      .neq('id', postId)
+      .order('published_at', { ascending: false })
+      .limit(4);
+
+    if (categoryId) query = query.eq('category_id', categoryId);
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return data ?? [];
+  } catch (err: any) {
+    console.error('[blogApi] getRelatedPosts error:', err);
+    return [];
+  }
+}
+
+/** Fetch previous and next posts by publication date */
+export async function getAdjacentPosts(currentSlug: string) {
+  try {
+    // First, get the current post to know its date
+    const { data: current, error: currentErr } = await supabase
+      .from('blog_posts')
+      .select('id, slug, published_at')
+      .eq('slug', currentSlug)
+      .maybeSingle();
+
+    if (currentErr || !current) return { prev: null, next: null };
+
+    const publishedAt = current.published_at;
+
+    // Previous (newer) post
+    const { data: prevData } = await supabase
+      .from('blog_posts')
+      .select('id, slug, title')
+      .eq('status', 'published')
+      .gt('published_at', publishedAt)
+      .order('published_at', { ascending: true })
+      .limit(1);
+
+    // Next (older) post
+    const { data: nextData } = await supabase
+      .from('blog_posts')
+      .select('id, slug, title')
+      .eq('status', 'published')
+      .lt('published_at', publishedAt)
+      .order('published_at', { ascending: false })
+      .limit(1);
+
+    return {
+      prev: prevData && prevData.length > 0 ? prevData[0] : null,
+      next: nextData && nextData.length > 0 ? nextData[0] : null,
+    };
+  } catch (err: any) {
+    console.error('[blogApi] getAdjacentPosts error:', err);
+    return { prev: null, next: null };
+  }
+}
+
+/** Alias for semantic clarity */
+export const getBlogPostBySlug = getBlogPost;
+
+
 /* -------------------------------------------------------------------------- */
 /*                              Convenience export                            */
 /* -------------------------------------------------------------------------- */
