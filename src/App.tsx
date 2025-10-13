@@ -8,6 +8,7 @@ import ScrollToTop from './components/ScrollToTop';
 
 // Layouts
 import PublicLayout from './layouts/PublicLayout';
+import AdminLayout from './layouts/AdminLayout';
 
 // Public pages
 import HomePage from './pages/HomePage';
