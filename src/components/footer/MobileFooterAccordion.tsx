@@ -1,8 +1,13 @@
-src/components/footer/MobileFooterAccordion.tsx
+// src/components/footer/MobileFooterAccordion.tsx
 import React from 'react';
 
+interface FooterLink {
+  label: string;
+  href: string;
+}
+
 interface MobileFooterAccordionProps {
-  footerLinks: Record<string, { title: string; links: string[] }>;
+  footerLinks: Record<string, { title: string; links: FooterLink[] }>;
 }
 
 const MobileFooterAccordion: React.FC<MobileFooterAccordionProps> = ({ footerLinks }) => {
@@ -21,9 +26,12 @@ const MobileFooterAccordion: React.FC<MobileFooterAccordionProps> = ({ footerLin
           <div className="pl-4 pt-2 pb-4">
             <ul className="space-y-2">
               {section.links.map((link) => (
-                <li key={link}>
-                  <a href="#" className="text-sm text-gray-600 hover:text-teal-600">
-                    {link}
+                <li key={link.href}>
+                  <a
+                    href={link.href}
+                    className="text-sm text-gray-600 hover:text-teal-600 transition-colors"
+                  >
+                    {link.label}
                   </a>
                 </li>
               ))}
