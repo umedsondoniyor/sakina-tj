@@ -83,21 +83,20 @@ function App() {
               path="/admin"
               element={<AdminRoute><AdminLayout /></AdminRoute>}
             >
-              <Route index element={<AdminDashboard />} />
-              <Route path="products" element={<AdminProducts />} />
-              <Route path="variants" element={<AdminProductVariants />} />
+              <Route index element={<AdminDashboard />} /> {/* 👈 this renders inside layout */}
+              <Route path="carousel" element={<AdminCarousel />} />
+              <Route path="about" element={<AdminAbout />} />
               <Route path="reviews" element={<AdminReviews />} />
               <Route path="blog" element={<AdminBlog />} />
-              <Route path="carousel" element={<AdminCarousel />} />
+              <Route path="products" element={<AdminProducts />} />
+              <Route path="variants" element={<AdminProductVariants />} />
               <Route path="quiz" element={<AdminQuiz />} />
               <Route path="navigation" element={<AdminNavigation />} />
               <Route path="one-click-orders" element={<AdminOneClickOrders />} />
               <Route path="users" element={<AdminUsers />} />
-              <Route path="about" element={<AdminAbout />} />
               <Route path="sms-templates" element={<AdminSmsTemplates />} />
               <Route path="payments" element={<AdminPayments />} />
             </Route>
-
 
             <Route path="*" element={<NotFound />} />
           </Routes>
