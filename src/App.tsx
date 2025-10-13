@@ -5,6 +5,7 @@ import { Toaster } from 'react-hot-toast';
 import { CartProvider } from './contexts/CartContext';
 import CartModal from './components/CartModal';
 import ScrollToTop from './components/ScrollToTop';
+import { HelmetProvider } from 'react-helmet-async';
 
 // Layouts
 import PublicLayout from './layouts/PublicLayout';
@@ -47,6 +48,7 @@ const NotFound = () => <div className="p-8 text-center">Page not found</div>;
 function App() {
   return (
     <Router>
+      <HelmetProvider>
       <CartProvider>
         {/* Global app-level UI */}
         <Toaster position="top-right" />
@@ -102,6 +104,7 @@ function App() {
           </Routes>
         </Suspense>
       </CartProvider>
+    </HelmetProvider>
     </Router>
   );
 }
