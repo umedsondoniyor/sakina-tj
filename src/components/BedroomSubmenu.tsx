@@ -1,3 +1,4 @@
+// src/components/BedroomSubmenu.tsx
 import React from 'react';
 import { Bed, Box, Shirt, Lamp } from 'lucide-react';
 
