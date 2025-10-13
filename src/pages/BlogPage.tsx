@@ -101,7 +101,7 @@ const BlogPage: React.FC = () => {
       } finally {
         setLoading(false);
       }
-    })(); 
+    })();
   }, [
     selectedCategorySlug,
     selectedTagSlug,
@@ -109,5 +109,6 @@ const BlogPage: React.FC = () => {
     categoryBySlug,
     tagBySlug,
     searchParams,
-  ]); 
+  ]);
+
 
