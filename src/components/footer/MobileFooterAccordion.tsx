@@ -1,3 +1,4 @@
+src/components/footer/MobileFooterAccordion.tsx
 import React from 'react';
 
 interface MobileFooterAccordionProps {
