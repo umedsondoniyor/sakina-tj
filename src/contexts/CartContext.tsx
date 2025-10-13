@@ -1,3 +1,4 @@
+// src/contexts/CartContext.tsx
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { CartItem, CartContextType } from '../lib/types';
 
@@ -7,17 +8,32 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [items, setItems] = useState<CartItem[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [total, setTotal] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
 
+  // ✅ Load from localStorage on mount
   useEffect(() => {
-    // Calculate total whenever items change
+    const savedCart = localStorage.getItem('cart');
+    if (savedCart) {
+      setItems(JSON.parse(savedCart));
+    }
+  }, []);
+
+  // ✅ Persist to localStorage on change
+  useEffect(() => {
+    localStorage.setItem('cart', JSON.stringify(items));
+
+    // Recalculate totals
     const newTotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const newCount = items.reduce((sum, item) => sum + item.quantity, 0);
+
     setTotal(newTotal);
+    setTotalItems(newCount);
   }, [items]);
 
   const addItem = (newItem: CartItem) => {
     setItems(currentItems => {
-      const existingItem = currentItems.find(item => 
-        item.id === newItem.id && item.size === newItem.size
+      const existingItem = currentItems.find(
+        item => item.id === newItem.id && item.size === newItem.size
       );
 
       if (existingItem) {
@@ -45,21 +61,22 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
   };
 
-  const clearCart = () => {
-    setItems([]);
-  };
+  const clearCart = () => setItems([]);
 
   return (
-    <CartContext.Provider value={{
-      items,
-      addItem,
-      removeItem,
-      updateQuantity,
-      clearCart,
-      isOpen,
-      setIsOpen,
-      total
-    }}>
+    <CartContext.Provider
+      value={{
+        items,
+        addItem,
+        removeItem,
+        updateQuantity,
+        clearCart,
+        isOpen,
+        setIsOpen,
+        total,
+        totalItems,
+      }}
+    >
       {children}
     </CartContext.Provider>
   );
