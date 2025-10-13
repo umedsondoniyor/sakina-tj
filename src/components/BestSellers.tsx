@@ -1,3 +1,4 @@
+// src/components/BestSellers.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Star, PackageOpen } from 'lucide-react';
 import { getBestSellers } from '../lib/api';
