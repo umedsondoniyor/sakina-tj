@@ -1,70 +1,222 @@
-import React, { useState } from 'react';
-import { Outlet, useLocation, Link } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
-import AdminNavigation from '../components/admin/AdminNavigation';
+import React from 'react';
+import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { Image, Star, Package, Layers, CircleHelp as HelpCircle, LogOut, Home, Navigation, MousePointer, Users, Target, FileText, MessageSquare, CreditCard } from 'lucide-react';
+import { supabase } from '../../lib/supabaseClient';
+import Logo from '../Logo';
 
-/**
- * AdminLayout
- * Shared layout for all /admin pages.
- * - Responsive sidebar (collapsible on mobile)
- * - Uses Tailwind CSS
- * - Keeps content scrollable independently of sidebar
- */
-const AdminLayout: React.FC = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const location = useLocation();
+const AdminLayout = () => {
+  const navigate = useNavigate();
 
-  // Optional: close sidebar when route changes
-  React.useEffect(() => {
-    setSidebarOpen(false);
-  }, [location.pathname]);
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate('/admin/login');
+  };
 
   return (
-    <div className="flex h-screen bg-gray-100 text-gray-900">
-      {/* Sidebar */}
-      <div
-        className={`fixed inset-y-0 left-0 z-30 w-64 transform bg-white shadow-lg
-        transition-transform duration-300 ease-in-out lg:translate-x-0 
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
-      >
-        <div className="flex items-center justify-between px-4 py-3 border-b">
-          <Link to="/admin" className="text-xl font-semibold text-gray-800">
-            Admin Panel
-          </Link>
+    <div className="min-h-screen bg-gray-100">
+      {/* Header */}
+      <header className="bg-white shadow">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+          <Logo variant="horizontal" />
           <button
-            className="lg:hidden text-gray-600 hover:text-gray-900"
-            onClick={() => setSidebarOpen(false)}
+            onClick={handleLogout}
+            className="flex items-center text-gray-600 hover:text-gray-900"
           >
-            <X size={24} />
+            <LogOut size={20} className="mr-2" />
+            Выйти
           </button>
         </div>
+      </header>
 
-        {/* Your existing AdminNavigation component */}
-        <div className="overflow-y-auto h-[calc(100vh-64px)]">
-          <AdminNavigation />
+      <div className="w-full mx-auto px-4 py-6">
+        <div className="flex gap-6 items-start">
+          {/* Sidebar */}
+          <nav className="w-56 bg-white rounded-lg shadow p-4 flex-shrink-0">
+            <div className="space-y-2">
+              <NavLink
+                to="/admin/carousel"
+                className={({ isActive }) =>
+                  `flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                    isActive
+                      ? 'bg-teal-500 text-white'
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`
+                }
+              >
+                <Image size={20} />
+                <span>Карусель</span>
+              </NavLink>
+
+              <NavLink
+                to="/admin/about"
+                className={({ isActive }) =>
+                  `flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                    isActive ? 'bg-teal-500 text-white' : 'text-gray-600 hover:bg-gray-100'
+                  }`
+                }
+              >
+                <Target size={20} />
+                <span>О компании</span>
+              </NavLink>
+
+
+              <NavLink
+                to="/admin/reviews"
+                className={({ isActive }) =>
+                  `flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                    isActive
+                      ? 'bg-teal-500 text-white'
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`
+                }
+              >
+                <Star size={20} />
+                <span>Отзывы</span>
+              </NavLink>
+
+              <NavLink
+                to="/admin/blog"
+                className={({ isActive }) =>
+                  `flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                    isActive
+                      ? 'bg-teal-500 text-white'
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`
+                }
+              >
+                <FileText size={20} />
+                <span>Блог</span>
+              </NavLink>
+
+              <NavLink
+                to="/admin/products"
+                className={({ isActive }) =>
+                  `flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                    isActive
+                      ? 'bg-teal-500 text-white'
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`
+                }
+              >
+                <Package size={20} />
+                <span>Товары</span>
+              </NavLink>
+
+              <NavLink
+                to="/admin/variants"
+                className={({ isActive }) =>
+                  `flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                    isActive
+                      ? 'bg-teal-500 text-white'
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`
+                }
+              >
+                <Layers size={20} />
+                <span>Размеры товаров</span>
+              </NavLink>
+
+              <NavLink
+                to="/admin/quiz"
+                className={({ isActive }) =>
+                  `flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                    isActive
+                      ? 'bg-teal-500 text-white'
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`
+                }
+              >
+                <HelpCircle size={20} />
+                <span>Опросник</span>
+              </NavLink>
+
+              <NavLink
+                to="/admin/navigation"
+                className={({ isActive }) =>
+                  `flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                    isActive
+                      ? 'bg-teal-500 text-white'
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`
+                }
+              >
+                <Navigation size={20} />
+                <span>Навигация</span>
+              </NavLink>
+
+              <NavLink
+                to="/admin/one-click-orders"
+                className={({ isActive }) =>
+                  `flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                    isActive
+                      ? 'bg-teal-500 text-white'
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`
+                }
+              >
+                <MousePointer size={20} />
+                <span>Заказы в 1 клик</span>
+              </NavLink>
+
+              <NavLink
+                to="/admin/users"
+                className={({ isActive }) =>
+                  `flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                    isActive
+                      ? 'bg-teal-500 text-white'
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`
+                }
+              >
+                <Users size={20} />
+                <span>Пользователи</span>
+              </NavLink>
+
+              <NavLink
+                to="/admin/sms-templates"
+                className={({ isActive }) =>
+                  `flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                    isActive
+                      ? 'bg-teal-500 text-white'
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`
+                }
+              >
+                <MessageSquare size={20} />
+                <span>SMS Шаблоны</span>
+              </NavLink>
+
+              <NavLink
+                to="/admin/payments"
+                className={({ isActive }) =>
+                  `flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                    isActive
+                      ? 'bg-teal-500 text-white'
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`
+                }
+              >
+                <CreditCard size={20} />
+                <span>Платежи</span>
+              </NavLink>
+
+              <a
+                href="/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center space-x-2 px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
+              >
+                <Home size={20} />
+                <span>Открыть сайт</span>
+              </a>
+            </div>
+          </nav>
+
+          {/* Main Content */}
+          <main className="flex-1 bg-white rounded-lg shadow p-6 min-w-0">
+            <Outlet />
+          </main>
         </div>
-      </div>
-
-      {/* Main content */}
-      <div className="flex flex-col flex-1 lg:pl-64">
-        {/* Mobile top bar */}
-        <div className="sticky top-0 z-20 flex items-center justify-between bg-white shadow px-4 py-3 lg:hidden">
-          <button
-            className="text-gray-700 hover:text-gray-900"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-          >
-            <Menu size={24} />
-          </button>
-          <Link to="/admin" className="font-semibold text-gray-800">
-            Admin Dashboard
-          </Link>
-          <div className="w-6" /> {/* placeholder to balance flex */}
-        </div>
-
-        {/* Main admin page area */}
-        <main className="flex-1 p-6 overflow-y-auto">
-          <Outlet />
-        </main>
       </div>
     </div>
   );
