@@ -102,11 +102,14 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
           intercom: orderData.deliveryInfo.intercom
         },
         items: orderData.items.map(item => ({
+          product_variant_id: item.product_variant_id || item.id, // fallback to id if needed
+          location_id: import.meta.env.VITE_DEFAULT_LOCATION_ID, // from .env
           name: item.name,
           price: Number(item.price),
           quantity: Number(item.quantity),
           category: item.category || 'general'
         }))
+
       };
 
       console.log('📋 Order data with delivery info prepared:', {
