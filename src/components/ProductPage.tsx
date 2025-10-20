@@ -22,6 +22,10 @@ const ProductPage: React.FC = () => {
   const [showCharacteristicsModal, setShowCharacteristicsModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // 🧠 Helper for safe number display (avoids showing "0")
+  const safeNumber = (num?: number | null, suffix = '') =>
+    num != null && num > 0 ? `${num}${suffix}` : null;
+
   useEffect(() => {
     const loadProduct = async () => {
       setLoading(true);
@@ -64,21 +68,18 @@ const ProductPage: React.FC = () => {
     addItem(cartItem);
   };
 
-  // === Derived / memoized data ===
   const productImages = useMemo(() => product?.image_urls || [], [product]);
 
-  // === Loading and Error States ===
   if (loading) return <ProductLoadingState />;
   if (error) return <div className="text-center py-16 text-red-600">{error}</div>;
   if (!product) return <ProductNotFound />;
 
-  // === Helper to render spec rows ===
   const SpecRow = ({
     label,
     value
   }: {
     label: string;
-    value: React.ReactNode | undefined | null;
+    value?: string | number | null;
   }) =>
     value ? (
       <div className="flex justify-between py-3 px-6">
@@ -92,7 +93,7 @@ const ProductPage: React.FC = () => {
       {/* Breadcrumbs */}
       <ProductBreadcrumbs productName={product.name} category={product.category} />
 
-      {/* Top section: Images + Info */}
+      {/* Top section */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <ProductImageGallery
           images={productImages}
@@ -142,9 +143,7 @@ const ProductPage: React.FC = () => {
                 }[product.category] || product.category
               }
             />
-            {product.mattress_type && (
-              <SpecRow label="Тип матраса" value={product.mattress_type} />
-            )}
+
             {selectedVariant && (
               <SpecRow
                 label="Размер (Ш×Д)"
@@ -155,15 +154,19 @@ const ProductPage: React.FC = () => {
                 }
               />
             )}
-            {selectedVariant?.height_cm && (
-              <SpecRow label="Высота" value={`${selectedVariant.height_cm} см`} />
+
+            <SpecRow label="Высота" value={safeNumber(selectedVariant?.height_cm, ' см')} />
+
+            {product.mattress_type && (
+              <SpecRow label="Тип матраса" value={product.mattress_type} />
             )}
+
             {product.hardness && <SpecRow label="Жесткость" value={product.hardness} />}
             {product.spring_block_type && (
               <SpecRow label="Пружинный блок" value={product.spring_block_type} />
             )}
-            {product.spring_count && (
-              <SpecRow label="Количество пружин" value={product.spring_count.toString()} />
+            {safeNumber(product.spring_count) && (
+              <SpecRow label="Количество пружин" value={safeNumber(product.spring_count)} />
             )}
             {product.cover_material && (
               <SpecRow label="Материал чехла" value={product.cover_material} />
@@ -183,8 +186,8 @@ const ProductPage: React.FC = () => {
                 value={product.recommended_mattress_pad}
               />
             )}
-            {product.warranty_years && (
-              <SpecRow label="Гарантия" value={`${product.warranty_years} лет`} />
+            {safeNumber(product.warranty_years, ' лет') && (
+              <SpecRow label="Гарантия" value={safeNumber(product.warranty_years, ' лет')} />
             )}
             {product.rating && (
               <SpecRow
@@ -200,6 +203,7 @@ const ProductPage: React.FC = () => {
             />
           </div>
 
+          {/* Show more button */}
           <button
             onClick={() => setShowCharacteristicsModal(true)}
             className="mt-4 text-teal-600 hover:text-teal-700 text-sm font-medium"
@@ -210,9 +214,7 @@ const ProductPage: React.FC = () => {
 
         {/* Care Instructions */}
         <section>
-          <h3 className="text-xl font-semibold text-gray-900 mb-4">
-            Уход за изделием
-          </h3>
+          <h3 className="text-xl font-semibold text-gray-900 mb-4">Уход за изделием</h3>
           <ul className="bg-blue-50 rounded-lg p-6 space-y-2 text-sm text-gray-700">
             {[
               'Регулярно проветривайте матрас',
