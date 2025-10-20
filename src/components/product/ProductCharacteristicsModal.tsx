@@ -15,8 +15,6 @@ const ProductCharacteristicsModal: React.FC<ProductCharacteristicsModalProps> = 
   product,
   selectedVariant
 }) => {
-  if (!isOpen) return null;
-
   // Close on ESC key
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
@@ -24,8 +22,19 @@ const ProductCharacteristicsModal: React.FC<ProductCharacteristicsModalProps> = 
     return () => window.removeEventListener('keydown', handleEsc);
   }, [onClose]);
 
-  const formatValue = (val: any) =>
-    val === undefined || val === null || val === '' ? null : val;
+  // universal safe value filter
+  const safeValue = (value: any, suffix = ''): string | null => {
+    if (
+      value === null ||
+      value === undefined ||
+      value === '' ||
+      value === 0 ||
+      value === '0'
+    ) {
+      return null;
+    }
+    return `${value}${suffix}`;
+  };
 
   const price = selectedVariant?.price ?? product.price;
   const oldPrice = selectedVariant?.old_price ?? product.old_price;
@@ -35,7 +44,7 @@ const ProductCharacteristicsModal: React.FC<ProductCharacteristicsModalProps> = 
       category: 'Основные характеристики',
       items: [
         { label: 'Категория', value: product.category },
-        { label: 'Тип матраса', value: product.mattress_type },
+        { label: 'Тип матраса', value: safeValue(product.mattress_type) },
         {
           label: 'Размер (Ш×Д)',
           value:
@@ -45,23 +54,21 @@ const ProductCharacteristicsModal: React.FC<ProductCharacteristicsModalProps> = 
         },
         {
           label: 'Высота',
-          value: selectedVariant?.height_cm
-            ? `${selectedVariant.height_cm} см`
-            : null
+          value: safeValue(selectedVariant?.height_cm, ' см')
         },
-        { label: 'Жесткость', value: product.hardness },
-        { label: 'Весовая категория', value: product.weight_category }
+        { label: 'Жесткость', value: safeValue(product.hardness) },
+        { label: 'Весовая категория', value: safeValue(product.weight_category) }
       ]
     },
     {
       category: 'Конструкция',
       items: [
-        { label: 'Пружинный блок', value: product.spring_block_type },
+        { label: 'Пружинный блок', value: safeValue(product.spring_block_type) },
         {
           label: 'Количество пружин',
-          value: product.spring_count ? `${product.spring_count}` : null
+          value: safeValue(product.spring_count)
         },
-        { label: 'Материал чехла', value: product.cover_material },
+        { label: 'Материал чехла', value: safeValue(product.cover_material) },
         {
           label: 'Съемный чехол',
           value:
@@ -71,7 +78,7 @@ const ProductCharacteristicsModal: React.FC<ProductCharacteristicsModalProps> = 
                 : 'Нет'
               : null
         },
-        { label: 'Наполнитель', value: product.filler_material }
+        { label: 'Наполнитель', value: safeValue(product.filler_material) }
       ]
     },
     {
@@ -79,15 +86,16 @@ const ProductCharacteristicsModal: React.FC<ProductCharacteristicsModalProps> = 
       items: [
         {
           label: 'Гарантия',
-          value: product.warranty_years
-            ? `${product.warranty_years} лет`
-            : null
+          value: safeValue(product.warranty_years, ' лет')
         },
         {
           label: 'Рекомендуемый наматрасник',
-          value: product.recommended_mattress_pad
+          value: safeValue(product.recommended_mattress_pad)
         },
-        { label: 'Страна производства', value: product.country_of_origin },
+        {
+          label: 'Страна производства',
+          value: safeValue(product.country_of_origin || 'Таджикистан')
+        },
         product.rating
           ? {
               label: 'Рейтинг',
@@ -114,9 +122,8 @@ const ProductCharacteristicsModal: React.FC<ProductCharacteristicsModalProps> = 
         }
       ].filter(Boolean)
     }
-  ].filter(
-    section =>
-      section.items.some(item => item && formatValue(item.value) !== null)
+  ].filter(section =>
+    section.items.some(item => item && item.value !== null)
   );
 
   const handleBackdropClick = (e: React.MouseEvent) => {
@@ -125,10 +132,19 @@ const ProductCharacteristicsModal: React.FC<ProductCharacteristicsModalProps> = 
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+      className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-all duration-300 ${
+        isOpen
+          ? 'opacity-100 pointer-events-auto bg-black/50'
+          : 'opacity-0 pointer-events-none bg-transparent'
+      }`}
+      aria-hidden={!isOpen}
       onClick={handleBackdropClick}
     >
-      <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+      <div
+        className={`bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto transform transition-transform duration-300 ${
+          isOpen ? 'scale-100' : 'scale-95'
+        }`}
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b">
           <h2 className="text-2xl font-semibold">Все характеристики</h2>
@@ -165,7 +181,7 @@ const ProductCharacteristicsModal: React.FC<ProductCharacteristicsModalProps> = 
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {section.items
-                    .filter(item => item && formatValue(item.value) !== null)
+                    .filter(item => item && item.value !== null)
                     .map((item, j) => (
                       <div
                         key={j}
