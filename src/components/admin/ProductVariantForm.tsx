@@ -19,6 +19,7 @@ const sizeTypes = [
   { value: 'sofa', label: 'Sofa' },
   { value: 'blanket', label: 'Blanket' },
   { value: 'furniture', label: 'Furniture' },
+  { value: 'map3d', label: '3D Map' },
 ];
 
 const ProductVariantForm: React.FC<ProductVariantFormProps> = ({
