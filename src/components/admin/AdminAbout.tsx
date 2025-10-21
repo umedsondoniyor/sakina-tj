@@ -14,7 +14,6 @@ import {
  * - about_team: id uuid pk, name text, position text, description text, image_url text, order int
  */
 
-
 type AboutSettings = {
   id: string;
   hero_title: string | null;
@@ -896,4 +895,3 @@ const TeamForm: React.FC<{
     </form>
   );
 };
-export default AdminAbout;
