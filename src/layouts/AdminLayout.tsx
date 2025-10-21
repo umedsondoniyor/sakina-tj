@@ -114,7 +114,7 @@ const AdminLayout = () => {
                 }
               >
                 <Layers size={20} />
-                <span>Размеры товаров</span>
+                <span>Инвентарь</span>
               </NavLink>
 
               <NavLink
