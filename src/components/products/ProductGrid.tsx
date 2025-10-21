@@ -156,15 +156,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) =
             </div>
             <div>
               <div className="flex items-center mb-2">
-                <div className="flex">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star
-                      key={i}
-                      size={16}
-                      className={i < product.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}
-                    />
-                  ))}
-                </div>
+ */}
                 <span className="text-sm text-gray-500 ml-2">{product.review_count}</span>
               </div>
               <h3 className="font-medium mb-2 group-hover:text-teal-600 line-clamp-2">
