@@ -15,7 +15,7 @@ const sortOptions = [
   { value: 'discount', label: 'По скидке' },
   { value: 'new', label: 'По новизне' },
   { value: 'rating', label: 'По рейтингу' },
-  { value: 'reviews', label: 'По количеству отзывов' },
+  // { value: 'reviews', label: 'По количеству отзывов' },
   { value: 'promo', label: 'Акция' }
 ];
 
