@@ -42,7 +42,7 @@ import AdminOneClickOrders from './components/admin/AdminOneClickOrders';
 import AdminUsers from './components/admin/AdminUsers';
 import AdminSmsTemplates from './components/admin/AdminSmsTemplates';
 import AdminPayments from './components/admin/AdminPayments';
-import AdminAbout from './components/admin/AdminAbout';
+import {AdminAbout} from './components/admin/AdminAbout';
 
 // Optional: NotFound
 const NotFound = () => <div className="p-8 text-center">Page not found</div>;
