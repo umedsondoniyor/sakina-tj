@@ -156,8 +156,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) =
             </div>
             <div>
               <div className="flex items-center mb-2">
- */}
-                <span className="text-sm text-gray-500 ml-2">{product.review_count}</span>
+          */}
               </div>
               <h3 className="font-medium mb-2 group-hover:text-teal-600 line-clamp-2">
                 {product.name}
