@@ -319,6 +319,247 @@ const AdminAbout: React.FC = () => {
       </section>
 
       {/* STATS */}
+<section>
+  <div className="flex items-center justify-between mb-4">
+    <h2 className="text-2xl font-bold">Stats</h2>
+    <button
+      onClick={() => {
+        setEditingStat({
+          id: crypto.randomUUID(),
+          number: "",
+          label: "",
+          icon: "Clock",
+          order: nextOrder(stats),
+        });
+        setOpenStatModal(true);
+      }}
+      className="inline-flex items-center px-3 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+    >
+      <Plus className="w-4 h-4 mr-2" />
+      Add Stat
+    </button>
+  </div>
+
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    {stats.map((s) => {
+      const Icon = iconMap[s.icon as keyof typeof iconMap];
+      return (
+        <div
+          key={s.id}
+          className="bg-white rounded-lg shadow p-4 flex items-center justify-between"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-teal-50 flex items-center justify-center text-teal-600">
+              <Icon className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="font-semibold">{s.number}</div>
+              <div className="text-sm text-gray-600">{s.label}</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => {
+                setEditingStat(s);
+                setOpenStatModal(true);
+              }}
+              className="p-2 text-blue-600 hover:text-blue-800"
+            >
+              <Pencil className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => deleteStat(s.id)}
+              className="p-2 text-red-600 hover:text-red-800"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      );
+    })}
+  </div>
+</section>
+
+      {/* VALUES */}
+<section>
+  <div className="flex items-center justify-between mb-4">
+    <h2 className="text-2xl font-bold">Values</h2>
+    <button
+      onClick={() => {
+        setEditingValue({
+          id: crypto.randomUUID(),
+          title: "",
+          description: "",
+          icon: "Heart",
+          order: nextOrder(values),
+        });
+        setOpenValueModal(true);
+      }}
+      className="inline-flex items-center px-3 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+    >
+      <Plus className="w-4 h-4 mr-2" />
+      Add Value
+    </button>
+  </div>
+
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    {values.map((v) => {
+      const Icon = iconMap[v.icon as keyof typeof iconMap];
+      return (
+        <div
+          key={v.id}
+          className="bg-white rounded-lg shadow p-4 flex flex-col gap-3"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-teal-50 flex items-center justify-center text-teal-600">
+              <Icon className="w-6 h-6" />
+            </div>
+            <div className="font-semibold">{v.title}</div>
+          </div>
+          <div className="text-gray-600 text-sm">{v.description}</div>
+          <div className="flex items-center gap-3 justify-end">
+            <button
+              onClick={() => {
+                setEditingValue(v);
+                setOpenValueModal(true);
+              }}
+              className="p-2 text-blue-600 hover:text-blue-800"
+            >
+              <Pencil className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => deleteValue(v.id)}
+              className="p-2 text-red-600 hover:text-red-800"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      );
+    })}
+  </div>
+</section>
+{/* TIMELINE */}
+<section>
+  <div className="flex items-center justify-between mb-4">
+    <h2 className="text-2xl font-bold">Timeline</h2>
+    <button
+      onClick={() => {
+        setEditingTimeline({
+          id: crypto.randomUUID(),
+          year: "",
+          title: "",
+          description: "",
+          order: nextOrder(timeline),
+        });
+        setOpenTimelineModal(true);
+      }}
+      className="inline-flex items-center px-3 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+    >
+      <Plus className="w-4 h-4 mr-2" />
+      Add Item
+    </button>
+  </div>
+
+  <div className="space-y-3">
+    {timeline.map((t) => (
+      <div
+        key={t.id}
+        className="bg-white rounded-lg shadow p-4 flex items-center justify-between"
+      >
+        <div className="flex-1">
+          <div className="text-teal-600 font-semibold">{t.year}</div>
+          <div className="font-semibold">{t.title}</div>
+          <div className="text-gray-600 text-sm">{t.description}</div>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => {
+              setEditingTimeline(t);
+              setOpenTimelineModal(true);
+            }}
+            className="p-2 text-blue-600 hover:text-blue-800"
+          >
+            <Pencil className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => deleteTimelineItem(t.id)}
+            className="p-2 text-red-600 hover:text-red-800"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    ))}
+  </div>
+</section>
+{/* TEAM */}
+<section>
+  <div className="flex items-center justify-between mb-4">
+    <h2 className="text-2xl font-bold">Team</h2>
+    <button
+      onClick={() => {
+        setEditingTeam({
+          id: crypto.randomUUID(),
+          name: "",
+          position: "",
+          description: "",
+          image_url: "",
+          order: nextOrder(team),
+        });
+        setOpenTeamModal(true);
+      }}
+      className="inline-flex items-center px-3 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+    >
+      <Plus className="w-4 h-4 mr-2" />
+      Add Member
+    </button>
+  </div>
+
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    {team.map((m) => (
+      <div key={m.id} className="bg-white rounded-lg shadow p-4">
+        <div className="relative mb-3">
+          {m.image_url ? (
+            <img
+              src={m.image_url}
+              alt={m.name}
+              className="w-40 h-40 rounded-full object-cover mx-auto"
+            />
+          ) : (
+            <div className="w-40 h-40 rounded-full bg-gray-100 mx-auto flex items-center justify-center text-gray-400">
+              <Users className="w-10 h-10" />
+            </div>
+          )}
+        </div>
+        <div className="text-center">
+          <div className="font-semibold">{m.name}</div>
+          <div className="text-sm text-teal-600">{m.position}</div>
+          <div className="text-sm text-gray-600 mt-2">{m.description}</div>
+        </div>
+        <div className="mt-3 flex items-center justify-center gap-3">
+          <button
+            onClick={() => {
+              setEditingTeam(m);
+              setOpenTeamModal(true);
+            }}
+            className="p-2 text-blue-600 hover:text-blue-800"
+          >
+            <Pencil className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => deleteTeam(m.id)}
+            className="p-2 text-red-600 hover:text-red-800"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    ))}
+  </div>
+</section>
+
+
       {/* (Stats, Values, Timeline, and Team sections remain unchanged — your logic there is fine) */}
 
       {/* -------- MODALS -------- */}
