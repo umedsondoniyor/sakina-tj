@@ -3,8 +3,6 @@ import { CreditCard, Loader as Loader2, CircleAlert as AlertCircle } from 'lucid
 import { supabase } from '../lib/supabaseClient';
 import toast from 'react-hot-toast';
 
-import { buildDeliveryAddress } from '../lib/utils';
-
 interface PaymentButtonProps {
   amount: number;
   currency?: string;
@@ -15,6 +13,7 @@ interface PaymentButtonProps {
       price: number;
       quantity: number;
       category?: string;
+      product_variant_id?: string; // ✅ optional but expected
     }>;
     customerInfo: {
       name: string;
@@ -29,10 +28,6 @@ interface PaymentButtonProps {
       entrance?: string;
       floor?: string;
       intercom?: string;
-    };
-    invoices?: {
-      is_hold_required?: boolean;
-      is_outbox_marked?: boolean;
     };
   };
   onSuccess?: (paymentId: string) => void;
@@ -52,7 +47,7 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
   disabled = false,
   className = '',
   children,
-  gate = 'alif_bank'
+  gate = 'alif_bank',
 }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -71,92 +66,72 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
 
     try {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      
-      if (!supabaseUrl) {
-        throw new Error('Supabase URL not configured. Please check your environment variables.');
-      }
+      const defaultLocationId = import.meta.env.VITE_DEFAULT_LOCATION_ID;
+
+      if (!supabaseUrl) throw new Error('Supabase URL not configured');
+      if (!defaultLocationId) throw new Error('DEFAULT_LOCATION_ID not configured in .env');
 
       console.log('🚀 Initiating payment with Supabase URL:', supabaseUrl);
       console.log('📦 Order data:', {
         amount,
         currency,
         customerInfo: orderData.customerInfo,
-        itemsCount: orderData.items.length
+        itemsCount: orderData.items.length,
       });
 
+      debugger;
 
-      // Prepare simplified order data that matches working Postman payload
+      // --- 🧩 Fix variant_id formatting here ---
+      const sanitizeVariantId = (val?: string): string | null => {
+        if (!val) return null;
+        if (val.includes('_')) {
+          const parts = val.split('_');
+          return parts[1] || parts[0];
+        }
+        return val;
+      };
+
+      // Prepare full payload
       const orderDataWithDelivery = {
-        customerInfo: {
-          name: orderData.customerInfo.name,
-          email: orderData.customerInfo.email,
-          phone: orderData.customerInfo.phone
-        },
-        deliveryInfo: {
-          delivery_type: orderData.deliveryInfo.delivery_type,
-          delivery_address: orderData.deliveryInfo.delivery_address,
-          city: orderData.deliveryInfo.city,
-          apartment: orderData.deliveryInfo.apartment,
-          entrance: orderData.deliveryInfo.entrance,
-          floor: orderData.deliveryInfo.floor,
-          intercom: orderData.deliveryInfo.intercom
-        },
-        items: orderData.items.map(item => ({
-          product_variant_id: item.product_variant_id,
-          location_id: import.meta.env.VITE_DEFAULT_LOCATION_ID,
+        customerInfo: { ...orderData.customerInfo },
+        deliveryInfo: { ...orderData.deliveryInfo },
+        items: orderData.items.map((item) => ({
+          product_variant_id: sanitizeVariantId(item.product_variant_id || item.id), // ✅ ensure valid UUID
+          location_id: defaultLocationId, // ✅ fallback for warehouse
           name: item.name,
           price: Number(item.price),
           quantity: Number(item.quantity),
-          category: item.category || 'general'
-        }))
-
+          category: item.category || 'general',
+        })),
       };
 
-      console.log(orderData,'orderData');
+      console.log('📋 Final order data with variant/location IDs:', orderDataWithDelivery);
       debugger;
-
-      console.log('📋 Order data with delivery info prepared:', {
-        deliveryType: orderDataWithDelivery.deliveryInfo.delivery_type,
-        deliveryAddress: orderDataWithDelivery.deliveryInfo.delivery_address,
-        customerInfo: orderDataWithDelivery.customerInfo
-      });
-      debugger;
-
-      // Call Supabase Edge Function to initialize payment
-      console.log('🔄 Calling Edge Function: alif-payment-init');
 
       const paymentPayload = {
-        amount: amount,
-        currency: currency,
-        gate: gate,
-        orderData: orderDataWithDelivery
+        amount,
+        currency,
+        gate,
+        orderData: orderDataWithDelivery,
       };
 
       console.log('📦 Payload:', JSON.stringify(paymentPayload));
       debugger;
-      
+
       const { data, error } = await supabase.functions.invoke('alif-payment-init', {
-        body: paymentPayload
+        body: paymentPayload,
       });
 
-      if (error) {
-        console.error('❌ Edge Function error:', error);
-        throw new Error(`Edge Function Error: ${error.message || 'Unknown error'}`);
-      }
-
-      if (!data || !data.success) {
-        console.error('❌ Payment initialization failed:', data?.error);
-        throw new Error(data?.error || 'Payment initialization failed');
-      }
+      if (error) throw new Error(`Edge Function Error: ${error.message || 'Unknown error'}`);
+      if (!data?.success) throw new Error(data?.error || 'Payment initialization failed');
 
       console.log('✅ Edge Function response received:', data);
-      console.log('💳 Payment URL received:', data.payment_url);
+      debugger;
 
-      // Store payment info for later reference
+      // Save temporary data for callback
       sessionStorage.setItem('sakina_payment_id', data.payment_id);
-      sessionStorage.setItem('sakina_order_id', data.order_id);
+      sessionStorage.setItem('sakina_order_id', data.order_id)
 
-      // Redirect to Alif Bank payment page
       if (data.payment_url) {
         console.log('🔄 Redirecting to payment page...');
         window.location.href = data.payment_url;
@@ -164,13 +139,11 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
         throw new Error('Payment URL not received from Alif Bank');
       }
 
-      // Call success callback
       onSuccess?.(data.payment_id);
-
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Произошла ошибка при инициализации платежа';
+      const errorMessage =
+        err instanceof Error ? err.message : 'Произошла ошибка при инициализации платежа';
       console.error('❌ Payment initiation error:', err);
-      
       setError(errorMessage);
       onError?.(errorMessage);
       toast.error(errorMessage);
