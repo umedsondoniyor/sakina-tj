@@ -896,3 +896,4 @@ const TeamForm: React.FC<{
     </form>
   );
 };
+export default AdminAbout;
