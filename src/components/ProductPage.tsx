@@ -216,18 +216,6 @@ const ProductPage: React.FC = () => {
               value={safeValue(product.warranty_years, ' лет')}
             />
 
-            <SpecRow
-              label="Рейтинг"
-              value={
-                product.rating
-                  ? `${product.rating}/5${
-                      product.review_count
-                        ? ` (${product.review_count} отзывов)`
-                        : ''
-                    }`
-                  : null
-              }
-            />
 
             <SpecRow
               label="Страна производства"
