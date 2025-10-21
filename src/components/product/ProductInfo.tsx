@@ -86,14 +86,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
       )}
 
       <div className="flex items-center mb-4">
-        <div className="flex">
-          {[...Array(5)].map((_, i) => (
-            <Star
-              key={i}
-              className={`w-4 h-4 ${i < product.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
-            />
-          ))}
-        </div>
+
         {/* <span className="ml-2 text-sm text-gray-600">{product.review_count} отзывов</span> */}
       </div>
 
