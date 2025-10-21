@@ -382,7 +382,7 @@ const ProductsPage: React.FC = () => {
                 <option value="discount">По скидке</option>
                 <option value="new">По новизне</option>
                 <option value="rating">По рейтингу</option>
-                <option value="reviews">По количеству отзывов</option>
+                {/* <option value="reviews">По количеству отзывов</option> */}
               </select>
             </div>
 
