@@ -152,7 +152,7 @@ const AdminProductVariants: React.FC = () => {
 
   const filteredVariants = filterType === 'all' ? variants : variants.filter((v) => v.size_type === filterType);
 
-  const sizeTypes = ['pillow', 'mattress', 'bed', 'sofa', 'blanket', 'furniture'];
+  const sizeTypes = ['pillow', 'mattress', 'bed', 'sofa', 'blanket', 'furniture','map'];
 
   if (loading) {
     return (
