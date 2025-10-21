@@ -72,7 +72,7 @@ BEGIN
   ) THEN
     ALTER TABLE product_variants 
     ADD CONSTRAINT valid_size_type 
-    CHECK (size_type IN ('pillow', 'mattress', 'bed', 'sofa', 'blanket', 'furniture'));
+    CHECK (size_type IN ('pillow', 'mattress', 'bed', 'sofa', 'blanket', 'furniture','map'));
   END IF;
 END $$;
 
