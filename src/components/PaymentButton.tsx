@@ -120,6 +120,7 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
         deliveryAddress: orderDataWithDelivery.deliveryInfo.delivery_address,
         customerInfo: orderDataWithDelivery.customerInfo
       });
+      debugger;
 
       // Call Supabase Edge Function to initialize payment
       console.log('🔄 Calling Edge Function: alif-payment-init');
