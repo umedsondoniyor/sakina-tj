@@ -1,5 +1,23 @@
-import React, { useState } from "react";
-import { AboutTeam } from "../ui/types";
+import React, { useEffect, useState } from "react";
+import { supabase } from "../../lib/supabaseClient";
+import toast from "react-hot-toast";
+import { Plus, Pencil, Trash2, Image as ImageIcon, Users } from "lucide-react";
+
+import { iconMap } from "./ui/icons";
+import {
+  AboutSettings,
+  AboutStat,
+  AboutValue,
+  AboutTimeline,
+  AboutTeam,
+} from "./ui/types";
+import Modal from "./ui/Modal";
+
+import SettingsForm from "./forms/SettingsForm";
+import StatForm from "./forms/StatForm";
+import ValueForm from "./forms/ValueForm";
+import TimelineForm from "./forms/TimelineForm";
+import TeamForm from "./forms/TeamForm";
 
 interface Props {
   initial: AboutTeam;
