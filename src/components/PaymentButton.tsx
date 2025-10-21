@@ -133,6 +133,7 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
       };
 
       console.log('📦 Payload:', JSON.stringify(paymentPayload));
+      debugger;
       
       const { data, error } = await supabase.functions.invoke('alif-payment-init', {
         body: paymentPayload
