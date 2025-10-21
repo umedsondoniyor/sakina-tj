@@ -94,7 +94,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
             />
           ))}
         </div>
-        <span className="ml-2 text-sm text-gray-600">{product.review_count} отзывов</span>
+        {/* <span className="ml-2 text-sm text-gray-600">{product.review_count} отзывов</span> */}
       </div>
 
       <div className="mb-6">
