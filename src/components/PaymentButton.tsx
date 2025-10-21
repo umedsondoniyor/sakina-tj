@@ -113,6 +113,7 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
       };
 
       console.log(orderData,'orderData');
+      debugger;
 
       console.log('📋 Order data with delivery info prepared:', {
         deliveryType: orderDataWithDelivery.deliveryInfo.delivery_type,
