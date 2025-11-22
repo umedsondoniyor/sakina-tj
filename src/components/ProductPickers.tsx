@@ -33,7 +33,7 @@ const ProductPickers = () => {
         {/* Bed Picker */}
         <div 
           className="bg-gray-50 rounded-lg p-8 flex flex-col md:flex-row items-center cursor-pointer hover:bg-gray-100 transition-colors"
-          onClick={() => setIsQuizOpen(true)}
+          onClick={() => setIsQuizOpen(false)}
         >
           <div className="flex-1 mb-6 md:mb-0 text-brand-navy">
             <h3 className="text-2xl font-bold mb-2">Подборщик кроватей</h3>
