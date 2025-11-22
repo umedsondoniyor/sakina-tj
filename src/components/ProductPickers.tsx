@@ -52,7 +52,7 @@ const ProductPickers = () => {
             />
           </div>
         </div>
-
+{/* vremenno etto uberayem tak kak Abdumanob tak poprosil */}
         {/* Pillow Picker */}
         {/* <div 
           className="bg-gray-50 rounded-lg p-8 flex flex-col md:flex-row items-center cursor-pointer hover:bg-gray-100 transition-colors"
