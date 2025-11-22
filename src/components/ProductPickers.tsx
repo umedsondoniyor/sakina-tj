@@ -48,13 +48,13 @@ const ProductPickers = () => {
             <img
               src="https://ik.imagekit.io/3js0rb3pk/bed.png"
               alt="Bed"
-              className="w-auto h-48 md:h-64 object-contain"
+              className="w-auto h-48 md:h-64 object-contain "
             />
           </div>
         </div>
 
         {/* Pillow Picker */}
-        <div 
+        {/* <div 
           className="bg-gray-50 rounded-lg p-8 flex flex-col md:flex-row items-center cursor-pointer hover:bg-gray-100 transition-colors"
           onClick={() => setIsQuizOpen(true)}
         >
@@ -74,10 +74,10 @@ const ProductPickers = () => {
               className="w-auto h-48 md:h-64 object-contain"
             />
           </div>
-        </div>
+        </div> */}
 
         {/* Massage Chair */}
-        <div 
+        {/* <div 
           className="bg-gray-50 rounded-lg p-8 flex flex-col md:flex-row items-center cursor-pointer hover:bg-gray-100 transition-colors"
           onClick={() => setIsQuizOpen(true)}
         >
@@ -97,7 +97,7 @@ const ProductPickers = () => {
               className="w-auto h-48 md:h-64 object-contain"
             />
           </div>
-        </div>
+        </div> */}
 
         {/* Quiz Modal */}
         <QuizModal open={isQuizOpen} onClose={() => setIsQuizOpen(false)} />
