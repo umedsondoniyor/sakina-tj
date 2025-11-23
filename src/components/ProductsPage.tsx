@@ -206,10 +206,22 @@ const ProductsPage: React.FC = () => {
       list = list.filter(p => p.variants?.some(v => (v as any).inventory?.in_stock));
     }
 
-    // Numeric ranges (product-level; leave variant-level to server search if needed)
-    if (filters.width.length === 2)  list = list.filter(p => inRange((p as any).width,  filters.width));
-    if (filters.length.length === 2) list = list.filter(p => inRange((p as any).length, filters.length));
-    if (filters.height.length === 2) list = list.filter(p => inRange((p as any).height, filters.height));
+    // Numeric ranges - check variants for dimensions
+    if (filters.width.length === 2) {
+      list = list.filter(p =>
+        p.variants?.some(v => inRange(v.width_cm, filters.width))
+      );
+    }
+    if (filters.length.length === 2) {
+      list = list.filter(p =>
+        p.variants?.some(v => inRange(v.length_cm, filters.length))
+      );
+    }
+    if (filters.height.length === 2) {
+      list = list.filter(p =>
+        p.variants?.some(v => inRange(v.height_cm, filters.height))
+      );
+    }
     if (filters.price.length === 2)  list = list.filter(p => inRange(p.price, filters.price));
 
     // Sorting
