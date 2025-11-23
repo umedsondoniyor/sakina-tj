@@ -69,6 +69,8 @@ const ProductsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState<string | null>(null);
 
+  const [activeQuickSize, setActiveQuickSize] = useState<string | null>(null);
+
   // Live category state (seeded from URL)
   const [selectedCategories, setSelectedCategories] = useState<string[]>(urlSelectedCategories);
 
@@ -261,6 +263,39 @@ const ProductsPage: React.FC = () => {
     navigate(`/products/${productId}`);
   }, [navigate]);
 
+  const handleQuickSizeSelect = useCallback(
+  ({ label, width, length }: { label: string; width: number; length: number }) => {
+    setActiveQuickSize((prev) => {
+      const isSame = prev === label;
+
+      if (isSame) {
+        // Toggle OFF: clear size filters
+        setFilters((f) => ({
+          ...f,
+          width: [],
+          length: [],
+        }));
+        return null;
+      }
+
+      // Toggle ON: apply exact width/length range
+      setFilters((f) => ({
+        ...f,
+        width: [width, width],
+        length: [length, length],
+      }));
+      return label;
+    });
+  },
+  [setFilters]
+);
+
+const handleOpenMattressWizard = useCallback(() => {
+  // change route if your builder path is different
+  navigate("/mattress-builder");
+}, [navigate]);
+
+
   // UI states
   if (loading) {
     return (
@@ -339,7 +374,13 @@ const ProductsPage: React.FC = () => {
         />
 
         {/* Quick Filters */}
-        <QuickFilters selectedCategories={selectedCategories} />
+        <QuickFilters
+          selectedCategories={selectedCategories}
+          activeSize={activeQuickSize}
+          onSelectSize={handleQuickSizeSelect}
+          onOpenMattressWizard={handleOpenMattressWizard}
+        />
+
 
         {/* Mobile Filter Bar */}
         <MobileFilterBar
