@@ -30,11 +30,11 @@ const QuickFilters: React.FC<QuickFiltersProps> = ({
       <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
         <div className="flex space-x-3 min-w-max">
           {/* Online mattress wizard */}
-          <span
+          <p
             className="flex-none px-4 py-2 bg-yellow-100 rounded-full text-sm whitespace-nowrap hover:bg-yellow-200"
           >
             Онлайн-подбор матраса
-          </span>
+          </p>
 
           {/* Size quick filters */}
           {QUICK_SIZES.map((size) => {
