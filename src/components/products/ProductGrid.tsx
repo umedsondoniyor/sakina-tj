@@ -1,8 +1,8 @@
 import React from 'react';
 import { Star } from 'lucide-react';
 import type { Product, ProductVariant } from '../../lib/types';
-import PillowSizeModal from './PillowSizeModal';
-import PillowConfirmationModal from './PillowConfirmationModal';
+import ProductSizeModal from './ProductSizeModal';
+import ProductConfirmationModal from './ProductConfirmationModal';
 import { useCart } from '../../contexts/CartContext';
 import { getProductVariants } from '../../lib/api';
 
@@ -57,10 +57,10 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) =
     try {
       setLoadingVariants(true);
       setSelectedProduct(product);
-      
+
       const variants = await getProductVariants(product.id);
       setProductVariants(variants);
-      
+
       if (variants.length > 0) {
         setShowSizeModal(true);
       } else {
@@ -156,7 +156,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) =
             </div>
             <div>
               <div className="flex items-center mb-2">
-                <div className="flex">
+                {/* <div className="flex">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <Star
                       key={i}
@@ -164,8 +164,8 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) =
                       className={i < product.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}
                     />
                   ))}
-                </div>
-                <span className="text-sm text-gray-500 ml-2">{product.review_count}</span>
+                </div> */}
+                {/* <span className="text-sm text-gray-500 ml-2">{product.review_count}</span> */}
               </div>
               <h3 className="font-medium mb-2 group-hover:text-teal-600 line-clamp-2">
                 {product.name}
@@ -195,22 +195,24 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) =
         ))}
       </div>
 
-      {/* Pillow Size Selection Modal */}
-      <PillowSizeModal
+      {/* Product Size Selection Modal */}
+      <ProductSizeModal
         isOpen={showSizeModal}
         onClose={handleCloseModals}
         onSelectSize={handleVariantSelect}
         productName={selectedProduct?.name || ''}
         variants={productVariants}
+        category={selectedProduct?.category}
       />
 
-      {/* Pillow Confirmation Modal */}
-      <PillowConfirmationModal
+      {/* Product Confirmation Modal */}
+      <ProductConfirmationModal
         isOpen={showConfirmationModal}
         onClose={handleCloseModals}
         onAddToCart={handleConfirmAddToCart}
         productName={selectedProduct?.name || ''}
         selectedVariant={selectedVariant!}
+        category={selectedProduct?.category}
       />
     </>
   );

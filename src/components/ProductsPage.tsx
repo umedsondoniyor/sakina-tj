@@ -41,7 +41,14 @@ const categoryDisplayNames: Record<string, string> = {
 const inRange = (val: number | undefined, range?: number[]) => {
   if (!range || range.length < 2) return true;
   if (val == null) return false;
-  const [min, max] = range;
+  let [min, max] = range;
+  // -1 means "not set" so ignore that boundary
+  if (min === -1) min = undefined as any;
+  if (max === -1) max = undefined as any;
+  // If both are set and min > max, swap them for filtering
+  if (min != null && max != null && min > max) {
+    [min, max] = [max, min];
+  }
   if (typeof min === 'number' && val < min) return false;
   if (typeof max === 'number' && val > max) return false;
   return true;
@@ -69,26 +76,58 @@ const ProductsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState<string | null>(null);
 
-  // Live category state (seeded from URL)
-  const [selectedCategories, setSelectedCategories] = useState<string[]>(urlSelectedCategories);
+  const [activeQuickSize, setActiveQuickSize] = useState<string | null>(null);
+
+  // Live category state (seeded from URL or quiz)
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(() => {
+    const state = location.state as any;
+    if (state?.filters) {
+      // Coming from quiz - show mattresses
+      return ['mattresses'];
+    }
+    return urlSelectedCategories;
+  });
 
   const [showFilters, setShowFilters]     = useState(false);
   const [showSortModal, setShowSortModal] = useState(false);
   const [sortBy, setSortBy]               = useState<string>((location.state as any)?.sortBy || 'popularity');
 
-  const [filters, setFilters] = useState<FilterState>({
-    age: [],
-    hardness: [],
-    width: [],
-    length: [],
-    height: [],
-    price: [],
-    inStock: false,
-    productType: urlSelectedCategories,
-    mattressType: [],
-    preferences: [],
-    functions: [],
-    weightCategory: [],
+  const [filters, setFilters] = useState<FilterState>(() => {
+    // Check if coming from quiz with filters
+    const state = location.state as any;
+    const quizFilters = state?.filters;
+
+    if (quizFilters) {
+      return {
+        age: quizFilters.age || [],
+        hardness: quizFilters.hardness || [],
+        width: quizFilters.width || [],
+        length: quizFilters.length || [],
+        height: quizFilters.height || [],
+        price: quizFilters.price || [],
+        inStock: quizFilters.inStock || false,
+        productType: ['mattresses'], // Quiz is for mattresses
+        mattressType: quizFilters.mattressType || [],
+        preferences: quizFilters.preferences || [],
+        functions: quizFilters.functions || [],
+        weightCategory: quizFilters.weightCategory || [],
+      };
+    }
+
+    return {
+      age: [],
+      hardness: [],
+      width: [],
+      length: [],
+      height: [],
+      price: [],
+      inStock: false,
+      productType: urlSelectedCategories,
+      mattressType: [],
+      preferences: [],
+      functions: [],
+      weightCategory: [],
+    };
   });
 
   // Fetch all products once
@@ -108,11 +147,15 @@ const ProductsPage: React.FC = () => {
     })();
   }, []);
 
-  // Keep categories in sync with the URL
+  // Keep categories in sync with the URL (but don't override quiz selections)
   useEffect(() => {
+    const state = location.state as any;
+    // Don't sync if we came from the quiz (quiz sets its own categories)
+    if (state?.filters) return;
+
     setSelectedCategories(urlSelectedCategories);
     setFilters(prev => ({ ...prev, productType: urlSelectedCategories }));
-  }, [urlSelectedCategories]);
+  }, [urlSelectedCategories, location.state]);
 
   // Real “clear categories”: also clear URL & navigation state
   const clearCategories = useCallback(() => {
@@ -204,10 +247,22 @@ const ProductsPage: React.FC = () => {
       list = list.filter(p => p.variants?.some(v => (v as any).inventory?.in_stock));
     }
 
-    // Numeric ranges (product-level; leave variant-level to server search if needed)
-    if (filters.width.length === 2)  list = list.filter(p => inRange((p as any).width,  filters.width));
-    if (filters.length.length === 2) list = list.filter(p => inRange((p as any).length, filters.length));
-    if (filters.height.length === 2) list = list.filter(p => inRange((p as any).height, filters.height));
+    // Numeric ranges - check variants for dimensions
+    if (filters.width.length === 2) {
+      list = list.filter(p =>
+        p.variants?.some(v => inRange(v.width_cm, filters.width))
+      );
+    }
+    if (filters.length.length === 2) {
+      list = list.filter(p =>
+        p.variants?.some(v => inRange(v.length_cm, filters.length))
+      );
+    }
+    if (filters.height.length === 2) {
+      list = list.filter(p =>
+        p.variants?.some(v => inRange(v.height_cm, filters.height))
+      );
+    }
     if (filters.price.length === 2)  list = list.filter(p => inRange(p.price, filters.price));
 
     // Sorting
@@ -260,6 +315,39 @@ const ProductsPage: React.FC = () => {
   const handleProductClick = useCallback((productId: string) => {
     navigate(`/products/${productId}`);
   }, [navigate]);
+
+  const handleQuickSizeSelect = useCallback(
+  ({ label, width, length }: { label: string; width: number; length: number }) => {
+    setActiveQuickSize((prev) => {
+      const isSame = prev === label;
+
+      if (isSame) {
+        // Toggle OFF: clear size filters
+        setFilters((f) => ({
+          ...f,
+          width: [],
+          length: [],
+        }));
+        return null;
+      }
+
+      // Toggle ON: apply exact width/length range
+      setFilters((f) => ({
+        ...f,
+        width: [width, width],
+        length: [length, length],
+      }));
+      return label;
+    });
+  },
+  [setFilters]
+);
+
+const handleOpenMattressWizard = useCallback(() => {
+  // change route if your builder path is different
+  navigate("/mattress-builder");
+}, [navigate]);
+
 
   // UI states
   if (loading) {
@@ -339,7 +427,13 @@ const ProductsPage: React.FC = () => {
         />
 
         {/* Quick Filters */}
-        <QuickFilters selectedCategories={selectedCategories} />
+        <QuickFilters
+          selectedCategories={selectedCategories}
+          activeSize={activeQuickSize}
+          onSelectSize={handleQuickSizeSelect}
+          onOpenMattressWizard={handleOpenMattressWizard}
+        />
+
 
         {/* Mobile Filter Bar */}
         <MobileFilterBar

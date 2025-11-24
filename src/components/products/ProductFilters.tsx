@@ -36,18 +36,15 @@ const upsertRange = (prev: number[], idx: 0 | 1, value?: number): number[] => {
   const min = next[0];
   const max = next[1];
   if (min == null && max == null) return [];
-  // normalize if both present & min > max
-  if (min != null && max != null && min > max) {
-    return [max, min];
-  }
-  return [min ?? 0, max ?? Number.MAX_SAFE_INTEGER];
+  // DON'T auto-swap - let users type freely, they're still typing!
+  // Keep actual values, use -1 as sentinel for "not set"
+  return [min ?? -1, max ?? -1];
 };
 
 const getInputValue = (range: number[], idx: 0 | 1) => {
   if (!range?.length) return '';
   const val = range[idx];
-  if (val === 0 && idx === 0) return ''; // treat 0-min as empty in UI
-  if (val === Number.MAX_SAFE_INTEGER && idx === 1) return ''; // treat max as empty
+  if (val === -1) return ''; // -1 means "not set"
   return String(val);
 };
 
@@ -140,7 +137,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
         <div>
           <h3 className="font-medium mb-3">Жесткость</h3>
           <div className="space-y-2">
-            {['Жесткий', 'Средняя', 'Мягкий', 'Разная жесткость сторон'].map((opt) => (
+            {['Жесткая', 'Средняя', 'Мягкая', 'Разная жесткость сторон'].map((opt) => (
               <label key={opt} className="flex items-center space-x-2">
                 <input
                   type="checkbox"

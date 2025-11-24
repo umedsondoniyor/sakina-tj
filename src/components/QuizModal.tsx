@@ -101,15 +101,29 @@ const QuizModal: React.FC<QuizModalProps> = ({ open, onClose }) => {
     return availableSteps[activeStep] ?? null;
   }, [availableSteps, activeStep]);
 
-  // Submit logic (unchanged)
-  const handleSubmit = useCallback((finalSelections = selections) => {
-    const filters = {
-      hardness: finalSelections.hardness ? [finalSelections.hardness] : [],
-      width: finalSelections.self_size ? [parseInt(finalSelections.self_size.split('_')[0])] : [],
-      length: finalSelections.self_size ? [parseInt(finalSelections.self_size.split('_')[1])] : [],
-      price: [],
-      inStock: true
+  // Map quiz values to filter values
+  const mapHardnessToFilter = (hardness: string): string => {
+    const hardnessMap: Record<string, string> = {
+      'soft': 'Мягкая',
+      'middle': 'Средняя',
+      'hard': 'Жесткая'
     };
+    return hardnessMap[hardness] || hardness;
+  };
+
+  // Submit logic - map quiz selections to product filters
+  const handleSubmit = useCallback((finalSelections = selections) => {
+    const width = finalSelections.self_size ? parseInt(finalSelections.self_size.split('_')[0]) : undefined;
+    const length = finalSelections.self_size ? parseInt(finalSelections.self_size.split('_')[1]) : undefined;
+
+    const filters = {
+      hardness: finalSelections.hardness ? [mapHardnessToFilter(finalSelections.hardness)] : [],
+      width: width ? [width, -1] : [],
+      length: length ? [length, -1] : [],
+      price: [],
+      inStock: false
+    };
+
     navigate('/products', {
       state: {
         filters,
