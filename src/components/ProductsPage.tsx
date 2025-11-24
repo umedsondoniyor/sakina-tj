@@ -78,26 +78,56 @@ const ProductsPage: React.FC = () => {
 
   const [activeQuickSize, setActiveQuickSize] = useState<string | null>(null);
 
-  // Live category state (seeded from URL)
-  const [selectedCategories, setSelectedCategories] = useState<string[]>(urlSelectedCategories);
+  // Live category state (seeded from URL or quiz)
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(() => {
+    const state = location.state as any;
+    if (state?.filters) {
+      // Coming from quiz - show mattresses
+      return ['mattresses'];
+    }
+    return urlSelectedCategories;
+  });
 
   const [showFilters, setShowFilters]     = useState(false);
   const [showSortModal, setShowSortModal] = useState(false);
   const [sortBy, setSortBy]               = useState<string>((location.state as any)?.sortBy || 'popularity');
 
-  const [filters, setFilters] = useState<FilterState>({
-    age: [],
-    hardness: [],
-    width: [],
-    length: [],
-    height: [],
-    price: [],
-    inStock: false,
-    productType: urlSelectedCategories,
-    mattressType: [],
-    preferences: [],
-    functions: [],
-    weightCategory: [],
+  const [filters, setFilters] = useState<FilterState>(() => {
+    // Check if coming from quiz with filters
+    const state = location.state as any;
+    const quizFilters = state?.filters;
+
+    if (quizFilters) {
+      return {
+        age: quizFilters.age || [],
+        hardness: quizFilters.hardness || [],
+        width: quizFilters.width || [],
+        length: quizFilters.length || [],
+        height: quizFilters.height || [],
+        price: quizFilters.price || [],
+        inStock: quizFilters.inStock || false,
+        productType: ['mattresses'], // Quiz is for mattresses
+        mattressType: quizFilters.mattressType || [],
+        preferences: quizFilters.preferences || [],
+        functions: quizFilters.functions || [],
+        weightCategory: quizFilters.weightCategory || [],
+      };
+    }
+
+    return {
+      age: [],
+      hardness: [],
+      width: [],
+      length: [],
+      height: [],
+      price: [],
+      inStock: false,
+      productType: urlSelectedCategories,
+      mattressType: [],
+      preferences: [],
+      functions: [],
+      weightCategory: [],
+    };
   });
 
   // Fetch all products once
