@@ -202,6 +202,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) =
         onSelectSize={handleVariantSelect}
         productName={selectedProduct?.name || ''}
         variants={productVariants}
+        category={selectedProduct?.category}
       />
 
       {/* Pillow Confirmation Modal */}
