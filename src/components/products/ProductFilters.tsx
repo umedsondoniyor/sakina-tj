@@ -40,14 +40,14 @@ const upsertRange = (prev: number[], idx: 0 | 1, value?: number): number[] => {
   if (min != null && max != null && min > max) {
     return [max, min];
   }
-  return [min ?? 0, max ?? Number.MAX_SAFE_INTEGER];
+  // Keep actual values, use -1 as sentinel for "not set"
+  return [min ?? -1, max ?? -1];
 };
 
 const getInputValue = (range: number[], idx: 0 | 1) => {
   if (!range?.length) return '';
   const val = range[idx];
-  if (val === 0 && idx === 0) return ''; // treat 0-min as empty in UI
-  if (val === Number.MAX_SAFE_INTEGER && idx === 1) return ''; // treat max as empty
+  if (val === -1) return ''; // -1 means "not set"
   return String(val);
 };
 

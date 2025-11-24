@@ -42,8 +42,9 @@ const inRange = (val: number | undefined, range?: number[]) => {
   if (!range || range.length < 2) return true;
   if (val == null) return false;
   const [min, max] = range;
-  if (typeof min === 'number' && val < min) return false;
-  if (typeof max === 'number' && val > max) return false;
+  // -1 means "not set" so ignore that boundary
+  if (typeof min === 'number' && min !== -1 && val < min) return false;
+  if (typeof max === 'number' && max !== -1 && val > max) return false;
   return true;
 };
 
