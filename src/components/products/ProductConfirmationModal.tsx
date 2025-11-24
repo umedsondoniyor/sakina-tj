@@ -2,7 +2,7 @@ import React from 'react';
 import { X } from 'lucide-react';
 import type { ProductVariant } from '../../lib/types';
 
-interface PillowConfirmationModalProps {
+interface ProductConfirmationModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAddToCart: () => void;
@@ -11,7 +11,7 @@ interface PillowConfirmationModalProps {
   category?: string;
 }
 
-const PillowConfirmationModal: React.FC<PillowConfirmationModalProps> = ({
+const ProductConfirmationModal: React.FC<ProductConfirmationModalProps> = ({
   isOpen,
   onClose,
   onAddToCart,
@@ -81,4 +81,4 @@ const PillowConfirmationModal: React.FC<PillowConfirmationModalProps> = ({
   );
 };
 
-export default PillowConfirmationModal;
+export default ProductConfirmationModal;

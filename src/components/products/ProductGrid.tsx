@@ -1,8 +1,8 @@
 import React from 'react';
 import { Star } from 'lucide-react';
 import type { Product, ProductVariant } from '../../lib/types';
-import PillowSizeModal from './PillowSizeModal';
-import PillowConfirmationModal from './PillowConfirmationModal';
+import ProductSizeModal from './ProductSizeModal';
+import ProductConfirmationModal from './ProductConfirmationModal';
 import { useCart } from '../../contexts/CartContext';
 import { getProductVariants } from '../../lib/api';
 
@@ -195,8 +195,8 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) =
         ))}
       </div>
 
-      {/* Pillow Size Selection Modal */}
-      <PillowSizeModal
+      {/* Product Size Selection Modal */}
+      <ProductSizeModal
         isOpen={showSizeModal}
         onClose={handleCloseModals}
         onSelectSize={handleVariantSelect}
@@ -205,8 +205,8 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) =
         category={selectedProduct?.category}
       />
 
-      {/* Pillow Confirmation Modal */}
-      <PillowConfirmationModal
+      {/* Product Confirmation Modal */}
+      <ProductConfirmationModal
         isOpen={showConfirmationModal}
         onClose={handleCloseModals}
         onAddToCart={handleConfirmAddToCart}

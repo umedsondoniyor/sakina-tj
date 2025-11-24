@@ -2,7 +2,7 @@ import React from 'react';
 import { X } from 'lucide-react';
 import type { ProductVariant } from '../../lib/types';
 
-interface PillowSizeModalProps {
+interface ProductSizeModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSelectSize: (variant: ProductVariant) => void;
@@ -11,7 +11,7 @@ interface PillowSizeModalProps {
   category?: string;
 }
 
-const PillowSizeModal: React.FC<PillowSizeModalProps> = ({
+const ProductSizeModal: React.FC<ProductSizeModalProps> = ({
   isOpen,
   onClose,
   onSelectSize,
@@ -107,4 +107,4 @@ const PillowSizeModal: React.FC<PillowSizeModalProps> = ({
   );
 };
 
-export default PillowSizeModal;
+export default ProductSizeModal;
