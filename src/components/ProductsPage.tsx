@@ -147,11 +147,15 @@ const ProductsPage: React.FC = () => {
     })();
   }, []);
 
-  // Keep categories in sync with the URL
+  // Keep categories in sync with the URL (but don't override quiz selections)
   useEffect(() => {
+    const state = location.state as any;
+    // Don't sync if we came from the quiz (quiz sets its own categories)
+    if (state?.filters) return;
+
     setSelectedCategories(urlSelectedCategories);
     setFilters(prev => ({ ...prev, productType: urlSelectedCategories }));
-  }, [urlSelectedCategories]);
+  }, [urlSelectedCategories, location.state]);
 
   // Real “clear categories”: also clear URL & navigation state
   const clearCategories = useCallback(() => {
