@@ -41,10 +41,16 @@ const categoryDisplayNames: Record<string, string> = {
 const inRange = (val: number | undefined, range?: number[]) => {
   if (!range || range.length < 2) return true;
   if (val == null) return false;
-  const [min, max] = range;
+  let [min, max] = range;
   // -1 means "not set" so ignore that boundary
-  if (typeof min === 'number' && min !== -1 && val < min) return false;
-  if (typeof max === 'number' && max !== -1 && val > max) return false;
+  if (min === -1) min = undefined as any;
+  if (max === -1) max = undefined as any;
+  // If both are set and min > max, swap them for filtering
+  if (min != null && max != null && min > max) {
+    [min, max] = [max, min];
+  }
+  if (typeof min === 'number' && val < min) return false;
+  if (typeof max === 'number' && val > max) return false;
   return true;
 };
 

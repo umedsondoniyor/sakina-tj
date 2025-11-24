@@ -36,10 +36,7 @@ const upsertRange = (prev: number[], idx: 0 | 1, value?: number): number[] => {
   const min = next[0];
   const max = next[1];
   if (min == null && max == null) return [];
-  // normalize if both present & min > max
-  if (min != null && max != null && min > max) {
-    return [max, min];
-  }
+  // DON'T auto-swap - let users type freely, they're still typing!
   // Keep actual values, use -1 as sentinel for "not set"
   return [min ?? -1, max ?? -1];
 };
