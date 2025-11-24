@@ -57,10 +57,11 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) =
     try {
       setLoadingVariants(true);
       setSelectedProduct(product);
-      
+
       const variants = await getProductVariants(product.id);
+      console.log('[ProductGrid] Loaded variants for', product.name, ':', variants);
       setProductVariants(variants);
-      
+
       if (variants.length > 0) {
         setShowSizeModal(true);
       } else {
