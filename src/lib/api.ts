@@ -106,9 +106,7 @@ export async function getProductVariants(productId: string): Promise<ProductVari
 
     // Create a map of variant_id to inventory
     const inventoryMap = new Map();
-    console.log('[getProductVariants] Raw inventory data:', inventoryData);
     (inventoryData || []).forEach((inv: any) => {
-      console.log('[getProductVariants] Processing inventory:', inv);
       // Take the first inventory record for each variant
       if (!inventoryMap.has(inv.product_variant_id)) {
         inventoryMap.set(inv.product_variant_id, {
@@ -120,13 +118,10 @@ export async function getProductVariants(productId: string): Promise<ProductVari
     });
 
     // Combine variants with their inventory
-    const result = variantsData.map((v: any) => ({
+    return variantsData.map((v: any) => ({
       ...v,
       inventory: inventoryMap.get(v.id),
     })) as ProductVariant[];
-
-    console.log('[getProductVariants] Final variants with inventory:', result);
-    return result;
   }, 3, 600, `getProductVariants:${productId}`);
 }
 

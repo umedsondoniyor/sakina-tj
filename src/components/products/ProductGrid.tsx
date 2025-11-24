@@ -59,7 +59,6 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) =
       setSelectedProduct(product);
 
       const variants = await getProductVariants(product.id);
-      console.log('[ProductGrid] Loaded variants for', product.name, ':', variants);
       setProductVariants(variants);
 
       if (variants.length > 0) {
@@ -213,6 +212,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) =
         onAddToCart={handleConfirmAddToCart}
         productName={selectedProduct?.name || ''}
         selectedVariant={selectedVariant!}
+        category={selectedProduct?.category}
       />
     </>
   );

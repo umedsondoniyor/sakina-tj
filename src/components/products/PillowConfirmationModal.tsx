@@ -8,6 +8,7 @@ interface PillowConfirmationModalProps {
   onAddToCart: () => void;
   productName: string;
   selectedVariant: ProductVariant;
+  category?: string;
 }
 
 const PillowConfirmationModal: React.FC<PillowConfirmationModalProps> = ({
@@ -15,9 +16,30 @@ const PillowConfirmationModal: React.FC<PillowConfirmationModalProps> = ({
   onClose,
   onAddToCart,
   productName,
-  selectedVariant
+  selectedVariant,
+  category
 }) => {
   if (!isOpen) return null;
+
+  const isPillow = category === 'pillows';
+  const isMattress = category === 'mattresses';
+  const isBed = category === 'beds';
+
+  const getTitle = () => {
+    if (isPillow) return 'Конфигурация подушки';
+    if (isMattress) return 'Конфигурация матраса';
+    if (isBed) return 'Конфигурация кровати';
+    return 'Конфигурация товара';
+  };
+
+  const getVariantLabel = () => {
+    if (isPillow && selectedVariant.height_cm) {
+      return `${selectedVariant.size_name}, h - ${selectedVariant.height_cm} см`;
+    } else if ((isMattress || isBed) && selectedVariant.width_cm && selectedVariant.length_cm) {
+      return `${selectedVariant.width_cm}×${selectedVariant.length_cm}`;
+    }
+    return selectedVariant.size_name;
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
@@ -33,14 +55,13 @@ const PillowConfirmationModal: React.FC<PillowConfirmationModalProps> = ({
         </div>
 
         <div className="p-6">
-          <h3 className="text-lg font-medium mb-4">Конфигурация подушки</h3>
-          
+          <h3 className="text-lg font-medium mb-4">{getTitle()}</h3>
+
           <div className="mb-6">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-gray-600">Размер</span>
               <span className="text-sm text-teal-600 flex items-center">
-                {selectedVariant.size_name}
-                {selectedVariant.height_cm && `, h - ${selectedVariant.height_cm} см`}
+                {getVariantLabel()}
                 <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
