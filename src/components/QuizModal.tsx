@@ -121,7 +121,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ open, onClose }) => {
       width: width ? [width, -1] : [],
       length: length ? [length, -1] : [],
       price: [],
-      inStock: true
+      inStock: false
     };
 
     navigate('/products', {
