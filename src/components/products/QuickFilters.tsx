@@ -31,8 +31,6 @@ const QuickFilters: React.FC<QuickFiltersProps> = ({
         <div className="flex space-x-3 min-w-max">
           {/* Online mattress wizard */}
           <span
-            {/* type="button" */}
-            {/* onClick={onOpenMattressWizard} */}
             className="flex-none px-4 py-2 bg-yellow-100 rounded-full text-sm whitespace-nowrap hover:bg-yellow-200"
           >
             Онлайн-подбор матраса
