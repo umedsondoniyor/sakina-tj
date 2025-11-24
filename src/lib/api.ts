@@ -77,70 +77,105 @@ export async function getProducts(): Promise<Product[]> {
 
 export async function getProductVariants(productId: string): Promise<ProductVariant[]> {
   return retryOperation(async () => {
-    const { data, error } = await supabase
+    // First get the variants
+    const { data: variantsData, error: variantsError } = await supabase
       .from('product_variants')
-      .select(`
-        *,
-        inventory:inventory!product_variant_id(
-          stock_quantity,
-          in_stock,
-          location_id,
-          locations:locations(name, is_active)
-        )
-      `)
+      .select('*')
       .eq('product_id', productId)
       .order('display_order', { ascending: true });
 
-    if (error) throw error;
+    if (variantsError) throw variantsError;
+    if (!variantsData || variantsData.length === 0) return [];
 
-    // flatten first inventory record
-    return (data ?? []).map((v: any) => {
-      const inv = Array.isArray(v.inventory) ? v.inventory[0] : v.inventory;
-      return {
-        ...v,
-        inventory: inv
-          ? {
-              stock_quantity: inv.stock_quantity,
-              in_stock: inv.in_stock,
-              location_id: inv.location_id,
-            }
-          : undefined,
-      } as ProductVariant & { inventory?: { stock_quantity?: number; in_stock?: boolean; location_id?: string } };
+    // Get variant IDs
+    const variantIds = variantsData.map((v: any) => v.id);
+
+    // Get inventory for these variants with active locations
+    const { data: inventoryData, error: inventoryError } = await supabase
+      .from('inventory')
+      .select(`
+        product_variant_id,
+        stock_quantity,
+        in_stock,
+        location_id,
+        locations:locations(is_active)
+      `)
+      .in('product_variant_id', variantIds);
+
+    if (inventoryError) throw inventoryError;
+
+    // Create a map of variant_id to inventory
+    const inventoryMap = new Map();
+    (inventoryData || []).forEach((inv: any) => {
+      // Only use active locations
+      if (inv.locations?.is_active !== false && inv.in_stock) {
+        if (!inventoryMap.has(inv.product_variant_id)) {
+          inventoryMap.set(inv.product_variant_id, {
+            stock_quantity: inv.stock_quantity,
+            in_stock: inv.in_stock,
+            location_id: inv.location_id,
+          });
+        }
+      }
     });
+
+    // Combine variants with their inventory
+    return variantsData.map((v: any) => ({
+      ...v,
+      inventory: inventoryMap.get(v.id),
+    })) as ProductVariant[];
   }, 3, 600, `getProductVariants:${productId}`);
 }
 
 export async function getVariantsByType(sizeType: string): Promise<ProductVariant[]> {
   return retryOperation(async () => {
-    const { data, error } = await supabase
+    // First get the variants
+    const { data: variantsData, error: variantsError } = await supabase
       .from('product_variants')
-      .select(`
-        *,
-        inventory:inventory!product_variant_id(
-          stock_quantity,
-          in_stock,
-          location_id,
-          locations:locations(name, is_active)
-        )
-      `)
+      .select('*')
       .eq('size_type', sizeType)
       .order('display_order', { ascending: true });
 
-    if (error) throw error;
+    if (variantsError) throw variantsError;
+    if (!variantsData || variantsData.length === 0) return [];
 
-    return (data ?? []).map((v: any) => {
-      const inv = Array.isArray(v.inventory) ? v.inventory[0] : v.inventory;
-      return {
-        ...v,
-        inventory: inv
-          ? {
-              stock_quantity: inv.stock_quantity,
-              in_stock: inv.in_stock,
-              location_id: inv.location_id,
-            }
-          : undefined,
-      } as ProductVariant;
+    // Get variant IDs
+    const variantIds = variantsData.map((v: any) => v.id);
+
+    // Get inventory for these variants with active locations
+    const { data: inventoryData, error: inventoryError } = await supabase
+      .from('inventory')
+      .select(`
+        product_variant_id,
+        stock_quantity,
+        in_stock,
+        location_id,
+        locations:locations(is_active)
+      `)
+      .in('product_variant_id', variantIds);
+
+    if (inventoryError) throw inventoryError;
+
+    // Create a map of variant_id to inventory
+    const inventoryMap = new Map();
+    (inventoryData || []).forEach((inv: any) => {
+      // Only use active locations
+      if (inv.locations?.is_active !== false && inv.in_stock) {
+        if (!inventoryMap.has(inv.product_variant_id)) {
+          inventoryMap.set(inv.product_variant_id, {
+            stock_quantity: inv.stock_quantity,
+            in_stock: inv.in_stock,
+            location_id: inv.location_id,
+          });
+        }
+      }
     });
+
+    // Combine variants with their inventory
+    return variantsData.map((v: any) => ({
+      ...v,
+      inventory: inventoryMap.get(v.id),
+    })) as ProductVariant[];
   }, 3, 600, `getVariantsByType:${sizeType}`);
 }
 
