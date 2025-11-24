@@ -90,40 +90,43 @@ export async function getProductVariants(productId: string): Promise<ProductVari
     // Get variant IDs
     const variantIds = variantsData.map((v: any) => v.id);
 
-    // Get inventory for these variants with active locations
+    // Get inventory for these variants
     const { data: inventoryData, error: inventoryError } = await supabase
       .from('inventory')
       .select(`
         product_variant_id,
         stock_quantity,
         in_stock,
-        location_id,
-        locations:locations(is_active)
+        location_id
       `)
-      .in('product_variant_id', variantIds);
+      .in('product_variant_id', variantIds)
+      .eq('in_stock', true);
 
     if (inventoryError) throw inventoryError;
 
     // Create a map of variant_id to inventory
     const inventoryMap = new Map();
+    console.log('[getProductVariants] Raw inventory data:', inventoryData);
     (inventoryData || []).forEach((inv: any) => {
-      // Only use active locations
-      if (inv.locations?.is_active !== false && inv.in_stock) {
-        if (!inventoryMap.has(inv.product_variant_id)) {
-          inventoryMap.set(inv.product_variant_id, {
-            stock_quantity: inv.stock_quantity,
-            in_stock: inv.in_stock,
-            location_id: inv.location_id,
-          });
-        }
+      console.log('[getProductVariants] Processing inventory:', inv);
+      // Take the first inventory record for each variant
+      if (!inventoryMap.has(inv.product_variant_id)) {
+        inventoryMap.set(inv.product_variant_id, {
+          stock_quantity: inv.stock_quantity,
+          in_stock: inv.in_stock,
+          location_id: inv.location_id,
+        });
       }
     });
 
     // Combine variants with their inventory
-    return variantsData.map((v: any) => ({
+    const result = variantsData.map((v: any) => ({
       ...v,
       inventory: inventoryMap.get(v.id),
     })) as ProductVariant[];
+
+    console.log('[getProductVariants] Final variants with inventory:', result);
+    return result;
   }, 3, 600, `getProductVariants:${productId}`);
 }
 
@@ -142,32 +145,30 @@ export async function getVariantsByType(sizeType: string): Promise<ProductVarian
     // Get variant IDs
     const variantIds = variantsData.map((v: any) => v.id);
 
-    // Get inventory for these variants with active locations
+    // Get inventory for these variants
     const { data: inventoryData, error: inventoryError } = await supabase
       .from('inventory')
       .select(`
         product_variant_id,
         stock_quantity,
         in_stock,
-        location_id,
-        locations:locations(is_active)
+        location_id
       `)
-      .in('product_variant_id', variantIds);
+      .in('product_variant_id', variantIds)
+      .eq('in_stock', true);
 
     if (inventoryError) throw inventoryError;
 
     // Create a map of variant_id to inventory
     const inventoryMap = new Map();
     (inventoryData || []).forEach((inv: any) => {
-      // Only use active locations
-      if (inv.locations?.is_active !== false && inv.in_stock) {
-        if (!inventoryMap.has(inv.product_variant_id)) {
-          inventoryMap.set(inv.product_variant_id, {
-            stock_quantity: inv.stock_quantity,
-            in_stock: inv.in_stock,
-            location_id: inv.location_id,
-          });
-        }
+      // Take the first inventory record for each variant
+      if (!inventoryMap.has(inv.product_variant_id)) {
+        inventoryMap.set(inv.product_variant_id, {
+          stock_quantity: inv.stock_quantity,
+          in_stock: inv.in_stock,
+          location_id: inv.location_id,
+        });
       }
     });
 
