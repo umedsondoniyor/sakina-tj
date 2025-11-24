@@ -137,7 +137,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
         <div>
           <h3 className="font-medium mb-3">Жесткость</h3>
           <div className="space-y-2">
-            {['Жесткий', 'Средняя', 'Мягкий', 'Разная жесткость сторон'].map((opt) => (
+            {['Жесткая', 'Средняя', 'Мягкая', 'Разная жесткость сторон'].map((opt) => (
               <label key={opt} className="flex items-center space-x-2">
                 <input
                   type="checkbox"

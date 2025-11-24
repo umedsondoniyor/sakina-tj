@@ -104,9 +104,9 @@ const QuizModal: React.FC<QuizModalProps> = ({ open, onClose }) => {
   // Map quiz values to filter values
   const mapHardnessToFilter = (hardness: string): string => {
     const hardnessMap: Record<string, string> = {
-      'soft': 'Мягкий',
+      'soft': 'Мягкая',
       'middle': 'Средняя',
-      'hard': 'Жесткий'
+      'hard': 'Жесткая'
     };
     return hardnessMap[hardness] || hardness;
   };
