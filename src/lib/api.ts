@@ -81,7 +81,7 @@ export async function getProductVariants(productId: string): Promise<ProductVari
       .from('product_variants')
       .select(`
         *,
-        inventory:inventory(
+        inventory:inventory!product_variant_id(
           stock_quantity,
           in_stock,
           location_id,
@@ -116,7 +116,7 @@ export async function getVariantsByType(sizeType: string): Promise<ProductVarian
       .from('product_variants')
       .select(`
         *,
-        inventory:inventory(
+        inventory:inventory!product_variant_id(
           stock_quantity,
           in_stock,
           location_id,
