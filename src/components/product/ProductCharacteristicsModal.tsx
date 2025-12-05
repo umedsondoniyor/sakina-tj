@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
 import type { Product, ProductVariant } from '../../lib/types';
+import { formatCurrency } from '../../lib/utils';
 
 interface ProductCharacteristicsModalProps {
   isOpen: boolean;
@@ -111,10 +112,10 @@ const ProductCharacteristicsModal: React.FC<ProductCharacteristicsModalProps> = 
     {
       category: 'Цена и наличие',
       items: [
-        price && { label: 'Цена', value: `${price.toLocaleString()} с.` },
+        price && { label: 'Цена', value: formatCurrency(price) },
         oldPrice && {
           label: 'Старая цена',
-          value: `${oldPrice.toLocaleString()} с.`
+          value: formatCurrency(oldPrice)
         },
         product.sale_percentage && {
           label: 'Скидка',

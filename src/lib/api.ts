@@ -90,7 +90,7 @@ export async function getProductVariants(productId: string): Promise<ProductVari
     // Get variant IDs
     const variantIds = variantsData.map((v: any) => v.id);
 
-    // Get inventory for these variants
+    // Get inventory for these variants - don't filter by in_stock, check stock_quantity instead
     const { data: inventoryData, error: inventoryError } = await supabase
       .from('inventory')
       .select(`
@@ -99,8 +99,7 @@ export async function getProductVariants(productId: string): Promise<ProductVari
         in_stock,
         location_id
       `)
-      .in('product_variant_id', variantIds)
-      .eq('in_stock', true);
+      .in('product_variant_id', variantIds);
 
     if (inventoryError) throw inventoryError;
 
@@ -111,7 +110,7 @@ export async function getProductVariants(productId: string): Promise<ProductVari
       if (!inventoryMap.has(inv.product_variant_id)) {
         inventoryMap.set(inv.product_variant_id, {
           stock_quantity: inv.stock_quantity,
-          in_stock: inv.in_stock,
+          in_stock: inv.in_stock || inv.stock_quantity > 0, // Check stock_quantity as fallback
           location_id: inv.location_id,
         });
       }
@@ -120,7 +119,11 @@ export async function getProductVariants(productId: string): Promise<ProductVari
     // Combine variants with their inventory
     return variantsData.map((v: any) => ({
       ...v,
-      inventory: inventoryMap.get(v.id),
+      inventory: inventoryMap.get(v.id) || {
+        stock_quantity: 0,
+        in_stock: false,
+        location_id: null,
+      },
     })) as ProductVariant[];
   }, 3, 600, `getProductVariants:${productId}`);
 }
@@ -140,7 +143,7 @@ export async function getVariantsByType(sizeType: string): Promise<ProductVarian
     // Get variant IDs
     const variantIds = variantsData.map((v: any) => v.id);
 
-    // Get inventory for these variants
+    // Get inventory for these variants - don't filter by in_stock, check stock_quantity instead
     const { data: inventoryData, error: inventoryError } = await supabase
       .from('inventory')
       .select(`
@@ -149,8 +152,7 @@ export async function getVariantsByType(sizeType: string): Promise<ProductVarian
         in_stock,
         location_id
       `)
-      .in('product_variant_id', variantIds)
-      .eq('in_stock', true);
+      .in('product_variant_id', variantIds);
 
     if (inventoryError) throw inventoryError;
 
@@ -161,7 +163,7 @@ export async function getVariantsByType(sizeType: string): Promise<ProductVarian
       if (!inventoryMap.has(inv.product_variant_id)) {
         inventoryMap.set(inv.product_variant_id, {
           stock_quantity: inv.stock_quantity,
-          in_stock: inv.in_stock,
+          in_stock: inv.in_stock || inv.stock_quantity > 0, // Check stock_quantity as fallback
           location_id: inv.location_id,
         });
       }
@@ -170,7 +172,11 @@ export async function getVariantsByType(sizeType: string): Promise<ProductVarian
     // Combine variants with their inventory
     return variantsData.map((v: any) => ({
       ...v,
-      inventory: inventoryMap.get(v.id),
+      inventory: inventoryMap.get(v.id) || {
+        stock_quantity: 0,
+        in_stock: false,
+        location_id: null,
+      },
     })) as ProductVariant[];
   }, 3, 600, `getVariantsByType:${sizeType}`);
 }

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { CheckCircle, Package, Phone, ArrowRight, Home } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import type { OneClickOrder } from '../lib/types';
+import { formatCurrency } from '../lib/utils';
 
 const OneClickConfirmationPage = () => {
   const { orderId } = useParams();
@@ -108,7 +109,7 @@ const OneClickConfirmationPage = () => {
                 <div className="text-sm text-gray-600">Размер: {order.selected_size}</div>
               )}
               <div className="text-lg font-bold text-teal-600 mt-2">
-                {order.product_price.toLocaleString()} с.
+                {formatCurrency(order.product_price)}
               </div>
             </div>
           </div>

@@ -5,6 +5,7 @@ import { getProductVariants } from '../../lib/api';
 import { useCart } from '../../contexts/CartContext';
 import OneClickModal from '../OneClickModal';
 import { useNavigate } from 'react-router-dom';
+import { formatCurrency } from '../../lib/utils';
 
 interface ProductInfoProps {
   product: Product; // ensure Product has: warranty_years?: number | null
@@ -39,7 +40,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
 
       // Auto-select first available variant
       if (data.length > 0 && !selectedVariant) {
-        const firstAvailable = data.find(v => v.in_stock) || data[0];
+        const firstAvailable = data.find(v => v.inventory?.in_stock) || data[0];
         onVariantChange(firstAvailable);
       }
     } catch (error) {
@@ -93,10 +94,10 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
       <div className="mb-6">
         <div className="flex items-center justify-between mb-2">
           <div className="text-3xl font-bold">
-            {getCurrentPrice().toLocaleString()} с.
+            {formatCurrency(getCurrentPrice())}
             {getCurrentOldPrice() && (
               <span className="ml-2 text-lg text-gray-500 line-through">
-                {getCurrentOldPrice()!.toLocaleString()} с.
+                {formatCurrency(getCurrentOldPrice()!)}
               </span>
             )}
           </div>
@@ -141,7 +142,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
                       ? `${variant.width_cm}×${variant.length_cm}`
                       : variant.size_name}
                   </div>
-                  <div className="text-sm text-gray-600">{variant.price.toLocaleString()} с.</div>
+                  <div className="text-sm text-gray-600">{formatCurrency(variant.price)}</div>
                   <div className="text-xs">
                     {variant.inventory?.in_stock ? (
                       <span className="text-teal-600">
@@ -164,36 +165,6 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
         <div className="mb-6">
           <div className="p-3 bg-gray-50 rounded-lg text-center">
             <p className="text-sm text-gray-600">Размеры для этого товара настраиваются администратором</p>
-          </div>
-        </div>
-      )}
-
-      {/* Size Selection - Legacy fallback (mattresses) */}
-      {product.category === 'mattresses' && variants.length === 0 && !loadingVariants && (
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="font-medium">Размер (Ш×Д)</h3>
-            <a href="#" className="text-sm text-teal-600 hover:text-teal-700">
-              Все размеры
-            </a>
-          </div>
-          <div className="grid grid-cols-3 gap-3">
-            {[
-              { size: '80×200', price: 36139 },
-              { size: '90×200', price: 38977 },
-              { size: '140×200', price: 49895 },
-              { size: '160×200', price: 53880 },
-              { size: '180×200', price: 59064 },
-            ].map(({ size, price }) => (
-              <button
-                key={size}
-                className="p-2 text-center border rounded-lg transition-colors border-gray-200 hover:border-teal-500"
-              >
-                <div className="font-medium">{size}</div>
-                <div className="text-sm text-gray-600">{price.toLocaleString()} с.</div>
-                <div className="text-xs text-teal-600">В наличии</div>
-              </button>
-            ))}
           </div>
         </div>
       )}

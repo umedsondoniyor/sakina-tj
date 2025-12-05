@@ -2,6 +2,7 @@ import React from 'react';
 import { X, Minus, Plus } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { useNavigate } from 'react-router-dom';
+import { formatCurrency } from '../lib/utils';
 
 const CartModal: React.FC = () => {
   const { items, isOpen, setIsOpen, removeItem, updateQuantity, total } = useCart();
@@ -68,7 +69,7 @@ const CartModal: React.FC = () => {
               </div>
               
               <div className="text-right">
-                <div className="font-bold">{item.price.toLocaleString()} с.</div>
+                <div className="font-bold">{formatCurrency(item.price)}</div>
               </div>
             </div>
           ))}
@@ -77,7 +78,7 @@ const CartModal: React.FC = () => {
         <div className="border-t p-4 space-y-4">
           <div className="flex justify-between text-lg font-bold">
             <span>Итого</span>
-            <span>{total.toLocaleString()} с.</span>
+            <span>{formatCurrency(total)}</span>
           </div>
           
           <button 

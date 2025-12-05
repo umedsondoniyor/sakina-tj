@@ -24,7 +24,7 @@ const AdminDashboard: React.FC = () => {
         </div>
 
         <div className="bg-white p-6 rounded-lg shadow flex items-center space-x-4">
-          <Users className="text-purple-500" size={28} />
+          <Users className="text-teal-500" size={28} />
           <div>
             <p className="text-gray-500 text-sm">Пользователи</p>
             <p className="text-xl font-semibold">948</p>

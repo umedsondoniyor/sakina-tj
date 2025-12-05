@@ -139,6 +139,7 @@ export interface CartContextType {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   total: number;
+  totalItems: number;
 }
 
 export interface QuizStep {

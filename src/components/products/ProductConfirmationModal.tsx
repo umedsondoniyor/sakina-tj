@@ -1,6 +1,7 @@
 import React from 'react';
 import { X } from 'lucide-react';
 import type { ProductVariant } from '../../lib/types';
+import { formatCurrency } from '../../lib/utils';
 
 interface ProductConfirmationModalProps {
   isOpen: boolean;
@@ -73,7 +74,7 @@ const ProductConfirmationModal: React.FC<ProductConfirmationModalProps> = ({
             onClick={onAddToCart}
             className="w-full bg-teal-500 text-white py-3 rounded-lg hover:bg-teal-600 transition-colors font-medium"
           >
-            В корзину • {selectedVariant.price.toLocaleString()} с.
+            В корзину • {formatCurrency(selectedVariant.price)}
           </button>
         </div>
       </div>
