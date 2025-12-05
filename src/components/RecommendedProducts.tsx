@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, PackageOpen } from 'lucide-react';
 import { getProducts } from '../lib/api';
 import type { Product } from '../lib/types';
+import { formatCurrency } from '../lib/utils';
 
 const CARD_WIDTH_MOBILE = 280; // px
 const SCROLL_STEP = 320;       // px per click (approx one card + gap)
@@ -233,11 +234,11 @@ const RecommendedProducts: React.FC = () => {
                   )}
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-base md:text-lg font-bold">
-                      {product.price.toLocaleString()} с.
+                      {formatCurrency(product.price)}
                     </span>
                     {product.old_price && (
                       <span className="text-sm text-gray-500 line-through">
-                        {product.old_price.toLocaleString()} с.
+                        {formatCurrency(product.old_price)}
                       </span>
                     )}
                   </div>

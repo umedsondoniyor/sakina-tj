@@ -3,6 +3,7 @@ import { X, Phone, ShoppingBag } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import toast from 'react-hot-toast';
 import type { Product, ProductVariant } from '../lib/types';
+import { formatCurrency } from '../lib/utils';
 
 interface OneClickModalProps {
   isOpen: boolean;
@@ -160,7 +161,7 @@ const OneClickModal: React.FC<OneClickModalProps> = ({
               )}
             </p>
             <div className="text-2xl font-bold text-teal-600 mt-2">
-              {currentPrice.toLocaleString()} с.
+              {formatCurrency(currentPrice)}
             </div>
           </div>
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Star, PackageOpen } from 'lucide-react';
 import { getBestSellers } from '../../lib/api';
 import type { Product } from '../../lib/types';
+import { formatCurrency } from '../../lib/utils';
 
 const HitSalesSection = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -141,10 +142,10 @@ const HitSalesSection = () => {
               </p>
             )}
             <div className="flex items-center space-x-2 mb-4">
-              <span className="text-lg font-bold">{product.price.toLocaleString()} с.</span>
+              <span className="text-lg font-bold">{formatCurrency(product.price)}</span>
               {product.old_price && (
                 <span className="text-sm text-gray-500 line-through">
-                  {product.old_price.toLocaleString()} с.
+                  {formatCurrency(product.old_price)}
                 </span>
               )}
             </div>

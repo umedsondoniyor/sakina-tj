@@ -1,6 +1,7 @@
 import React from 'react';
 import { ChevronDown } from 'lucide-react';
 import type { CartItem } from '../../lib/types';
+import { formatCurrency } from '../../lib/utils';
 
 interface OrderSummaryProps {
   items: CartItem[];
@@ -49,7 +50,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
                 <p className="text-sm text-gray-600">{item.size}</p>
               )}
               <div className="flex items-center justify-between mt-1">
-                <span className="text-sm font-medium">{item.price.toLocaleString()} с.</span>
+                <span className="text-sm font-medium">{formatCurrency(item.price)}</span>
                 <span className="text-sm text-gray-600">{item.quantity} шт.</span>
               </div>
             </div>
@@ -59,23 +60,23 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
         <div className="border-t pt-4 space-y-2">
           <div className="flex justify-between text-sm">
             <span>Товары ({items.length})</span>
-            <span>{total.toLocaleString()} с.</span>
+            <span>{formatCurrency(total)}</span>
           </div>
           
           <div className="flex justify-between text-sm">
             <span>Скидка</span>
-            <span className="text-red-600">-{calculateDiscount().toLocaleString()} с.</span>
+            <span className="text-red-600">-{formatCurrency(calculateDiscount())}</span>
           </div>
           
           <div className="flex justify-between text-sm">
             <span>Доставка</span>
-            <span>{calculateDeliveryFee().toLocaleString()} с.</span>
+            <span>{formatCurrency(calculateDeliveryFee())}</span>
           </div>
           
           <div className="border-t pt-2">
             <div className="flex justify-between font-semibold text-lg">
               <span>Итого</span>
-              <span>{calculateFinalTotal().toLocaleString()} с.</span>
+              <span>{formatCurrency(calculateFinalTotal())}</span>
             </div>
           </div>
         </div>

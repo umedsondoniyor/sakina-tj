@@ -16,7 +16,7 @@ const colorOptions = [
   { value: '#0fb6c9', label: 'Turquoise' },
   { value: '#10b981', label: 'Green' },
   { value: '#f59e0b', label: 'Yellow' },
-  { value: '#8b5cf6', label: 'Purple' },
+  { value: '#14b8a6', label: 'Teal' },
   { value: '#ef4444', label: 'Red' },
   { value: '#06b6d4', label: 'Cyan' },
   { value: '#84cc16', label: 'Lime' },

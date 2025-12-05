@@ -10,17 +10,22 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [total, setTotal] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
 
-  // ✅ Load from localStorage on mount
+  // Load from localStorage on mount
   useEffect(() => {
-    const savedCart = localStorage.getItem('cart');
+    const savedCart = localStorage.getItem('sakina_cart');
     if (savedCart) {
-      setItems(JSON.parse(savedCart));
+      try {
+        setItems(JSON.parse(savedCart));
+      } catch (e) {
+        console.error('Failed to load cart:', e);
+        localStorage.removeItem('sakina_cart');
+      }
     }
   }, []);
 
-  // ✅ Persist to localStorage on change
+  // Persist to localStorage on change and recalculate totals
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(items));
+    localStorage.setItem('sakina_cart', JSON.stringify(items));
 
     // Recalculate totals
     const newTotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -29,23 +34,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setTotal(newTotal);
     setTotalItems(newCount);
   }, [items]);
-
-  useEffect(() => {
-  // Load cart items from localStorage when app starts
-  const savedItems = localStorage.getItem('sakina_cart');
-  if (savedItems) {
-    try {
-      setItems(JSON.parse(savedItems));
-    } catch (e) {
-      console.error('Failed to load cart:', e);
-    }
-  }
-}, []);
-
-useEffect(() => {
-  // Save cart items whenever they change
-  localStorage.setItem('sakina_cart', JSON.stringify(items));
-}, [items]);
 
 
   const addItem = (newItem: CartItem) => {

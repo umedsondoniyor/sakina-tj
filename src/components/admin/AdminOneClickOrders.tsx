@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { Phone, Package, Calendar, Eye, CheckCircle, XCircle, Clock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import type { OneClickOrder } from '../../lib/types';
+import { formatCurrency } from '../../lib/utils';
 
 const AdminOneClickOrders = () => {
   const [orders, setOrders] = useState<OneClickOrder[]>([]);
@@ -208,7 +209,7 @@ const AdminOneClickOrders = () => {
                   </div>
                   <div className="text-right">
                     <div className="text-lg font-bold text-teal-600">
-                      {order.product_price.toLocaleString()} с.
+                      {formatCurrency(order.product_price)}
                     </div>
                   </div>
                 </div>

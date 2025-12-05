@@ -34,7 +34,9 @@ const DesktopHeader: React.FC<DesktopHeaderProps> = ({ isCatalogOpen, onToggleCa
             </button>
           </div>
 
-          <SearchBar />
+          <div className="flex-1 max-w-2xl mx-8">
+            <SearchBar />
+          </div>
 
           <div className="flex items-center space-x-6">
             <button 

@@ -210,7 +210,7 @@ const AdminBlog: React.FC = () => {
               setEditingTag(null);
               setShowTagModal(true);
             }}
-            className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+            className="flex items-center px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
           >
             <Tag className="w-4 h-4 mr-2" />
             Tags

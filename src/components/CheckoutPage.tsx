@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useCart } from '../contexts/CartContext';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { formatCurrency } from '../lib/utils';
 
 // Import subcomponents
 import CheckoutSteps from './checkout/CheckoutSteps';
@@ -362,7 +363,7 @@ useEffect(() => {
                 onError={handlePaymentError}
                 disabled={loading}
               >
-                Оплатить {calculateFinalTotal().toLocaleString()} TJS
+                Оплатить {formatCurrency(calculateFinalTotal())}
               </PaymentButton>
             ) : (
               <button

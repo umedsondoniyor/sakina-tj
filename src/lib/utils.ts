@@ -1,3 +1,44 @@
+/**
+ * Format a number as Somoni currency
+ * @param amount - The amount to format
+ * @returns Formatted string with Russian locale and "с." suffix
+ */
+export const formatCurrency = (amount: number): string => {
+  return `${amount.toLocaleString('ru-RU')} с.`;
+};
+
+/**
+ * Format a date for display
+ * @param date - Date string or Date object
+ * @returns Formatted date string
+ */
+export const formatDate = (date: Date | string): string => {
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  return dateObj.toLocaleString('ru-RU');
+};
+
+/**
+ * Get variant label based on category
+ * @param variant - Product variant
+ * @param category - Product category
+ * @returns Formatted size label
+ */
+export const getVariantLabel = (
+  variant: { size_name: string; height_cm?: number; width_cm?: number; length_cm?: number },
+  category?: string
+): string => {
+  const isPillow = category === 'pillows';
+  const isMattress = category === 'mattresses';
+  const isBed = category === 'beds';
+
+  if (isPillow && variant.height_cm) {
+    return `${variant.size_name}, h - ${variant.height_cm} см`;
+  } else if ((isMattress || isBed) && variant.width_cm && variant.length_cm) {
+    return `${variant.width_cm}×${variant.length_cm}`;
+  }
+  return variant.size_name;
+};
+
 export const buildDeliveryAddress = (formData: {
   deliveryType: 'home' | 'pickup';
   address: string;

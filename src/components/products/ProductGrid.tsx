@@ -5,6 +5,7 @@ import ProductSizeModal from './ProductSizeModal';
 import ProductConfirmationModal from './ProductConfirmationModal';
 import { useCart } from '../../contexts/CartContext';
 import { getProductVariants } from '../../lib/api';
+import { formatCurrency } from '../../lib/utils';
 
 interface ProductGridProps {
   products: Product[];
@@ -176,10 +177,10 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) =
                 </p>
               )}
               <div className="flex items-center space-x-2">
-                <span className="text-lg font-bold">{product.price.toLocaleString()} c.</span>
+                <span className="text-lg font-bold">{formatCurrency(product.price)}</span>
                 {product.old_price && (
                   <span className="text-sm text-gray-500 line-through">
-                    {product.old_price.toLocaleString()} c.
+                    {formatCurrency(product.old_price)}
                   </span>
                 )}
               </div>

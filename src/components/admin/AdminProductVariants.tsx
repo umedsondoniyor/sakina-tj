@@ -4,6 +4,7 @@ import { Pencil, Trash2, Plus, PackageOpen } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ProductVariantForm from './ProductVariantForm';
 import type { ProductVariant, Product } from '../../lib/types';
+import { formatCurrency } from '../../lib/utils';
 
 type VariantRow = ProductVariant & {
   product_name?: string;
@@ -247,9 +248,9 @@ const AdminProductVariants: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       <div>
-                        <span className="font-medium">{variant.price?.toLocaleString()} c.</span>
+                        <span className="font-medium">{variant.price ? formatCurrency(variant.price) : '—'}</span>
                         {variant.old_price && (
-                          <div className="text-xs text-gray-500 line-through">{variant.old_price.toLocaleString()} c.</div>
+                          <div className="text-xs text-gray-500 line-through">{formatCurrency(variant.old_price)}</div>
                         )}
                       </div>
                     </td>
@@ -299,7 +300,7 @@ const AdminProductVariants: React.FC = () => {
                     <div className="text-sm font-semibold text-gray-900">{v.product_name}</div>
                     <div className="text-xs text-gray-500 capitalize">{v.size_type}</div>
                   </div>
-                  <div className="text-sm font-medium text-gray-900">{v.price?.toLocaleString()} c.</div>
+                  <div className="text-sm font-medium text-gray-900">{v.price ? formatCurrency(v.price) : '—'}</div>
                 </div>
 
                 <div className="mt-2 text-sm text-gray-700">
