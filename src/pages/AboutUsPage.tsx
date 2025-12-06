@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import {
   Award, Users, Heart, Target, Clock, Globe,
-  type Icon as LucideIcon
 } from 'lucide-react';
+import type { LucideProps } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
 /* =========================
@@ -13,6 +13,14 @@ type AboutSettings = {
   hero_title: string | null;
   hero_subtitle: string | null;
   hero_image_url: string | null;
+  mission_text: string | null;
+  mission_section_title: string | null;
+  timeline_section_title: string | null;
+  timeline_section_description: string | null;
+  team_section_title: string | null;
+  team_section_description: string | null;
+  cta_title: string | null;
+  cta_description: string | null;
 };
 
 type AboutStat = {
@@ -57,7 +65,9 @@ type AboutTeam = {
 /* =========================
    Icon Resolver (robust)
 ========================= */
-const ICONS: Record<string, LucideIcon> = {
+type IconComponent = React.ComponentType<LucideProps>;
+
+const ICONS: Record<string, IconComponent> = {
   award: Award,
   users: Users,
   heart: Heart,
@@ -85,7 +95,7 @@ function normalizeIconKey(key: string): string {
     .pop() || '';
 }
 
-function resolveIcon(keyRaw: string): LucideIcon {
+function resolveIcon(keyRaw: string): IconComponent {
   const key = normalizeIconKey(keyRaw);
   return ICONS[key] ?? Award;
 }
@@ -93,93 +103,20 @@ function resolveIcon(keyRaw: string): LucideIcon {
 /* =========================
    Fallback content
 ========================= */
+// Minimal fallback settings only for critical display
 const FALLBACK_SETTINGS: AboutSettings = {
   hero_title: 'О компании Sakina',
-  hero_subtitle:
-    'Мы создаем мир здорового сна уже более 30 лет, помогая людям просыпаться отдохнувшими и полными энергии.',
-  hero_image_url:
-    'https://images.unsplash.com/photo-1631679706909-1844bbd07221?auto=format&fit=crop&w=1200&q=80',
+  hero_subtitle: 'Мы создаем мир здорового сна уже более 30 лет, помогая людям просыпаться отдохнувшими и полными энергии.',
+  hero_image_url: 'https://images.unsplash.com/photo-1631679706909-1844bbd07221?auto=format&fit=crop&w=1200&q=80',
+  mission_text: 'Мы верим, что качественный сон — это основа здоровой и счастливой жизни. Наша цель — предоставить каждому человеку возможность наслаждаться комфортным и восстанавливающим сном каждую ночь.',
+  mission_section_title: 'Наша миссия',
+  timeline_section_title: 'История развития',
+  timeline_section_description: 'Путь от небольшой мастерской до ведущего производителя товаров для сна',
+  team_section_title: 'Наша команда',
+  team_section_description: 'Профессионалы, которые делают ваш сон лучше каждый день',
+  cta_title: 'Готовы улучшить качество вашего сна?',
+  cta_description: 'Свяжитесь с нами для персональной консультации и подбора идеального матраса',
 };
-
-const FALLBACK_STATS = [
-  { id: '1', number: '30+', label: 'лет на рынке', icon_key: 'Clock', order: 1 },
-  { id: '2', number: '50,000+', label: 'довольных клиентов', icon_key: 'Users', order: 2 },
-  { id: '3', number: '100+', label: 'моделей продукции', icon_key: 'Award', order: 3 },
-  { id: '4', number: '5', label: 'стран присутствия', icon_key: 'Globe', order: 4 },
-];
-
-const FALLBACK_VALUES = [
-  {
-    id: '1',
-    icon_key: 'Heart',
-    title: 'Забота о здоровье',
-    description:
-      'Мы создаем продукцию, которая способствует здоровому сну и улучшению качества жизни наших клиентов.',
-    order: 1,
-  },
-  {
-    id: '2',
-    icon_key: 'Award',
-    title: 'Качество превыше всего',
-    description:
-      'Используем только проверенные материалы и современные технологии производства.',
-    order: 2,
-  },
-  {
-    id: '3',
-    icon_key: 'Users',
-    title: 'Индивидуальный подход',
-    description:
-      'Каждый клиент уникален, поэтому мы предлагаем персональные решения для комфортного сна.',
-    order: 3,
-  },
-  {
-    id: '4',
-    icon_key: 'Target',
-    title: 'Постоянное развитие',
-    description:
-      'Мы постоянно совершенствуем наши продукты и услуги, следуя последним тенденциям в индустрии сна.',
-    order: 4,
-  },
-];
-
-const FALLBACK_TIMELINE = [
-  { id: 't1', year: '1990', title: 'Основание компании', description: 'Начало пути в индустрии здорового сна', order: 1 },
-  { id: 't2', year: '2000', title: 'Первая лаборатория', description: 'Открытие собственной лаборатории контроля качества', order: 2 },
-  { id: 't3', year: '2010', title: 'Международное признание', description: 'Получение международных сертификатов качества', order: 3 },
-  { id: 't4', year: '2020', title: 'Цифровая трансформация', description: 'Запуск онлайн-платформы и цифровых сервисов', order: 4 },
-  { id: 't5', year: '2025', title: 'Новые горизонты', description: 'Расширение ассортимента и география присутствия', order: 5 },
-];
-
-const FALLBACK_TEAM = [
-  {
-    id: 'a1',
-    name: 'Алексей Иванов',
-    position: 'Генеральный директор',
-    image_url:
-      'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=300&q=80',
-    description: 'Более 15 лет опыта в индустрии товаров для сна',
-    order: 1,
-  },
-  {
-    id: 'a2',
-    name: 'Мария Петрова',
-    position: 'Главный технолог',
-    image_url:
-      'https://images.unsplash.com/photo-1494790108755-2616b612b786?auto=format&fit=crop&w=300&q=80',
-    description: 'Эксперт по инновационным материалам и технологиям',
-    order: 2,
-  },
-  {
-    id: 'a3',
-    name: 'Дмитрий Сидоров',
-    position: 'Руководитель производства',
-    image_url:
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80',
-    description: 'Контроль качества на каждом этапе производства',
-    order: 3,
-  },
-];
 
 /* =========================
    Component
@@ -206,10 +143,10 @@ const AboutUsPage: React.FC = () => {
         ]);
 
         setSettings(settingsRes.error || !settingsRes.data ? FALLBACK_SETTINGS : settingsRes.data as AboutSettings);
-        setStats(statsRes.error || !statsRes.data || statsRes.data.length === 0 ? FALLBACK_STATS : statsRes.data as AboutStat[]);
-        setValues(valuesRes.error || !valuesRes.data || valuesRes.data.length === 0 ? FALLBACK_VALUES : valuesRes.data as AboutValue[]);
-        setTimeline(timelineRes.error || !timelineRes.data || timelineRes.data.length === 0 ? FALLBACK_TIMELINE : timelineRes.data as AboutTimeline[]);
-        setTeam(teamRes.error || !teamRes.data || teamRes.data.length === 0 ? FALLBACK_TEAM : teamRes.data as AboutTeam[]);
+        setStats(statsRes.error ? [] : (statsRes.data || []) as AboutStat[]);
+        setValues(valuesRes.error ? [] : (valuesRes.data || []) as AboutValue[]);
+        setTimeline(timelineRes.error ? [] : (timelineRes.data || []) as AboutTimeline[]);
+        setTeam(teamRes.error ? [] : (teamRes.data || []) as AboutTeam[]);
       } finally {
         setLoading(false);
       }
@@ -233,10 +170,10 @@ const AboutUsPage: React.FC = () => {
   }
 
   const hero = settings ?? FALLBACK_SETTINGS;
-  const statsArr = stats ?? FALLBACK_STATS;
-  const valuesArr = values ?? FALLBACK_VALUES;
-  const timelineArr = timeline ?? FALLBACK_TIMELINE;
-  const teamArr = team ?? FALLBACK_TEAM;
+  const statsArr = stats ?? [];
+  const valuesArr = values ?? [];
+  const timelineArr = timeline ?? [];
+  const teamArr = team ?? [];
 
   return (
     <div className="min-h-screen bg-white">
@@ -266,18 +203,20 @@ const AboutUsPage: React.FC = () => {
               <p className="text-lg md:text-xl mb-8 text-white/90">
                 {hero.hero_subtitle || FALLBACK_SETTINGS.hero_subtitle}
               </p>
-              <div className="grid grid-cols-2 gap-6">
-                {statsArr.slice(0, 2).map((stat) => {
-                  const Icon = resolveIcon(pickIconKey(stat));
-                  return (
-                    <div key={stat.id} className="text-center">
-                      <Icon className="w-8 h-8 mx-auto mb-2 text-yellow-300" />
-                      <div className="text-2xl font-bold">{stat.number}</div>
-                      <div className="text-sm text-white/80">{stat.label}</div>
-                    </div>
-                  );
-                })}
-              </div>
+              {statsArr.length > 0 ? (
+                <div className="grid grid-cols-2 gap-6">
+                  {statsArr.slice(0, 2).map((stat) => {
+                    const Icon = resolveIcon(pickIconKey(stat));
+                    return (
+                      <div key={stat.id} className="text-center">
+                        <Icon className="w-8 h-8 mx-auto mb-2 text-yellow-300" />
+                        <div className="text-2xl font-bold">{stat.number}</div>
+                        <div className="text-sm text-white/80">{stat.label}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : null}
             </div>
 
             <div className="relative">
@@ -301,29 +240,37 @@ const AboutUsPage: React.FC = () => {
       <div className="py-16 md:py-24">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-brand-navy mb-6">Наша миссия</h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-brand-navy mb-6">
+              {hero.mission_section_title || FALLBACK_SETTINGS.mission_section_title}
+            </h2>
             <div className="bg-yellow-300 h-2 w-16 mx-auto mb-8" />
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-              Мы верим, что качественный сон — это основа здоровой и счастливой жизни.
-              Наша цель — предоставить каждому человеку возможность наслаждаться комфортным
-              и восстанавливающим сном каждую ночь.
-            </p>
+            {hero.mission_text && (
+              <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+                {hero.mission_text}
+              </p>
+            )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {valuesArr.map((value) => {
-              const Icon = resolveIcon(pickIconKey(value));
-              return (
-                <div key={value.id} className="text-center group">
-                  <div className="w-16 h-16 bg-brand-turquoise rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-brand-navy transition-colors">
-                    <Icon className="w-8 h-8 text-white" />
+          {valuesArr.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-500 text-lg">Ценности компании скоро появятся</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {valuesArr.map((value) => {
+                const Icon = resolveIcon(pickIconKey(value));
+                return (
+                  <div key={value.id} className="text-center group">
+                    <div className="w-16 h-16 bg-brand-turquoise rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-brand-navy transition-colors">
+                      <Icon className="w-8 h-8 text-white" />
+                    </div>
+                    <h3 className="text-xl font-semibold mb-3 text-brand-navy">{value.title}</h3>
+                    <p className="text-gray-600">{value.description}</p>
                   </div>
-                  <h3 className="text-xl font-semibold mb-3 text-brand-navy">{value.title}</h3>
-                  <p className="text-gray-600">{value.description}</p>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 
@@ -331,17 +278,26 @@ const AboutUsPage: React.FC = () => {
       <div className="bg-gray-50 py-16 md:py-24">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-brand-navy mb-6">История развития</h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-brand-navy mb-6">
+              {hero.timeline_section_title || FALLBACK_SETTINGS.timeline_section_title}
+            </h2>
             <div className="bg-yellow-300 h-2 w-16 mx-auto mb-8" />
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Путь от небольшой мастерской до ведущего производителя товаров для сна
-            </p>
+            {(hero.timeline_section_description || FALLBACK_SETTINGS.timeline_section_description) && (
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                {hero.timeline_section_description || FALLBACK_SETTINGS.timeline_section_description}
+              </p>
+            )}
           </div>
 
-          <div className="relative">
-            <div className="absolute left-1/2 -translate-x-1/2 w-1 h-full bg-brand-turquoise hidden md:block" />
-            <div className="space-y-12">
-              {timelineArr.map((item, index) => (
+          {timelineArr.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-500 text-lg">История компании скоро появится</p>
+            </div>
+          ) : (
+            <div className="relative">
+              <div className="absolute left-1/2 -translate-x-1/2 w-1 h-full bg-brand-turquoise hidden md:block" />
+              <div className="space-y-12">
+                {timelineArr.map((item, index) => (
                 <div
                   key={item.id}
                   className={`flex items-center ${index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'}`}
@@ -358,9 +314,10 @@ const AboutUsPage: React.FC = () => {
                   </div>
                   <div className="hidden md:block w-5/12" />
                 </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 
@@ -368,15 +325,24 @@ const AboutUsPage: React.FC = () => {
       <div className="py-16 md:py-24">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-brand-navy mb-6">Наша команда</h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-brand-navy mb-6">
+              {hero.team_section_title || FALLBACK_SETTINGS.team_section_title}
+            </h2>
             <div className="bg-yellow-300 h-2 w-16 mx-auto mb-8" />
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Профессионалы, которые делают ваш сон лучше каждый день
-            </p>
+            {(hero.team_section_description || FALLBACK_SETTINGS.team_section_description) && (
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                {hero.team_section_description || FALLBACK_SETTINGS.team_section_description}
+              </p>
+            )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {teamArr.map((member) => (
+          {teamArr.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-500 text-lg">Информация о команде скоро появится</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {teamArr.map((member) => (
               <div key={member.id} className="text-center group">
                 <div className="relative mb-6">
                   <img
@@ -390,8 +356,9 @@ const AboutUsPage: React.FC = () => {
                 <p className="text-brand-turquoise font-medium mb-3">{member.position}</p>
                 <p className="text-gray-600">{member.description}</p>
               </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -399,11 +366,13 @@ const AboutUsPage: React.FC = () => {
       <div className="bg-brand-turquoise py-16">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-            Готовы улучшить качество вашего сна?
+            {hero.cta_title || FALLBACK_SETTINGS.cta_title}
           </h2>
-          <p className="text-lg text-white/90 mb-8">
-            Свяжитесь с нами для персональной консультации и подбора идеального матраса
-          </p>
+          {(hero.cta_description || FALLBACK_SETTINGS.cta_description) && (
+            <p className="text-lg text-white/90 mb-8">
+              {hero.cta_description || FALLBACK_SETTINGS.cta_description}
+            </p>
+          )}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
               href="tel:+992905339595"

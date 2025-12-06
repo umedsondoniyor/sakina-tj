@@ -295,26 +295,34 @@ const AdminAbout: React.FC = () => {
           </button>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-4 flex items-center gap-6">
-          <div className="flex-1">
-            <div className="text-lg font-semibold">
-              {settings?.hero_title || "—"}
-            </div>
-            <div className="text-gray-600">{settings?.hero_subtitle || "—"}</div>
-          </div>
-          <div className="w-48 h-28 bg-gray-100 rounded overflow-hidden border">
-            {settings?.hero_image_url ? (
-              <img
-                src={settings.hero_image_url}
-                alt="Hero"
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="h-full w-full flex items-center justify-center text-gray-400">
-                <ImageIcon className="w-6 h-6" />
+        <div className="bg-white rounded-lg shadow p-4 space-y-4">
+          <div className="flex items-start gap-6">
+            <div className="flex-1">
+              <div className="text-lg font-semibold mb-2">
+                {settings?.hero_title || "—"}
               </div>
-            )}
+              <div className="text-gray-600">{settings?.hero_subtitle || "—"}</div>
+            </div>
+            <div className="w-48 h-28 bg-gray-100 rounded overflow-hidden border flex-shrink-0">
+              {settings?.hero_image_url ? (
+                <img
+                  src={settings.hero_image_url}
+                  alt="Hero"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="h-full w-full flex items-center justify-center text-gray-400">
+                  <ImageIcon className="w-6 h-6" />
+                </div>
+              )}
+            </div>
           </div>
+          {settings?.mission_text && (
+            <div className="pt-4 border-t">
+              <div className="text-sm font-medium text-gray-500 mb-1">Текст миссии:</div>
+              <div className="text-gray-700">{settings.mission_text}</div>
+            </div>
+          )}
         </div>
       </section>
 
@@ -575,6 +583,14 @@ const AdminAbout: React.FC = () => {
               hero_title: "",
               hero_subtitle: "",
               hero_image_url: "",
+              mission_text: "",
+              mission_section_title: "",
+              timeline_section_title: "",
+              timeline_section_description: "",
+              team_section_title: "",
+              team_section_description: "",
+              cta_title: "",
+              cta_description: "",
             }
           }
           onSave={upsertSettings}
