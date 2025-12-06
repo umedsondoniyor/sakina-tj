@@ -28,6 +28,17 @@ export interface Product {
   weight_category?: string;
 }
 
+export interface RelatedProduct {
+  id: string;
+  product_id: string;
+  related_product_id: string;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+  // Joined product data
+  related_product?: Product;
+}
+
 export interface ProductVariant {
   id: string;
   product_id: string;

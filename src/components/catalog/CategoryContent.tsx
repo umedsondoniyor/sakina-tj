@@ -13,24 +13,44 @@ interface CategoryContentProps {
       image: string;
     }[];
   };
+  onItemClick?: (sectionTitle: string, item: string) => void;
+  onSeeAll?: () => void;
 }
 
-const CategoryContent: React.FC<CategoryContentProps> = ({ content }) => {
+const CategoryContent: React.FC<CategoryContentProps> = ({ content, onItemClick, onSeeAll }) => {
   return (
     <div className="flex-1 p-6 overflow-y-auto">
-      <h2 className="text-2xl font-bold mb-6">{content.title}</h2>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-bold">{content.title}</h2>
+        {onSeeAll && (
+          <button
+            onClick={onSeeAll}
+            className="text-teal-600 hover:text-teal-700 font-medium text-sm"
+          >
+            Посмотреть все →
+          </button>
+        )}
+      </div>
 
       <div className="grid grid-cols-4 gap-8">
         <div className="col-span-3 grid grid-cols-3 gap-8">
           {content.categories.map((category) => (
             <div key={category.title}>
-              <h3 className="font-semibold mb-4">{category.title}</h3>
+              <h3 className="font-semibold mb-4 text-gray-900">{category.title}</h3>
               <div className="space-y-2">
-                {category.items.map((item) => (
-                  <a key={item} href="#" className="block py-1 hover:text-teal-600">
-                    {item}
-                  </a>
-                ))}
+                {category.items.length === 0 ? (
+                  <p className="text-sm text-gray-400">Нет данных</p>
+                ) : (
+                  category.items.map((item) => (
+                    <button
+                      key={item}
+                      onClick={() => onItemClick?.(category.title, item)}
+                      className="block w-full text-left py-1 text-gray-700 hover:text-teal-600 transition-colors"
+                    >
+                      {item}
+                    </button>
+                  ))
+                )}
               </div>
             </div>
           ))}
@@ -38,15 +58,18 @@ const CategoryContent: React.FC<CategoryContentProps> = ({ content }) => {
 
         <div className="space-y-6">
           {content.promos.map((promo) => (
-            <div key={promo.title}>
+            <div key={promo.title} className="bg-gray-50 rounded-lg p-4">
               <img
                 src={promo.image}
                 alt={promo.title}
                 className="w-full h-auto rounded-lg mb-4"
               />
-              <a href="#" className="block text-teal-600 hover:text-teal-700 font-medium">
+              <button
+                onClick={onSeeAll}
+                className="block w-full text-left text-teal-600 hover:text-teal-700 font-medium mb-1"
+              >
                 {promo.title}
-              </a>
+              </button>
               <p className="text-sm text-gray-600">{promo.description}</p>
             </div>
           ))}

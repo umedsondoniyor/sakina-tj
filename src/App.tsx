@@ -43,6 +43,7 @@ import AdminUsers from './components/admin/AdminUsers';
 import AdminSmsTemplates from './components/admin/AdminSmsTemplates';
 import AdminPayments from './components/admin/AdminPayments';
 import AdminAbout from './components/admin/AdminAbout';
+import AdminRelatedProducts from './components/admin/AdminRelatedProducts';
 
 // Optional: NotFound
 const NotFound = () => <div className="p-8 text-center">Page not found</div>;
@@ -95,6 +96,7 @@ function App() {
               <Route path="blog" element={<AdminBlog />} />
               <Route path="products" element={<AdminProducts />} />
               <Route path="variants" element={<AdminProductVariants />} />
+              <Route path="related-products" element={<AdminRelatedProducts />} />
               <Route path="quiz" element={<AdminQuiz />} />
               <Route path="navigation" element={<AdminNavigation />} />
               <Route path="one-click-orders" element={<AdminOneClickOrders />} />
