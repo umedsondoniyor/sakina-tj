@@ -317,12 +317,12 @@ const AdminAbout: React.FC = () => {
               )}
             </div>
           </div>
-          {settings?.mission_text && (
-            <div className="pt-4 border-t">
-              <div className="text-sm font-medium text-gray-500 mb-1">Текст миссии:</div>
-              <div className="text-gray-700">{settings.mission_text}</div>
+          <div className="pt-4 border-t">
+            <div className="text-sm font-medium text-gray-500 mb-1">Текст миссии:</div>
+            <div className="text-gray-700 min-h-[3rem]">
+              {settings?.mission_text || <span className="text-gray-400 italic">Текст миссии не добавлен</span>}
             </div>
-          )}
+          </div>
         </div>
       </section>
 

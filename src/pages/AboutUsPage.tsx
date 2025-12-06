@@ -244,11 +244,9 @@ const AboutUsPage: React.FC = () => {
               {hero.mission_section_title || FALLBACK_SETTINGS.mission_section_title}
             </h2>
             <div className="bg-yellow-300 h-2 w-16 mx-auto mb-8" />
-            {hero.mission_text && (
-              <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-                {hero.mission_text}
-              </p>
-            )}
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+              {hero.mission_text || FALLBACK_SETTINGS.mission_text || "Текст миссии будет добавлен администратором"}
+            </p>
           </div>
 
           {valuesArr.length === 0 ? (
