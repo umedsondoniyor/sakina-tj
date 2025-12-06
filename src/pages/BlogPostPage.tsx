@@ -255,7 +255,7 @@ const BlogPostPage: React.FC = () => {
             <img
               src={post.featured_image}
               alt={post.title}
-              className="w-full h-auto object-cover"
+              className="w-full h-auto max-h-[400px] md:max-h-[500px] object-cover"
               loading="eager"
             />
           </div>
