@@ -207,14 +207,16 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) =
       />
 
       {/* Product Confirmation Modal */}
-      <ProductConfirmationModal
-        isOpen={showConfirmationModal}
-        onClose={handleCloseModals}
-        onAddToCart={handleConfirmAddToCart}
-        productName={selectedProduct?.name || ''}
-        selectedVariant={selectedVariant!}
-        category={selectedProduct?.category}
-      />
+      {selectedProduct && selectedVariant && (
+        <ProductConfirmationModal
+          isOpen={showConfirmationModal}
+          onClose={handleCloseModals}
+          onAddToCart={handleConfirmAddToCart}
+          product={selectedProduct}
+          selectedVariant={selectedVariant}
+          category={selectedProduct.category}
+        />
+      )}
     </>
   );
 };
