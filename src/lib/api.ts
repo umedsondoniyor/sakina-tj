@@ -8,6 +8,7 @@ import type {
   CarouselSlide,
   QuizStep,
   NavigationItem,
+  RelatedProduct,
 } from './types';
 
 // Lightweight retry with exponential backoff
@@ -295,4 +296,90 @@ export async function getNavigationItems(): Promise<NavigationItem[]> {
     if (error) throw error;
     return data ?? [];
   }, 3, 600, 'getNavigationItems');
+}
+
+/* ------------------- Related Products ------------------- */
+export async function getRelatedProducts(productId: string): Promise<Product[]> {
+  return retryOperation(async () => {
+    const { data, error } = await supabase
+      .from('related_products')
+      .select(`
+        *,
+        related_product:products!related_product_id(*)
+      `)
+      .eq('product_id', productId)
+      .order('display_order', { ascending: true });
+
+    if (error) throw error;
+
+    // Extract and return the related products
+    return (data ?? [])
+      .map((item: any) => item.related_product)
+      .filter((p: any) => p !== null) as Product[];
+  }, 3, 600, `getRelatedProducts:${productId}`);
+}
+
+export async function getRelatedProductsForAdmin(productId: string): Promise<RelatedProduct[]> {
+  return retryOperation(async () => {
+    const { data, error } = await supabase
+      .from('related_products')
+      .select(`
+        *,
+        related_product:products!related_product_id(*)
+      `)
+      .eq('product_id', productId)
+      .order('display_order', { ascending: true });
+
+    if (error) throw error;
+    return (data ?? []).map((item: any) => ({
+      ...item,
+      related_product: item.related_product,
+    })) as RelatedProduct[];
+  }, 3, 600, `getRelatedProductsForAdmin:${productId}`);
+}
+
+export async function addRelatedProduct(
+  productId: string,
+  relatedProductId: string,
+  displayOrder: number = 0
+): Promise<RelatedProduct> {
+  return retryOperation(async () => {
+    const { data, error } = await supabase
+      .from('related_products')
+      .insert({
+        product_id: productId,
+        related_product_id: relatedProductId,
+        display_order: displayOrder,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data as RelatedProduct;
+  }, 3, 600, `addRelatedProduct:${productId}`);
+}
+
+export async function removeRelatedProduct(relationId: string): Promise<void> {
+  return retryOperation(async () => {
+    const { error } = await supabase
+      .from('related_products')
+      .delete()
+      .eq('id', relationId);
+
+    if (error) throw error;
+  }, 3, 600, `removeRelatedProduct:${relationId}`);
+}
+
+export async function updateRelatedProductOrder(
+  relationId: string,
+  displayOrder: number
+): Promise<void> {
+  return retryOperation(async () => {
+    const { error } = await supabase
+      .from('related_products')
+      .update({ display_order: displayOrder })
+      .eq('id', relationId);
+
+    if (error) throw error;
+  }, 3, 600, `updateRelatedProductOrder:${relationId}`);
 }

@@ -115,6 +115,7 @@ const AdminLayout = () => {
       items: [
         { path: '/admin/products', label: 'Товары', icon: Package },
         { path: '/admin/variants', label: 'Варианты и склад', icon: Layers },
+        { path: '/admin/related-products', label: 'Сопутствующие товары', icon: Package },
       ],
     },
     {

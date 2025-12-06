@@ -1,8 +1,5 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  ChevronRight,
-  Bed, BedDouble, Sofa, Box, Baby, Pill as Pillow, X, Phone,
-} from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { ChevronRight, Bed, BedDouble, Sofa, Box, Baby, Pill as Pillow, X, Phone } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import Logo from './Logo';
@@ -10,26 +7,14 @@ import CategoryMenuItem from './catalog/CategoryMenuItem';
 import CategoryContent from './catalog/CategoryContent';
 
 type MenuItem = {
-  id: string;       // slug or category key used elsewhere (e.g., 'mattresses')
-  name: string;     // display name (RU)
+  id: string;
+  name: string;
   icon: React.ElementType;
 };
 
 type RightPanelSection = {
   title: string;
-  items: string[];  // label list; we’ll map clicks to filters
-};
-
-type RightPanelPromo = {
-  title: string;
-  description: string;
-  image: string;
-};
-
-type RightPanelContent = {
-  title: string;
-  categories: RightPanelSection[];
-  promos: RightPanelPromo[];
+  items: string[];
 };
 
 interface CatalogMenuProps {
@@ -37,7 +22,6 @@ interface CatalogMenuProps {
   onClose: () => void;
 }
 
-/* ---------- Icon mapping for known categories ---------- */
 const ICON_BY_CATEGORY: Record<string, React.ElementType> = {
   mattresses: Bed,
   beds: BedDouble,
@@ -51,7 +35,6 @@ const ICON_BY_CATEGORY: Record<string, React.ElementType> = {
   map: Box,
 };
 
-/* ---------- RU display names for categories ---------- */
 const RU_NAME: Record<string, string> = {
   mattresses: 'Матрасы',
   beds: 'Кровати',
@@ -65,270 +48,273 @@ const RU_NAME: Record<string, string> = {
   map: 'Карты',
 };
 
-/* ---------- Helpers ---------- */
-const uniq = <T,>(arr: T[]) => Array.from(new Set(arr));
+// Helper to generate dynamic price ranges based on min/max prices
+const generatePriceRanges = (minPrice: number, maxPrice: number): string[] => {
+  if (minPrice === maxPrice || maxPrice === 0) {
+    return [`${Math.round(minPrice)} c.`];
+  }
 
-// helpers at top (keep or add if missing)
-const dedupeBy = <T, K extends string | number>(arr: T[], key: (x: T) => K) => {
-  const m = new Map<K, T>();
-  for (const it of arr) m.set(key(it), it);
-  return Array.from(m.values());
+  const ranges: string[] = [];
+  const diff = maxPrice - minPrice;
+  
+  // Calculate smart ranges based on price spread
+  if (diff < 1000) {
+    // Small range: just show min and max
+    ranges.push(`До ${Math.round(maxPrice)} c.`);
+  } else if (diff < 3000) {
+    // Medium range: 2-3 ranges
+    const mid = Math.round((minPrice + maxPrice) / 2);
+    ranges.push(`До ${mid} c.`);
+    ranges.push(`${mid}+ c.`);
+  } else if (diff < 6000) {
+    // Large range: 3-4 ranges
+    const third1 = Math.round(minPrice + diff / 3);
+    const third2 = Math.round(minPrice + (diff * 2) / 3);
+    ranges.push(`До ${third1} c.`);
+    ranges.push(`${third1}–${third2} c.`);
+    ranges.push(`${third2}+ c.`);
+  } else {
+    // Very large range: 4 ranges
+    const quarter1 = Math.round(minPrice + diff / 4);
+    const quarter2 = Math.round(minPrice + diff / 2);
+    const quarter3 = Math.round(minPrice + (diff * 3) / 4);
+    ranges.push(`До ${quarter1} c.`);
+    ranges.push(`${quarter1}–${quarter2} c.`);
+    ranges.push(`${quarter2}–${quarter3} c.`);
+    ranges.push(`${quarter3}+ c.`);
+  }
+
+  return ranges;
 };
-
-const asSizeLabel = (w?: number | null, l?: number | null) =>
-  w && l ? `${w}×${l}` : null;
 
 const CatalogMenu: React.FC<CatalogMenuProps> = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
-
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>('mattresses');
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
   const [showSubmenu, setShowSubmenu] = useState(false);
-  const [rightContent, setRightContent] = useState<RightPanelContent | null>(null);
-  const [loadingContent, setLoadingContent] = useState(false);
-
+  const [rightContent, setRightContent] = useState<RightPanelSection[]>([]);
+  const [loading, setLoading] = useState(false);
   const hoverTimerRef = useRef<NodeJS.Timeout>();
 
-  /* Load categories (prefer the `categories` table; fallback to distinct product categories) */
-// --- REPLACE your existing categories-loading useEffect with THIS ---
+  // Load categories
 useEffect(() => {
   if (!isOpen) return;
 
-  (async () => {
-    // 1) Build a product-count map: { [category]: count }
-    const { data: productsRows, error: prodErr } = await supabase
-      .from('products')
-      .select('category'); // lightweight (only category)
+    const loadCategories = async () => {
+      try {
+        // Get all products to count categories
+        const { data: products } = await supabase.from('products').select('category');
+        const categoryCounts = new Map<string, number>();
+        (products || []).forEach((p: any) => {
+          const cat = p.category;
+          if (cat) categoryCounts.set(cat, (categoryCounts.get(cat) || 0) + 1);
+        });
 
-    if (prodErr) {
-      console.warn('Could not fetch products for category counts:', prodErr);
-    }
+        // Try categories table first
+        const { data: categories } = await supabase
+          .from('categories')
+          .select('*')
+          .order('name');
 
-    const counts = new Map<string, number>();
-    (productsRows || []).forEach((r: any) => {
-      const c = (r.category || '').toString();
-      if (!c) return;
-      counts.set(c, (counts.get(c) || 0) + 1);
-    });
+        let items: MenuItem[] = [];
 
-    // Helper to translate a row to a menu item (only if has products)
-    const toMenuItem = (idRaw: string, nameRaw?: string) => {
-      const id = (idRaw || '').toString();
-      if (!id) return null;
-      if (!counts.get(id)) return null; // <-- drop categories without products
+        if (categories && categories.length > 0) {
+          items = categories
+            .map((c: any) => {
+              const id = c.slug || c.name?.toLowerCase() || '';
+              if (!id || !categoryCounts.has(id)) return null;
       return {
         id,
-        name: nameRaw || RU_NAME[id] || id,
+                name: c.name || RU_NAME[id] || id,
         icon: ICON_BY_CATEGORY[id] || Box,
-      } as MenuItem;
-    };
-
-    // 2) Try categories table first
-    let items: MenuItem[] = [];
-    const { data: cats, error: catsErr } = await supabase
-      .from('categories')
-      .select('*')
-      .order('name', { ascending: true });
-
-    if (!catsErr && cats && cats.length) {
-      items = cats
-        .map((c: any) => {
-          const id =
-            (c.slug || c.key || c.id || '').toString() ||
-            (c.name || '').toString().toLowerCase();
-          const name = c.display_name || c.name;
-          return toMenuItem(id, name);
+              };
         })
         .filter(Boolean) as MenuItem[];
     } else {
-      // 3) Fallback: distinct categories from products (already have counts)
-      const uniqueCats = Array.from(counts.keys()).sort(); // simple alpha
-      items = uniqueCats
-        .map((id) => toMenuItem(id))
-        .filter(Boolean) as MenuItem[];
-    }
-
-    // 4) Deduplicate by id and sort by RU display name for stable UI
-    items = dedupeBy(items, (x) => x.id).sort((a, b) =>
-      (a.name || a.id).localeCompare(b.name || b.id, 'ru')
-    );
+          // Fallback: use product categories
+          items = Array.from(categoryCounts.keys())
+            .map((id) => ({
+              id,
+              name: RU_NAME[id] || id,
+              icon: ICON_BY_CATEGORY[id] || Box,
+            }))
+            .sort((a, b) => a.name.localeCompare(b.name, 'ru'));
+        }
 
     setMenuItems(items);
+        if (items.length > 0 && !selectedCategory) {
+          setSelectedCategory(items[0].id);
+        }
+      } catch (error) {
+        console.error('Error loading categories:', error);
+      }
+    };
 
-    // 5) Ensure selectedCategory is valid
-    if (!items.find((i) => i.id === selectedCategory)) {
-      setSelectedCategory(items[0]?.id || ''); // blank if nothing available
-    }
-  })();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [isOpen]);
+    loadCategories();
+  }, [isOpen, selectedCategory]);
 
-  /* Debounced hover → change selected category */
+  // Debounced hover
   useEffect(() => {
     if (!hoveredCategory) return;
     hoverTimerRef.current = setTimeout(() => {
       setSelectedCategory(hoveredCategory);
-    }, 350);
+    }, 300);
     return () => {
       if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
     };
   }, [hoveredCategory]);
 
-  /* Load right-panel content dynamically for the selected category */
+  // Load category content
   useEffect(() => {
-    if (!isOpen || !selectedCategory) return;
+    if (!isOpen || !selectedCategory) {
+      setRightContent([]);
+      return;
+    }
 
-    (async () => {
-      setLoadingContent(true);
-
-      // 1) Distinct hardness (products)
-      const { data: hardnessRows } = await supabase
+    const loadContent = async () => {
+      setLoading(true);
+      try {
+        // Get all products in category with prices
+        const { data: products } = await supabase
         .from('products')
-        .select('hardness, category', { distinct: true })
+          .select('id, hardness, mattress_type, price')
         .eq('category', selectedCategory);
 
-      const hardness = uniq(
-        (hardnessRows || [])
-          .map((r: any) => r.hardness as string)
-          .filter(Boolean)
-      );
-
-      // 2) Distinct mattress types (products)
-      const { data: typeRows } = await supabase
-        .from('products')
-        .select('mattress_type, category', { distinct: true })
-        .eq('category', selectedCategory);
-
-      const mattressTypes = uniq(
-        (typeRows || [])
-          .map((r: any) => r.mattress_type as string)
-          .filter(Boolean)
-      );
-
-      // 3) Distinct sizes (product_variants)
-      const { data: sizeRows } = await supabase
+        // Get variant prices too (they might be different)
+        const productIds = (products || []).map((p: any) => p.id);
+        const { data: variants } = productIds.length > 0
+          ? await supabase
         .from('product_variants')
-        .select('width_cm,length_cm, size_name, product_id, products!inner(category)')
-        .eq('products.category', selectedCategory);
+              .select('width_cm, length_cm, size_name, price, product_id')
+              .in('product_id', productIds)
+          : { data: [] };
 
-      const sizeLabels = uniq(
-        (sizeRows || [])
-          .map((r: any) => asSizeLabel(Number(r.width_cm), Number(r.length_cm)) || r.size_name)
-          .filter(Boolean)
-      );
+        // Collect all prices (from products and variants)
+        const allPrices: number[] = [];
+        (products || []).forEach((p: any) => {
+          if (p.price) allPrices.push(Number(p.price));
+        });
+        (variants || []).forEach((v: any) => {
+          if (v.price) allPrices.push(Number(v.price));
+        });
 
-      // 4) Promos (optional): pull from navigation or hardcode a tasteful default
-      const promos: RightPanelPromo[] = [
-        {
-          title: `Подборщик ${RU_NAME[selectedCategory] || 'товаров'}`,
-          description: 'подберите идеальный вариант по параметрам',
-          image:
-            selectedCategory === 'mattresses'
-              ? 'https://ik.imagekit.io/3js0rb3pk/categ_matress.png'
-              : 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=400&q=80',
-        },
-      ];
+        // Calculate min/max prices
+        const minPrice = allPrices.length > 0 ? Math.min(...allPrices) : 0;
+        const maxPrice = allPrices.length > 0 ? Math.max(...allPrices) : 0;
 
-      // 5) Assemble sections
+        // Build sections
       const sections: RightPanelSection[] = [];
 
-      if (selectedCategory === 'mattresses') {
-        if (mattressTypes.length) {
-          sections.push({ title: 'Тип матраса', items: mattressTypes });
-        }
-        if (hardness.length) {
+        // Hardness
+        const hardness = [...new Set((products || []).map((p: any) => p.hardness).filter(Boolean))];
+        if (hardness.length > 0) {
           sections.push({ title: 'Жесткость', items: hardness });
         }
-        if (sizeLabels.length) {
-          sections.push({ title: 'Размер', items: sizeLabels.slice(0, 18) });
-        }
-        sections.push({
-          title: 'Цена',
-          items: ['До 1500 c.', '1500–3000 c.', '3000–6000 c.', '6000+ c.'],
-        });
-      } else {
-        if (sizeLabels.length) {
-          sections.push({ title: 'Размер', items: sizeLabels.slice(0, 18) });
-        }
-        if (hardness.length) {
-          // Many non-mattress products won't have this — we only add if present.
-          sections.push({ title: 'Жесткость', items: hardness });
-        }
-        sections.push({
-          title: 'Цена',
-          items: ['До 1500 c.', '1500–3000 c.', '3000–6000 c.', '6000+ c.'],
-        });
-      }
 
-      setRightContent({
-        title: RU_NAME[selectedCategory] || 'Категория',
-        categories: sections,
-        promos,
-      });
-      setLoadingContent(false);
-    })();
+        // Mattress types (only for mattresses)
+        if (selectedCategory === 'mattresses') {
+          const types = [...new Set((products || []).map((p: any) => p.mattress_type).filter(Boolean))];
+          if (types.length > 0) {
+            sections.push({ title: 'Тип матраса', items: types });
+          }
+        }
+
+        // Sizes
+        const sizes = [...new Set(
+          (variants || []).map((v: any) => {
+            if (v.width_cm && v.length_cm) return `${v.width_cm}×${v.length_cm}`;
+            return v.size_name;
+          }).filter(Boolean)
+        )].slice(0, 18);
+        if (sizes.length > 0) {
+          sections.push({ title: 'Размер', items: sizes });
+        }
+
+        // Dynamic price ranges based on actual prices
+        if (minPrice > 0 && maxPrice > 0) {
+          const priceRanges = generatePriceRanges(minPrice, maxPrice);
+          sections.push({ title: 'Цена', items: priceRanges });
+        }
+
+        setRightContent(sections);
+      } catch (error) {
+        console.error('Error loading content:', error);
+        setRightContent([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadContent();
   }, [isOpen, selectedCategory]);
+
+  const handleNavigate = (categoryId: string, filter?: { section: string; item: string }) => {
+    let url = `/products?category=${encodeURIComponent(categoryId)}`;
+    
+    if (filter) {
+      const state: any = { selectedCategories: [categoryId] };
+      
+      if (filter.section === 'Жесткость') {
+        state.presetFilters = { hardness: [filter.item] };
+      } else if (filter.section === 'Тип матраса') {
+        state.presetFilters = { mattressType: [filter.item] };
+      } else if (filter.section === 'Размер') {
+        const match = filter.item.match(/^(\d+)[×xX](\d+)$/);
+      if (match) {
+          state.presetFilters = { width: [Number(match[1]), Number(match[1])], length: [Number(match[2]), Number(match[2])] };
+        }
+      } else if (filter.section === 'Цена') {
+        // Parse dynamic price ranges
+        // Format examples: "До 1500 c.", "1500–3000 c.", "3000+ c."
+        if (filter.item.startsWith('До')) {
+          const match = filter.item.match(/До\s*(\d+)/);
+          if (match) {
+            const max = Number(match[1]);
+            state.presetFilters = { price: [0, max] };
+          }
+        } else if (filter.item.includes('–')) {
+          // Range like "1500–3000 c."
+          const match = filter.item.match(/(\d+)\s*–\s*(\d+)/);
+          if (match) {
+            const min = Number(match[1]);
+            const max = Number(match[2]);
+            state.presetFilters = { price: [min, max] };
+          }
+        } else if (filter.item.includes('+')) {
+          // Range like "3000+ c."
+          const match = filter.item.match(/(\d+)\+/);
+          if (match) {
+            const min = Number(match[1]);
+            state.presetFilters = { price: [min, 999999] };
+          }
+        } else {
+          // Single price like "1500 c."
+          const match = filter.item.match(/(\d+)/);
+          if (match) {
+            const price = Number(match[1]);
+            state.presetFilters = { price: [price, price] };
+          }
+        }
+      }
+      
+      navigate(url, { state });
+    } else {
+      navigate(url);
+    }
+    
+    onClose();
+  };
 
   if (!isOpen) return null;
 
-  /* ---------- Navigation helpers ---------- */
-  const goCategory = (catId: string) => {
-    // Go to /products with ?category=<catId>
-    navigate(`/products?category=${encodeURIComponent(catId)}`);
-    onClose();
-  };
-
-  // Used by the right panel clicks: map section+item to ProductsPage filters via `state`
-  const goWithFilter = (catId: string, sectionTitle: string, item: string) => {
-    const state: any = { selectedCategories: [catId] };
-
-    if (sectionTitle === 'Жесткость') {
-      state.presetFilters = { hardness: [item] };
-    } else if (sectionTitle === 'Тип матраса') {
-      state.presetFilters = { mattressType: [item] };
-    } else if (sectionTitle === 'Размер') {
-      // Parse "W×L" if present
-      const match = item.match(/^(\d+)[×xX](\d+)$/);
-      if (match) {
-        const w = Number(match[1]);
-        const l = Number(match[2]);
-        state.presetFilters = { width: [w, w], length: [l, l] };
-      }
-    } else if (sectionTitle === 'Цена') {
-      // Very simple price bands (you can tune in ProductsPage if needed)
-      if (item.startsWith('До')) state.presetFilters = { price: [0, 1500] };
-      else if (item.includes('1500–3000')) state.presetFilters = { price: [1500, 3000] };
-      else if (item.includes('3000–6000')) state.presetFilters = { price: [3000, 6000] };
-      else state.presetFilters = { price: [6000, Number.MAX_SAFE_INTEGER] };
-    }
-
-    navigate(`/products?category=${encodeURIComponent(catId)}`, { state });
-    onClose();
-  };
-
-  /* ---------- Handlers for UI ---------- */
-  const handleCategoryClick = (categoryId: string) => {
-    setSelectedCategory(categoryId);
-    setShowSubmenu(true);
-  };
-  const handleCategoryHover = (categoryId: string) => setHoveredCategory(categoryId);
-  const handleCategoryLeave = () => {
-    setHoveredCategory(null);
-    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
-  };
-  const handleBackClick = () => setShowSubmenu(false);
-
-  const current = rightContent;
-
-  /* ---------- Rendering ---------- */
   return (
     <>
       {/* Mobile View */}
       <div className="md:hidden fixed inset-0 bg-white z-50 overflow-y-auto catalog-menu">
         {!showSubmenu ? (
           <>
-            <div className="flex items-center justify-between p-4 border-b">
+            <div className="flex items-center justify-between p-4 border-b sticky top-0 bg-white z-10">
               <button onClick={onClose} className="text-gray-600">
                 <X size={24} />
               </button>
@@ -340,80 +326,82 @@ useEffect(() => {
               </a>
             </div>
             <div className="divide-y">
-              {menuItems.map((item) => (
+              {menuItems.length === 0 ? (
+                <div className="p-8 text-center text-gray-500">
+                  <p>Категории не найдены</p>
+                </div>
+              ) : (
+                menuItems.map((item) => (
                 <button
                   key={item.id}
-                  onClick={() => handleCategoryClick(item.id)}
-                  className="flex items-center justify-between w-full p-4 text-left hover:text-teal-600"
+                    onClick={() => {
+                      setSelectedCategory(item.id);
+                      setShowSubmenu(true);
+                    }}
+                    className="flex items-center justify-between w-full p-4 text-left hover:text-teal-600 hover:bg-gray-50 transition-colors"
                 >
                   <div className="flex items-center space-x-3">
                     <item.icon size={24} className="text-gray-400" />
-                    <span>{item.name}</span>
+                      <span className="font-medium">{item.name}</span>
                   </div>
                   <ChevronRight size={20} className="text-gray-400" />
                 </button>
-              ))}
+                ))
+              )}
             </div>
           </>
         ) : (
           <>
-            <div className="flex items-center justify-between p-4 border-b">
-              <button onClick={handleBackClick} className="text-gray-600">
+            <div className="flex items-center justify-between p-4 border-b sticky top-0 bg-white z-10">
+              <button
+                onClick={() => setShowSubmenu(false)}
+                className="text-gray-600"
+              >
                 <ChevronRight className="rotate-180" size={24} />
               </button>
               <h2 className="text-lg font-semibold">
-                {current?.title || RU_NAME[selectedCategory] || 'Каталог'}
+                {RU_NAME[selectedCategory] || 'Каталог'}
               </h2>
               <button onClick={onClose} className="text-gray-600">
                 <X size={24} />
               </button>
             </div>
 
-            <div className="divide-y">
-              {/* Sections */}
-              {loadingContent ? (
-                <div className="p-4 text-gray-500">Загрузка…</div>
-              ) : (
-                current?.categories.map((section) => (
+            <div className="divide-y pb-20">
+              {loading ? (
+                <div className="p-8 text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500 mx-auto mb-4"></div>
+                  <p className="text-gray-500">Загрузка…</p>
+                </div>
+              ) : rightContent.length > 0 ? (
+                rightContent.map((section) => (
                   <div key={section.title} className="p-4">
-                    <h3 className="font-semibold mb-2">{section.title}</h3>
-                    <div className="space-y-4">
-                      {section.items.map((label) => (
+                    <h3 className="font-semibold mb-3 text-gray-900">{section.title}</h3>
+                    <div className="space-y-2">
+                      {section.items.map((item) => (
                         <button
-                          key={label}
-                          onClick={() => goWithFilter(selectedCategory, section.title, label)}
-                          className="flex items-center justify-between w-full text-gray-700 hover:text-teal-600"
+                          key={item}
+                          onClick={() => handleNavigate(selectedCategory, { section: section.title, item })}
+                          className="flex items-center justify-between w-full text-gray-700 hover:text-teal-600 transition-colors py-2"
                         >
-                          <span>{label}</span>
-                          <ChevronRight size={20} className="text-gray-400" />
+                          <span>{item}</span>
+                          <ChevronRight size={18} className="text-gray-400" />
                         </button>
                       ))}
                     </div>
                   </div>
                 ))
-              )}
-
-              {/* Promos */}
-              {(current?.promos || []).map((promo) => (
-                <div key={promo.title} className="p-4">
-                  <button
-                    onClick={() => goCategory(selectedCategory)}
-                    className="flex items-center justify-between bg-teal-50 rounded-lg p-4 hover:bg-teal-100 w-full text-left"
-                  >
-                    <div>
-                      <h4 className="font-semibold text-teal-600">{promo.title}</h4>
-                      <p className="text-sm text-gray-600">{promo.description}</p>
-                    </div>
-                    <ChevronRight size={20} className="text-teal-600" />
-                  </button>
+              ) : (
+                <div className="p-8 text-center text-gray-500">
+                  <p>Нет доступных фильтров</p>
                 </div>
-              ))}
+              )}
             </div>
 
             <div className="sticky bottom-0 p-4 bg-white border-t">
               <button
-                onClick={() => goCategory(selectedCategory)}
-                className="w-full bg-teal-500 text-white py-3 rounded-lg hover:bg-teal-600"
+                onClick={() => handleNavigate(selectedCategory)}
+                className="w-full bg-teal-500 text-white py-3 rounded-lg hover:bg-teal-600 transition-colors"
               >
                 Посмотреть все товары
               </button>
@@ -422,46 +410,65 @@ useEffect(() => {
         )}
       </div>
 
-      {/* Desktop View (overlay) */}
-      <div className="hidden md:block fixed inset-x-0 top-[144px] bottom-0 bg-black/50 z-40 catalog-menu">
-        <div className="max-w-7xl mx-auto px-4 h-full">
-          <div className="flex h-full bg-white">
+      {/* Desktop View */}
+      <div
+        className="hidden md:block fixed inset-x-0 top-[144px] bottom-0 bg-black/50 z-40 catalog-menu"
+        onClick={(e) => {
+          if (e.target === e.currentTarget) onClose();
+        }}
+      >
+        <div className="max-w-7xl mx-auto px-4 h-full" onClick={(e) => e.stopPropagation()}>
+          <div className="flex h-full bg-white shadow-xl rounded-t-lg overflow-hidden">
             {/* Left Panel */}
-            <div className="w-[280px] border-r">
-              <div className="p-4 border-b">
+            <div className="w-[280px] border-r overflow-y-auto">
+              <div className="p-4 border-b sticky top-0 bg-white z-10">
+                <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold">Каталог</h2>
+                  <button
+                    onClick={onClose}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                    aria-label="Закрыть"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
               </div>
               <div className="py-2">
-                {menuItems.map((item) => (
+                {menuItems.length === 0 ? (
+                  <div className="p-4 text-center text-gray-500 text-sm">
+                    Категории не найдены
+                  </div>
+                ) : (
+                  menuItems.map((item) => (
                   <CategoryMenuItem
                     key={item.id}
                     item={item}
                     isSelected={selectedCategory === item.id}
-                    onCategoryClick={(id: string) => {
-                      setSelectedCategory(id);
-                      // desktop: keep right panel visible, not switching to mobile submenu
-                    }}
-                    onCategoryHover={handleCategoryHover}
-                    onCategoryLeave={handleCategoryLeave}
-                  />
-                ))}
+                      onCategoryClick={setSelectedCategory}
+                      onCategoryHover={setHoveredCategory}
+                      onCategoryLeave={() => {
+                        setHoveredCategory(null);
+                        if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+                      }}
+                    />
+                  ))
+                )}
               </div>
             </div>
 
             {/* Right Panel */}
             <CategoryContent
               content={{
-                title: current?.title || RU_NAME[selectedCategory] || 'Каталог',
-                categories: loadingContent
+                title: RU_NAME[selectedCategory] || 'Каталог',
+                categories: loading
                   ? [{ title: 'Загрузка…', items: [] }]
-                  : current?.categories || [],
-                promos: current?.promos || [],
+                  : rightContent,
+                promos: [],
               }}
-              // If your CategoryContent supports item clicks, wire them:
-              onItemClick={(sectionTitle: string, item: string) =>
-                goWithFilter(selectedCategory, sectionTitle, item)
+              onItemClick={(sectionTitle, item) =>
+                handleNavigate(selectedCategory, { section: sectionTitle, item })
               }
-              onSeeAll={() => goCategory(selectedCategory)}
+              onSeeAll={() => handleNavigate(selectedCategory)}
             />
           </div>
         </div>
@@ -471,3 +478,4 @@ useEffect(() => {
 };
 
 export default CatalogMenu;
+

@@ -6,6 +6,7 @@ import { useCart } from '../../contexts/CartContext';
 import OneClickModal from '../OneClickModal';
 import { useNavigate } from 'react-router-dom';
 import { formatCurrency } from '../../lib/utils';
+import RelatedProducts from './RelatedProducts';
 
 interface ProductInfoProps {
   product: Product; // ensure Product has: warranty_years?: number | null
@@ -195,6 +196,12 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
           <span className="font-medium">Купить в 1 клик</span>
         </button>
       </div>
+
+      {/* Related Products - Compact horizontal scroll */}
+      <RelatedProducts 
+        productId={product.id} 
+        currentProductName={product.name}
+      />
 
       {/* Additional Info */}
       <div className="grid grid-cols-2 gap-4 text-sm">

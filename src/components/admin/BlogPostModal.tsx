@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { X, Upload, Eye } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
+import rehypeSanitize from 'rehype-sanitize';
 import { supabase } from '../../lib/supabaseClient';
 import toast from 'react-hot-toast';
 import type { BlogPost, BlogCategory, BlogTag } from '../../lib/types';
@@ -202,7 +206,14 @@ const BlogPostModal: React.FC<BlogPostModalProps> = ({
                 {formData.excerpt && (
                   <p className="text-lg text-gray-600 italic">{formData.excerpt}</p>
                 )}
-                <div className="whitespace-pre-wrap">{formData.content}</div>
+                <div className="prose prose-lg max-w-none">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    rehypePlugins={[rehypeRaw, rehypeSanitize]}
+                  >
+                    {formData.content}
+                  </ReactMarkdown>
+                </div>
               </div>
             </div>
           ) : (
@@ -292,18 +303,33 @@ const BlogPostModal: React.FC<BlogPostModalProps> = ({
 
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Content
+                    Content (Markdown supported)
                   </label>
                   {/* Content */}
                   <textarea
                     value={formData.content}
                     onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
-                    rows={12}
-                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Write your post content here..."
+                    rows={16}
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                    placeholder="Write your post content in Markdown format...
+
+# Heading 1
+## Heading 2
+
+**Bold text** and *italic text*
+
+- Bullet point 1
+- Bullet point 2
+
+1. Numbered item 1
+2. Numbered item 2
+
+[Link text](https://example.com)
+
+![Image alt](https://example.com/image.jpg)"
                   />
                   <p className="mt-1 text-xs text-gray-500">
-                    Estimated reading time: {calculateReadingTime(formData.content)} min
+                    Markdown format supported. Estimated reading time: {calculateReadingTime(formData.content)} min
                   </p>
                 </div>
 
