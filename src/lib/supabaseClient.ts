@@ -45,9 +45,9 @@ export async function checkSupabaseConnection(retries = 3, delay = 1000) {
     try {
       const { data, error } = await supabase
         .from('products')
-        .select('count')
+        .select('id')
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.warn(`Connection attempt ${attempt + 1} failed:`, error.message);
@@ -60,7 +60,11 @@ export async function checkSupabaseConnection(retries = 3, delay = 1000) {
         throw error;
       }
 
-      console.log('Successfully connected to Supabase');
+      console.log(
+        data
+          ? 'Successfully fetched at least one product row from Supabase'
+          : 'Supabase reachable (products table returned no rows)'
+      );
       return true;
     } catch (err) {
       const error = err as Error;

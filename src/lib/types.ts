@@ -141,11 +141,16 @@ export interface CartItem {
   variant_id?: string;
 }
 
+export interface CartItemMatchOptions {
+  size?: string;
+  variantId?: string;
+}
+
 export interface CartContextType {
   items: CartItem[];
   addItem: (item: CartItem) => void;
-  removeItem: (id: string) => void;
-  updateQuantity: (id: string, quantity: number) => void;
+  removeItem: (id: string, options?: CartItemMatchOptions) => void;
+  updateQuantity: (id: string, quantity: number, options?: CartItemMatchOptions) => void;
   clearCart: () => void;
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
