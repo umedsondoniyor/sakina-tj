@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabaseClient';
-import { User, Mail, Phone, Calendar, Shield, Eye, EyeOff, Trash2 } from 'lucide-react';
+import { User, Mail, Phone, Calendar, Shield, Eye, EyeOff, Trash2, Plus, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface UserProfile {
@@ -18,6 +18,17 @@ const AdminUsers = () => {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterRole, setFilterRole] = useState<string>('all');
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newUser, setNewUser] = useState({
+    email: '',
+    password: '',
+    full_name: '',
+    phone: '',
+    role: 'user' as 'user' | 'admin',
+    date_of_birth: ''
+  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -81,6 +92,69 @@ const AdminUsers = () => {
     }
   };
 
+  const createUser = async () => {
+    if (!newUser.email || !newUser.password) {
+      toast.error('Email и пароль обязательны');
+      return;
+    }
+
+    if (newUser.password.length < 6) {
+      toast.error('Пароль должен содержать минимум 6 символов');
+      return;
+    }
+
+    setCreating(true);
+    let responseData: any = null;
+    try {
+      // Call edge function to create user (uses service role key)
+      const { data, error } = await supabase.functions.invoke('create-user', {
+        body: {
+          email: newUser.email,
+          password: newUser.password,
+          full_name: newUser.full_name || null,
+          phone: newUser.phone || null,
+          date_of_birth: newUser.date_of_birth || null,
+          role: newUser.role
+        }
+      });
+
+      responseData = data;
+
+      if (error) {
+        // Extract user-friendly error message
+        const errorMessage = data?.message || error.message || data?.error || 'Неизвестная ошибка';
+        toast.error(errorMessage);
+        return;
+      }
+
+      if (!data?.success) {
+        // Use the message field if available, otherwise fall back to error field
+        const errorMessage = data?.message || data?.error || 'Не удалось создать пользователя';
+        toast.error(errorMessage);
+        return;
+      }
+
+      toast.success('Пользователь успешно создан');
+      setShowAddModal(false);
+      setNewUser({
+        email: '',
+        password: '',
+        full_name: '',
+        phone: '',
+        role: 'user',
+        date_of_birth: ''
+      });
+      fetchUsers();
+    } catch (error: any) {
+      console.error('Error creating user:', error);
+      // Prioritize message field, then error field, then error.message
+      const errorMessage = responseData?.message || error.message || responseData?.error || error.error || 'Произошла неизвестная ошибка при создании пользователя. Попробуйте еще раз или обратитесь к администратору.';
+      toast.error(errorMessage);
+    } finally {
+      setCreating(false);
+    }
+  };
+
   const getRoleIcon = (role?: string) => {
     switch (role) {
       case 'admin':
@@ -127,8 +201,17 @@ const AdminUsers = () => {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Управление пользователями</h1>
-        <div className="text-sm text-gray-600">
-          Всего пользователей: {users.length}
+        <div className="flex items-center gap-4">
+          <div className="text-sm text-gray-600">
+            Всего пользователей: {users.length}
+          </div>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors"
+          >
+            <Plus size={20} />
+            Добавить пользователя
+          </button>
         </div>
       </div>
 
@@ -255,6 +338,129 @@ const AdminUsers = () => {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Add User Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg w-full max-w-md">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h2 className="text-xl font-semibold">Добавить пользователя</h2>
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email *
+                </label>
+                <input
+                  type="email"
+                  value={newUser.email}
+                  onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  placeholder="user@example.com"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Пароль *
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={newUser.password}
+                    onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    placeholder="Минимум 6 символов"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+                  >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Полное имя
+                </label>
+                <input
+                  type="text"
+                  value={newUser.full_name}
+                  onChange={(e) => setNewUser({ ...newUser, full_name: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  placeholder="Иван Иванов"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Телефон
+                </label>
+                <input
+                  type="tel"
+                  value={newUser.phone}
+                  onChange={(e) => setNewUser({ ...newUser, phone: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  placeholder="+992 93 123 45 67"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Дата рождения
+                </label>
+                <input
+                  type="date"
+                  value={newUser.date_of_birth}
+                  onChange={(e) => setNewUser({ ...newUser, date_of_birth: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Роль *
+                </label>
+                <select
+                  value={newUser.role}
+                  onChange={(e) => setNewUser({ ...newUser, role: e.target.value as 'user' | 'admin' })}
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                >
+                  <option value="user">Пользователь</option>
+                  <option value="admin">Администратор</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 p-6 border-t">
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                disabled={creating}
+              >
+                Отмена
+              </button>
+              <button
+                onClick={createUser}
+                disabled={creating || !newUser.email || !newUser.password}
+                className="px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {creating ? 'Создание...' : 'Создать пользователя'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
