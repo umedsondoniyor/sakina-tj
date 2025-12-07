@@ -263,7 +263,7 @@ export async function getCurrentUser() {
 }
 
 /* ------------------- Quiz / Navigation ------------------- */
-export async function getQuizSteps(): Promise<QuizStep[]> {
+export async function getQuizSteps(productType: 'mattress' | 'bed' = 'mattress'): Promise<QuizStep[]> {
   return retryOperation(async () => {
     const { data, error } = await supabase
       .from('quiz_steps')
@@ -272,6 +272,7 @@ export async function getQuizSteps(): Promise<QuizStep[]> {
         options:quiz_step_options(*)
       `)
       .eq('is_active', true)
+      .eq('product_type', productType)
       .order('order_index', { ascending: true });
 
     if (error) throw error;

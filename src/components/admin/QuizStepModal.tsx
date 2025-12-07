@@ -8,15 +8,17 @@ interface QuizStepModalProps {
   isOpen: boolean;
   onClose: () => void;
   step?: QuizStep;
+  productType?: 'mattress' | 'bed';
   onSuccess: () => void;
 }
 
-const QuizStepModal: React.FC<QuizStepModalProps> = ({ isOpen, onClose, step, onSuccess }) => {
+const QuizStepModal: React.FC<QuizStepModalProps> = ({ isOpen, onClose, step, productType = 'mattress', onSuccess }) => {
   const [formData, setFormData] = useState({
     label: '',
     step_key: '',
     order_index: 0,
     is_active: true,
+    product_type: productType,
     parent_step_key: '',
     parent_value: ''
   });
@@ -32,6 +34,7 @@ const QuizStepModal: React.FC<QuizStepModalProps> = ({ isOpen, onClose, step, on
         step_key: step.step_key,
         order_index: step.order_index,
         is_active: step.is_active,
+        product_type: step.product_type || productType,
         parent_step_key: step.parent_step_key || '',
         parent_value: step.parent_value || ''
       });
@@ -44,6 +47,7 @@ const QuizStepModal: React.FC<QuizStepModalProps> = ({ isOpen, onClose, step, on
         step_key: '',
         order_index: 0,
         is_active: true,
+        product_type: productType,
         parent_step_key: '',
         parent_value: ''
       });
@@ -194,9 +198,24 @@ const QuizStepModal: React.FC<QuizStepModalProps> = ({ isOpen, onClose, step, on
                   required
                   value={formData.label}
                   onChange={(e) => setFormData({ ...formData, label: e.target.value })}
-                  placeholder="e.g., Для кого вы подбираете матрас?"
+                  placeholder={productType === 'bed' ? 'e.g., Для кого вы подбираете кровать?' : 'e.g., Для кого вы подбираете матрас?'}
                   className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Product Type *
+                </label>
+                <select
+                  required
+                  value={formData.product_type}
+                  onChange={(e) => setFormData({ ...formData, product_type: e.target.value as 'mattress' | 'bed' })}
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                >
+                  <option value="mattress">Матрас</option>
+                  <option value="bed">Кровать</option>
+                </select>
               </div>
 
               <div>

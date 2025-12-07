@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import QuizModal from './QuizModal';
 import Benefits from './Benefits';
 
@@ -47,7 +47,7 @@ const Mattresses = () => {
       </div>
 
       {/* Quiz Modal */}
-      <QuizModal open={isQuizOpen} onClose={() => setIsQuizOpen(false)} />
+      <QuizModal open={isQuizOpen} onClose={() => setIsQuizOpen(false)} productType="mattress" />
     </div>
   );
 };

@@ -159,6 +159,7 @@ export interface QuizStep {
   step_key: string;
   order_index: number;
   is_active: boolean;
+  product_type?: 'mattress' | 'bed';
   parent_step_key?: string;
   parent_value?: string;
   created_at: string;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { Pencil, Trash2, Plus, PackageOpen, ChevronUp, ChevronDown } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -10,10 +10,11 @@ const AdminQuiz = () => {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedStep, setSelectedStep] = useState<QuizStep | undefined>();
+  const [productType, setProductType] = useState<'mattress' | 'bed'>('mattress');
 
   useEffect(() => {
     fetchSteps();
-  }, []);
+  }, [productType]);
 
   const fetchSteps = async () => {
     try {
@@ -23,6 +24,7 @@ const AdminQuiz = () => {
           *,
           options:quiz_step_options(*)
         `)
+        .eq('product_type', productType)
         .order('order_index', { ascending: true });
 
       if (error) throw error;
@@ -146,6 +148,32 @@ const AdminQuiz = () => {
         </button>
       </div>
 
+      {/* Product Type Tabs */}
+      <div className="mb-6 border-b border-gray-200">
+        <nav className="-mb-px flex space-x-8">
+          <button
+            onClick={() => setProductType('mattress')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              productType === 'mattress'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Матрасы
+          </button>
+          <button
+            onClick={() => setProductType('bed')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              productType === 'bed'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Кровати
+          </button>
+        </nav>
+      </div>
+
       {steps.length === 0 ? (
         <div className="text-center py-12">
           <PackageOpen className="mx-auto h-12 w-12 text-gray-400" />
@@ -255,6 +283,7 @@ const AdminQuiz = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         step={selectedStep}
+        productType={productType}
         onSuccess={fetchSteps}
       />
     </div>
