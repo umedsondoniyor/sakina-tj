@@ -42,7 +42,7 @@ const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
 }) => {
   const [updatingStatus, setUpdatingStatus] = useState(false);
 
-  const handleStatusUpdate = async (newStatus: 'pending' | 'confirmed') => {
+  const handleStatusUpdate = async (newStatus: 'pending' | 'confirmed' | 'completed') => {
     if (updatingStatus) return;
     
     setUpdatingStatus(true);
@@ -58,22 +58,27 @@ const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
 
       if (updateError) throw updateError;
 
-      // Call edge function to send SMS
-      const { data: smsData, error: smsError } = await supabase.functions.invoke('send-payment-sms', {
-        body: {
-          payment_id: payment.id,
-          status: newStatus
-        }
-      });
-
-      if (smsError) {
-        console.error('SMS sending error:', smsError);
-        // Don't fail the status update if SMS fails
-        toast.error(`Статус обновлен, но не удалось отправить SMS: ${smsError.message || 'Неизвестная ошибка'}`);
+      // Only send SMS for 'pending' and 'confirmed' statuses, not for 'completed'
+      if (newStatus === 'completed') {
+        toast.success(`Статус обновлен на "${getStatusText(newStatus)}"`);
       } else {
-        console.log('SMS sent successfully:', smsData);
-        const messageCount = smsData?.messages_sent || 1;
-        toast.success(`Статус обновлен на "${getStatusText(newStatus)}" и SMS отправлено (${messageCount} сообщение)`);
+        // Call edge function to send SMS for 'pending' and 'confirmed'
+        const { data: smsData, error: smsError } = await supabase.functions.invoke('send-payment-sms', {
+          body: {
+            payment_id: payment.id,
+            status: newStatus
+          }
+        });
+
+        if (smsError) {
+          console.error('SMS sending error:', smsError);
+          // Don't fail the status update if SMS fails
+          toast.error(`Статус обновлен, но не удалось отправить SMS: ${smsError.message || 'Неизвестная ошибка'}`);
+        } else {
+          console.log('SMS sent successfully:', smsData);
+          const messageCount = smsData?.messages_sent || 1;
+          toast.success(`Статус обновлен на "${getStatusText(newStatus)}" и SMS отправлено (${messageCount} сообщение)`);
+        }
       }
 
       if (onStatusUpdate) {
@@ -136,7 +141,7 @@ const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
                     {updatingStatus ? 'Обновление...' : 'Установить "Ожидает"'}
                   </button>
                 )}
-                {payment.status !== 'confirmed' && (
+                {payment.status !== 'confirmed' && payment.status !== 'completed' && (
                   <button
                     onClick={() => handleStatusUpdate('confirmed')}
                     disabled={updatingStatus}
@@ -144,6 +149,16 @@ const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
                   >
                     <CheckCircle size={16} className="mr-2" />
                     {updatingStatus ? 'Обновление...' : 'Установить "Подтвержден"'}
+                  </button>
+                )}
+                {payment.status === 'confirmed' && (
+                  <button
+                    onClick={() => handleStatusUpdate('completed')}
+                    disabled={updatingStatus}
+                    className="flex items-center justify-center px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                  >
+                    <CheckCircle size={16} className="mr-2" />
+                    {updatingStatus ? 'Обновление...' : 'Установить "Завершен" (без SMS)'}
                   </button>
                 )}
               </div>
