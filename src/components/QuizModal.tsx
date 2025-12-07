@@ -8,9 +8,10 @@ import type { QuizStep } from '../lib/types';
 interface QuizModalProps {
   open: boolean;
   onClose: () => void;
+  productType?: 'mattress' | 'bed';
 }
 
-const QuizModal: React.FC<QuizModalProps> = ({ open, onClose }) => {
+const QuizModal: React.FC<QuizModalProps> = ({ open, onClose, productType = 'mattress' }) => {
   const navigate = useNavigate();
 
   const [activeStep, setActiveStep] = useState(0);
@@ -28,7 +29,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ open, onClose }) => {
     const loadQuizSteps = async () => {
       try {
         setLoading(true);
-        const data = await getQuizSteps();
+        const data = await getQuizSteps(productType);
         if (!mounted) return;
         setSteps(data);
         setError(null);
@@ -46,7 +47,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ open, onClose }) => {
     return () => {
       mounted = false;
     };
-  }, [open]);
+  }, [open, productType]);
 
   // Body scroll lock
   useEffect(() => {

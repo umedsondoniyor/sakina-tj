@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import QuizModal from './QuizModal';
 
 const ProductPickers = () => {
-  const [isQuizOpen, setIsQuizOpen] = useState(false);
+  const [isMattressQuizOpen, setIsMattressQuizOpen] = useState(false);
+  const [isBedQuizOpen, setIsBedQuizOpen] = useState(false);
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -10,7 +11,7 @@ const ProductPickers = () => {
         {/* Mattress Picker */}
         <div 
           className="bg-gray-50 rounded-lg p-8 flex flex-col md:flex-row items-center cursor-pointer hover:bg-gray-100 transition-colors"
-          onClick={() => setIsQuizOpen(true)}
+          onClick={() => setIsMattressQuizOpen(true)}
         >
           <div className="flex-1 mb-6 md:mb-0 text-brand-navy">
             <h3 className="text-2xl font-bold mb-2">Подборщик матрасов</h3>
@@ -33,7 +34,7 @@ const ProductPickers = () => {
         {/* Bed Picker */}
         <div 
           className="bg-gray-50 rounded-lg p-8 flex flex-col md:flex-row items-center cursor-pointer hover:bg-gray-100 transition-colors"
-          onClick={() => setIsQuizOpen(false)}
+          onClick={() => setIsBedQuizOpen(true)}
         >
           <div className="flex-1 mb-6 md:mb-0 text-brand-navy">
             <h3 className="text-2xl font-bold mb-2">Подборщик кроватей</h3>
@@ -99,8 +100,9 @@ const ProductPickers = () => {
           </div>
         </div> */}
 
-        {/* Quiz Modal */}
-        <QuizModal open={isQuizOpen} onClose={() => setIsQuizOpen(false)} />
+        {/* Quiz Modals */}
+        <QuizModal open={isMattressQuizOpen} onClose={() => setIsMattressQuizOpen(false)} productType="mattress" />
+        <QuizModal open={isBedQuizOpen} onClose={() => setIsBedQuizOpen(false)} productType="bed" />
       </div>
     </div>
   );
