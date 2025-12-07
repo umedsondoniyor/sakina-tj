@@ -1,6 +1,6 @@
 // src/contexts/CartContext.tsx
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import type { CartItem, CartContextType } from '../lib/types';
+import type { CartItem, CartContextType, CartItemMatchOptions } from '../lib/types';
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
@@ -36,10 +36,27 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [items]);
 
 
+  const isSameCartLine = (
+    item: CartItem,
+    id: string,
+    options?: CartItemMatchOptions
+  ) => {
+    if (options?.variantId) {
+      return item.id === id && item.variant_id === options.variantId;
+    }
+    if (options?.size) {
+      return item.id === id && item.size === options.size;
+    }
+    return item.id === id;
+  };
+
   const addItem = (newItem: CartItem) => {
     setItems(currentItems => {
-      const existingItem = currentItems.find(
-        item => item.id === newItem.id && item.size === newItem.size
+      const existingItem = currentItems.find(item =>
+        isSameCartLine(item, newItem.id, {
+          variantId: newItem.variant_id,
+          size: newItem.size,
+        })
       );
 
       if (existingItem) {
@@ -54,15 +71,19 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   };
 
-  const removeItem = (id: string) => {
-    setItems(currentItems => currentItems.filter(item => item.id !== id));
+  const removeItem = (id: string, options?: CartItemMatchOptions) => {
+    setItems(currentItems =>
+      currentItems.filter(item => !isSameCartLine(item, id, options))
+    );
   };
 
-  const updateQuantity = (id: string, quantity: number) => {
+  const updateQuantity = (id: string, quantity: number, options?: CartItemMatchOptions) => {
     if (quantity < 1) return;
     setItems(currentItems =>
       currentItems.map(item =>
-        item.id === id ? { ...item, quantity } : item
+        isSameCartLine(item, id, options)
+          ? { ...item, quantity }
+          : item
       )
     );
   };

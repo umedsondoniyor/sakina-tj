@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabaseClient';
-import { User, Mail, Phone, Calendar, Shield, Eye, EyeOff, Trash2, Plus, X } from 'lucide-react';
+import { User, Mail, Phone, Calendar, Shield, Eye, EyeOff, Trash2, Edit2, Plus, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface UserProfile {
@@ -18,17 +18,20 @@ const AdminUsers = () => {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterRole, setFilterRole] = useState<string>('all');
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [newUser, setNewUser] = useState({
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [formLoading, setFormLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [activeUser, setActiveUser] = useState<UserProfile | null>(null);
+  const createDefaultFormState = () => ({
     email: '',
-    password: '',
     full_name: '',
     phone: '',
-    role: 'user' as 'user' | 'admin',
-    date_of_birth: ''
+    date_of_birth: '',
+    role: 'user',
+    password: '',
   });
-  const [showPassword, setShowPassword] = useState(false);
-  const [creating, setCreating] = useState(false);
+  const [formData, setFormData] = useState(createDefaultFormState);
 
   useEffect(() => {
     fetchUsers();
@@ -48,6 +51,123 @@ const AdminUsers = () => {
       toast.error('Failed to load users');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const openCreateModal = () => {
+    setActiveUser(null);
+    setFormData(createDefaultFormState());
+    setFormError(null);
+    setShowPassword(false);
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (user: UserProfile) => {
+    setActiveUser(user);
+    setFormData({
+      email: user.email || '',
+      full_name: user.full_name || '',
+      phone: user.phone || '',
+      date_of_birth: user.date_of_birth ? user.date_of_birth.slice(0, 10) : '',
+      role: user.role || 'user',
+      password: '',
+    });
+    setFormError(null);
+    setShowPassword(false);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    if (formLoading) return;
+    setIsModalOpen(false);
+    setActiveUser(null);
+    setFormData(createDefaultFormState());
+    setFormError(null);
+  };
+
+  const handleFormChange = (field: keyof typeof formData, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const upsertProfile = async (userId: string) => {
+    const now = new Date().toISOString();
+    const payload = {
+      id: userId,
+      email: formData.email.trim(),
+      phone: formData.phone.trim() || null,
+      full_name: formData.full_name.trim() || null,
+      date_of_birth: formData.date_of_birth || null,
+      role: formData.role,
+      updated_at: now,
+      created_at: activeUser?.created_at ?? now,
+    };
+
+    const { error } = await supabase
+      .from('user_profiles')
+      .upsert(payload, { onConflict: 'id' });
+
+    if (error) throw error;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormError(null);
+
+    const trimmedEmail = formData.email.trim();
+    if (!trimmedEmail) {
+      setFormError('Email обязателен');
+      return;
+    }
+
+    if (!activeUser && formData.password.trim().length < 6) {
+      setFormError('Пароль должен содержать минимум 6 символов');
+      return;
+    }
+
+    setFormLoading(true);
+    try {
+      if (activeUser) {
+        const updatePayload: {
+          email?: string;
+          password?: string;
+          user_metadata?: Record<string, any>;
+        } = {
+          email: trimmedEmail,
+          user_metadata: { role: formData.role },
+        };
+
+        if (formData.password.trim()) {
+          updatePayload.password = formData.password.trim();
+        }
+
+        const { error: authError } = await supabase.auth.admin.updateUserById(
+          activeUser.id,
+          updatePayload
+        );
+        if (authError) throw authError;
+
+        await upsertProfile(activeUser.id);
+        toast.success('Пользователь обновлён');
+      } else {
+        const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
+          email: trimmedEmail,
+          password: formData.password.trim(),
+          email_confirm: true,
+          user_metadata: { role: formData.role },
+        });
+        if (createError || !newUser?.user) throw createError || new Error('User not created');
+
+        await upsertProfile(newUser.user.id);
+        toast.success('Пользователь создан');
+      }
+
+      await fetchUsers();
+      closeModal();
+    } catch (error: any) {
+      console.error('Error saving user:', error);
+      setFormError(error?.message || 'Не удалось сохранить пользователя');
+    } finally {
+      setFormLoading(false);
     }
   };
 
@@ -198,21 +318,22 @@ const AdminUsers = () => {
   }
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Управление пользователями</h1>
-        <div className="flex items-center gap-4">
+    <>
+      <div className="p-6">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold">Управление пользователями</h1>
           <div className="text-sm text-gray-600">
             Всего пользователей: {users.length}
           </div>
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors"
-          >
-            <Plus size={20} />
-            Добавить пользователя
-          </button>
         </div>
+        <button
+          onClick={openCreateModal}
+          className="inline-flex items-center gap-2 bg-teal-500 text-white px-4 py-2 rounded-lg hover:bg-teal-600 transition-colors"
+        >
+          <Plus size={16} />
+          Добавить пользователя
+        </button>
       </div>
 
       {/* Role Filter */}
@@ -324,7 +445,13 @@ const AdminUsers = () => {
                         <option value="user">Пользователь</option>
                         <option value="admin">Администратор</option>
                       </select>
-                      
+                      <button
+                        onClick={() => openEditModal(user)}
+                        className="p-1 text-gray-600 hover:text-gray-900 transition-colors"
+                        title="Редактировать"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
                       <button
                         onClick={() => deleteUser(user.id)}
                         className="p-1 text-red-600 hover:text-red-800 transition-colors"
@@ -464,6 +591,146 @@ const AdminUsers = () => {
         </div>
       )}
     </div>
+
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg">
+            <div className="flex items-center justify-between border-b px-6 py-4">
+              <div>
+                <h2 className="text-xl font-semibold">
+                  {activeUser ? 'Редактировать пользователя' : 'Новый пользователь'}
+                </h2>
+                <p className="text-sm text-gray-500">
+                  {activeUser ? 'Обновите данные и сохраните изменения' : 'Укажите данные для создания учётной записи'}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeModal}
+                disabled={formLoading}
+                className="text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {formError && (
+              <div className="mx-6 mt-4 rounded-lg bg-red-50 text-red-700 px-3 py-2 text-sm">
+                {formError}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="px-6 py-4 space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Email</label>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => handleFormChange('email', e.target.value)}
+                  className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  required
+                  disabled={formLoading}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-gray-700">
+                    Пароль {activeUser && <span className="text-gray-400">(необязательно)</span>}
+                  </label>
+                  {activeUser && (
+                    <span className="text-xs text-gray-500">Оставьте пустым, чтобы не менять пароль</span>
+                  )}
+                </div>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={formData.password}
+                    onChange={(e) => handleFormChange('password', e.target.value)}
+                    className="w-full border rounded-lg px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    placeholder={activeUser ? 'Новый пароль' : 'Минимум 6 символов'}
+                    disabled={formLoading}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(v => !v)}
+                    className="absolute inset-y-0 right-2 flex items-center text-gray-500"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Полное имя</label>
+                  <input
+                    type="text"
+                    value={formData.full_name}
+                    onChange={(e) => handleFormChange('full_name', e.target.value)}
+                    className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    disabled={formLoading}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Телефон</label>
+                  <input
+                    type="tel"
+                    value={formData.phone}
+                    onChange={(e) => handleFormChange('phone', e.target.value)}
+                    className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    placeholder="+992 ..."
+                    disabled={formLoading}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Дата рождения</label>
+                  <input
+                    type="date"
+                    value={formData.date_of_birth}
+                    onChange={(e) => handleFormChange('date_of_birth', e.target.value)}
+                    className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    max={new Date().toISOString().slice(0, 10)}
+                    disabled={formLoading}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Роль</label>
+                  <select
+                    value={formData.role}
+                    onChange={(e) => handleFormChange('role', e.target.value)}
+                    className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    disabled={formLoading}
+                  >
+                    <option value="user">Пользователь</option>
+                    <option value="admin">Администратор</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  disabled={formLoading}
+                  className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  Отмена
+                </button>
+                <button
+                  type="submit"
+                  disabled={formLoading}
+                  className="px-4 py-2 rounded-lg bg-teal-500 text-white hover:bg-teal-600 transition-colors disabled:opacity-70"
+                >
+                  {formLoading ? 'Сохранение...' : activeUser ? 'Сохранить' : 'Создать'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

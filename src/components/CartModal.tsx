@@ -44,14 +44,24 @@ const CartModal: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <button
-                      onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                      onClick={() =>
+                        updateQuantity(item.id, item.quantity - 1, {
+                          size: item.size,
+                          variantId: item.variant_id,
+                        })
+                      }
                       className="p-1 rounded-full hover:bg-gray-100"
                     >
                       <Minus size={16} />
                     </button>
                     <span>{item.quantity}</span>
                     <button
-                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                      onClick={() =>
+                        updateQuantity(item.id, item.quantity + 1, {
+                          size: item.size,
+                          variantId: item.variant_id,
+                        })
+                      }
                       className="p-1 rounded-full hover:bg-gray-100"
                     >
                       <Plus size={16} />
@@ -59,7 +69,12 @@ const CartModal: React.FC = () => {
                   </div>
                   <div className="flex items-center space-x-4">
                     <button
-                      onClick={() => removeItem(item.id)}
+                      onClick={() =>
+                        removeItem(item.id, {
+                          size: item.size,
+                          variantId: item.variant_id,
+                        })
+                      }
                       className="text-red-500 hover:text-red-600"
                     >
                       Удалить
