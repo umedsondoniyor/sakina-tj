@@ -139,8 +139,8 @@ Deno.serve(async (req) => {
         status: 500
       });
     }
-    // --- SMS notifications (only if payment completed) ---
-    if (mapped === 'completed') {
+    // --- SMS notifications (only if payment completed and not pickup) ---
+    if (mapped === 'completed' && payment.delivery_type !== 'pickup') {
       const orderTitle = payment.product_title || `Заказ №${orderId}`;
       
       // Helper function to clean phone numbers

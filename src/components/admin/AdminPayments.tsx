@@ -11,7 +11,7 @@ interface Payment {
   alif_order_id: string;
   amount: number;
   currency: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
+  status: 'pending' | 'processing' | 'completed' | 'confirmed' | 'failed' | 'cancelled';
   alif_transaction_id?: string;
   user_id?: string;
   product_title?: string;
@@ -122,6 +122,8 @@ const AdminPayments: React.FC = () => {
         if (payment.created_at.startsWith(today)) {
           newStats.todayRevenue += amount;
         }
+      } else if (payment.status === 'confirmed') {
+        newStats.pendingTransactions++; // Count confirmed as pending for stats
       } else if (payment.status === 'pending' || payment.status === 'processing') {
         newStats.pendingTransactions++;
       } else if (payment.status === 'failed' || payment.status === 'cancelled') {
@@ -311,6 +313,7 @@ const AdminPayments: React.FC = () => {
             setShowDetailModal(false);
             setSelectedPayment(null);
           }}
+          onStatusUpdate={fetchPayments}
           isOpen
         />
       )}

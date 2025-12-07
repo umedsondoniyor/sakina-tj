@@ -1,10 +1,11 @@
-import React from 'react';
 import { CircleCheck as CheckCircle, Circle as XCircle, Clock, CircleAlert as AlertCircle, CreditCard, Wallet, Building } from 'lucide-react';
 
 export const getStatusIcon = (status: string) => {
   switch (status) {
     case 'completed':
       return <CheckCircle className="text-green-500" size={16} />;
+    case 'confirmed':
+      return <CheckCircle className="text-blue-500" size={16} />;
     case 'failed':
     case 'cancelled':
       return <XCircle className="text-red-500" size={16} />;
@@ -19,6 +20,7 @@ export const getStatusIcon = (status: string) => {
 export const getStatusText = (status: string) => {
   switch (status) {
     case 'completed': return 'Завершен';
+    case 'confirmed': return 'Подтвержден';
     case 'failed': return 'Ошибка';
     case 'cancelled': return 'Отменен';
     case 'pending': return 'Ожидает';
@@ -30,6 +32,7 @@ export const getStatusText = (status: string) => {
 export const getStatusColor = (status: string) => {
   switch (status) {
     case 'completed': return 'bg-green-100 text-green-800';
+    case 'confirmed': return 'bg-blue-100 text-blue-800';
     case 'failed':
     case 'cancelled': return 'bg-red-100 text-red-800';
     case 'pending':
@@ -44,6 +47,8 @@ export const getPaymentMethodIcon = (gateway?: string) => {
       return <CreditCard className="text-green-600" size={16} />;
     case 'wallet':
       return <Wallet className="text-blue-600" size={16} />;
+    case 'cash':
+      return <Building className="text-orange-600" size={16} />;
     default:
       return <Building className="text-gray-600" size={16} />;
   }

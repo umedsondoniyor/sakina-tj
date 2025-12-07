@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { Plus, Star } from 'lucide-react';
 import type { Product } from '../../lib/types';
 import { getRelatedProducts } from '../../lib/api';
-import { formatCurrency } from '../../lib/utils';
+import { formatCurrency, getVariantLabel } from '../../lib/utils';
 import ProductSizeModal from '../products/ProductSizeModal';
 import ProductConfirmationModal from '../products/ProductConfirmationModal';
 import { getProductVariants } from '../../lib/api';
 import type { ProductVariant } from '../../lib/types';
+import { useCart } from '../../contexts/CartContext';
+import toast from 'react-hot-toast';
 
 interface RelatedProductsProps {
   productId: string;
@@ -19,6 +21,7 @@ const RelatedProducts: React.FC<RelatedProductsProps> = ({
   currentProductName
 }) => {
   const navigate = useNavigate();
+  const { addItem } = useCart();
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [showSizeModal, setShowSizeModal] = useState(false);
@@ -54,7 +57,16 @@ const RelatedProducts: React.FC<RelatedProductsProps> = ({
       setSelectedProduct(product);
 
       if (variants.length === 0) {
-        // No variants, add directly to cart (handled by parent)
+        // No variants, add directly to cart
+        const cartItem = {
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          quantity: 1,
+          image_url: product.image_url
+        };
+        addItem(cartItem);
+        toast.success('Товар добавлен в корзину');
         return;
       }
 
@@ -62,6 +74,7 @@ const RelatedProducts: React.FC<RelatedProductsProps> = ({
       setShowSizeModal(true);
     } catch (error) {
       console.error('Error loading variants:', error);
+      toast.error('Ошибка при загрузке вариантов товара');
     }
   };
 
@@ -81,7 +94,20 @@ const RelatedProducts: React.FC<RelatedProductsProps> = ({
 
   const handleConfirmAddToCart = () => {
     if (!selectedProduct || !selectedVariant) return;
-    // This will be handled by ProductConfirmationModal's onAddToCart
+    
+    const variantLabel = getVariantLabel(selectedVariant, selectedProduct.category);
+    const cartItem = {
+      id: selectedProduct.id,
+      name: selectedProduct.name,
+      price: selectedVariant.price,
+      quantity: 1,
+      image_url: selectedProduct.image_url,
+      size: variantLabel,
+      variant_id: selectedVariant.id
+    };
+    
+    addItem(cartItem);
+    toast.success('Товар добавлен в корзину');
     handleCloseModals();
   };
 
@@ -204,6 +230,7 @@ const RelatedProducts: React.FC<RelatedProductsProps> = ({
             <ProductConfirmationModal
               isOpen={showConfirmationModal}
               onClose={handleCloseModals}
+              onAddToCart={handleConfirmAddToCart}
               product={selectedProduct}
               selectedVariant={selectedVariant}
               category={selectedProduct.category}

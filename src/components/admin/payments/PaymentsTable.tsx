@@ -7,7 +7,7 @@ interface Payment {
   alif_order_id: string;
   amount: number;
   currency: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
+  status: 'pending' | 'processing' | 'completed' | 'confirmed' | 'failed' | 'cancelled';
   alif_transaction_id?: string;
   user_id?: string;
   product_title?: string;

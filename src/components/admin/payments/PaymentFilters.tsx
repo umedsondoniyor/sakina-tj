@@ -86,6 +86,7 @@ const PaymentFilters: React.FC<PaymentFiltersProps> = ({
         >
           <option value="all">Все статусы</option>
           <option value="completed">Завершён</option>
+          <option value="confirmed">Подтвержден</option>
           <option value="pending">Ожидает</option>
           <option value="processing">В обработке</option>
           <option value="failed">Ошибка</option>
