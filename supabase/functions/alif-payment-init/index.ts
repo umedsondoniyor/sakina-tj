@@ -21,9 +21,25 @@ Deno.serve(async (req)=>{
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const { amount, currency = 'TJS', gate = 'vsa', orderData } = requestBody;
     if (!amount || amount <= 0) throw new Error('Invalid amount');
-    if (!orderData?.customerInfo?.email) throw new Error('Customer email is required');
     if (!orderData?.customerInfo?.name) throw new Error('Customer name is required');
     if (!orderData?.customerInfo?.phone) throw new Error('Customer phone is required');
+    
+    // Skip payment gateway for pickup orders - don't create payment record
+    if (orderData?.deliveryInfo?.delivery_type === 'pickup') {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Pickup orders should be handled directly without payment gateway'
+      }), {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        },
+        status: 400
+      });
+    }
+    
+    // Email is optional for home delivery
+    // if (!orderData?.customerInfo?.email) throw new Error('Customer email is required');
 
     // Debug logging for delivery info
     console.log('📦 Delivery info received:', {
@@ -65,7 +81,7 @@ Deno.serve(async (req)=>{
       amount: parseFloat(amountFixed),
       callback_url: callbackUrl,
       return_url: returnUrl,
-      email: orderData.customerInfo.email,
+      email: orderData.customerInfo.email || '',
       phone: orderData.customerInfo.phone,
       gate,
       token,

@@ -1,13 +1,15 @@
-import React from 'react';
-import { X, Trash2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, Trash2, CheckCircle } from 'lucide-react';
 import { getStatusIcon, getStatusText, getStatusColor, getPaymentMethodIcon } from '../../../lib/paymentUtils';
+import { supabase } from '../../../lib/supabaseClient';
+import toast from 'react-hot-toast';
 
 interface Payment {
   id: string;
   alif_order_id: string;
   amount: number;
   currency: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
+  status: 'pending' | 'processing' | 'completed' | 'confirmed' | 'failed' | 'cancelled';
   alif_transaction_id?: string;
   user_id?: string;
   product_title?: string;
@@ -28,14 +30,68 @@ interface PaymentDetailModalProps {
   onDelete: (paymentId: string) => void;
   onClose: () => void;
   isOpen: boolean;
+  onStatusUpdate?: () => void;
 }
 
 const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
   payment,
   onDelete,
   onClose,
-  isOpen
+  isOpen,
+  onStatusUpdate
 }) => {
+  const [updatingStatus, setUpdatingStatus] = useState(false);
+
+  const handleStatusUpdate = async (newStatus: 'pending' | 'confirmed' | 'completed') => {
+    if (updatingStatus) return;
+    
+    setUpdatingStatus(true);
+    try {
+      // Update status in database
+      const { error: updateError } = await supabase
+        .from('payments')
+        .update({ 
+          status: newStatus,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', payment.id);
+
+      if (updateError) throw updateError;
+
+      // Only send SMS for 'pending' and 'confirmed' statuses, not for 'completed'
+      if (newStatus === 'completed') {
+        toast.success(`Статус обновлен на "${getStatusText(newStatus)}"`);
+      } else {
+        // Call edge function to send SMS for 'pending' and 'confirmed'
+        const { data: smsData, error: smsError } = await supabase.functions.invoke('send-payment-sms', {
+          body: {
+            payment_id: payment.id,
+            status: newStatus
+          }
+        });
+
+        if (smsError) {
+          console.error('SMS sending error:', smsError);
+          // Don't fail the status update if SMS fails
+          toast.error(`Статус обновлен, но не удалось отправить SMS: ${smsError.message || 'Неизвестная ошибка'}`);
+        } else {
+          console.log('SMS sent successfully:', smsData);
+          const messageCount = smsData?.messages_sent || 1;
+          toast.success(`Статус обновлен на "${getStatusText(newStatus)}" и SMS отправлено (${messageCount} сообщение)`);
+        }
+      }
+
+      if (onStatusUpdate) {
+        onStatusUpdate();
+      }
+    } catch (error: any) {
+      console.error('Error updating status:', error);
+      toast.error(`Ошибка обновления статуса: ${error.message || error}`);
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -67,11 +123,44 @@ const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-gray-50 rounded-lg p-4">
               <h3 className="font-medium text-gray-900 mb-2">Статус платежа</h3>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 mb-3">
                 {getStatusIcon(payment.status)}
                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(payment.status)}`}>
                   {getStatusText(payment.status)}
                 </span>
+              </div>
+              {/* Status update buttons */}
+              <div className="flex flex-col gap-2 mt-3">
+                {payment.status !== 'pending' && (
+                  <button
+                    onClick={() => handleStatusUpdate('pending')}
+                    disabled={updatingStatus}
+                    className="flex items-center justify-center px-3 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                  >
+                    <CheckCircle size={16} className="mr-2" />
+                    {updatingStatus ? 'Обновление...' : 'Установить "Ожидает"'}
+                  </button>
+                )}
+                {payment.status !== 'confirmed' && payment.status !== 'completed' && (
+                  <button
+                    onClick={() => handleStatusUpdate('confirmed')}
+                    disabled={updatingStatus}
+                    className="flex items-center justify-center px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                  >
+                    <CheckCircle size={16} className="mr-2" />
+                    {updatingStatus ? 'Обновление...' : 'Установить "Подтвержден"'}
+                  </button>
+                )}
+                {payment.status === 'confirmed' && (
+                  <button
+                    onClick={() => handleStatusUpdate('completed')}
+                    disabled={updatingStatus}
+                    className="flex items-center justify-center px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                  >
+                    <CheckCircle size={16} className="mr-2" />
+                    {updatingStatus ? 'Обновление...' : 'Установить "Завершен" (без SMS)'}
+                  </button>
+                )}
               </div>
             </div>
 
@@ -86,7 +175,13 @@ const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
               <h3 className="font-medium text-gray-900 mb-2">Метод оплаты</h3>
               <div className="flex items-center space-x-2">
                 {getPaymentMethodIcon(payment.payment_gateway)}
-                <span className="capitalize">{payment.payment_gateway?.replace('_', ' ') || 'Неизвестно'}</span>
+                <span className="capitalize">
+                  {payment.payment_gateway === 'cash' 
+                    ? 'Наличные' 
+                    : payment.payment_gateway === 'alif_bank'
+                    ? 'Alif Bank'
+                    : payment.payment_gateway?.replace('_', ' ') || 'Неизвестно'}
+                </span>
               </div>
             </div>
           </div>

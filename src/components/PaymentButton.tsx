@@ -17,7 +17,7 @@ interface PaymentButtonProps {
     }>;
     customerInfo: {
       name: string;
-      email: string;
+      email?: string;
       phone: string;
     };
     deliveryInfo: {
@@ -53,11 +53,63 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   const initiatePayment = async () => {
-    if (!orderData.customerInfo.email || !orderData.customerInfo.name) {
-      const errorMsg = 'Необходимо заполнить контактную информацию';
+    if (!orderData.customerInfo.name) {
+      const errorMsg = 'Необходимо указать имя';
       setError(errorMsg);
       onError?.(errorMsg);
       toast.error(errorMsg);
+      return;
+    }
+
+    // For pickup orders, skip payment gateway and create order directly
+    if (orderData.deliveryInfo?.delivery_type === 'pickup') {
+      setLoading(true);
+      try {
+        // Generate unique order ID for pickup orders
+        const orderId = `SAKINA_PICKUP_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        // Create order directly without payment gateway
+        const { data: order, error: orderError } = await supabase
+          .from('payments')
+          .insert({
+            alif_order_id: orderId,
+            amount: amount,
+            currency: currency,
+            status: 'pending',
+            customer_name: orderData.customerInfo.name,
+            customer_phone: orderData.customerInfo.phone,
+            customer_email: orderData.customerInfo.email || null,
+            delivery_type: 'pickup',
+            delivery_address: null,
+            payment_gateway: 'cash',
+            order_summary: {
+              items: orderData.items,
+              total_amount: amount,
+              currency: currency,
+              customer_info: orderData.customerInfo,
+              delivery_info: orderData.deliveryInfo,
+              timestamp: new Date().toISOString()
+            }
+          })
+          .select()
+          .single();
+
+        if (orderError) throw orderError;
+
+        toast.success('Заказ оформлен! Вы можете забрать его в магазине.');
+        onSuccess?.(order.id);
+        
+        // Clear cart and navigate
+        sessionStorage.removeItem('sakina_payment_id');
+        window.location.href = '/payment/success?order_id=' + order.id;
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Ошибка при оформлении заказа';
+        setError(errorMessage);
+        onError?.(errorMessage);
+        toast.error(errorMessage);
+      } finally {
+        setLoading(false);
+      }
       return;
     }
 

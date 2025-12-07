@@ -1,9 +1,10 @@
 // src/components/CheckoutPage.tsx
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useCart } from '../contexts/CartContext';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { formatCurrency } from '../lib/utils';
+import { supabase } from '../lib/supabaseClient';
 
 // Import subcomponents
 import CheckoutSteps from './checkout/CheckoutSteps';
@@ -32,7 +33,7 @@ interface FormData {
   paymentMethod: 'online' | 'cash';
   
   // Gateway Information
-  selectedGateway: 'alif_bank',
+  selectedGateway: string,
   
   // Additional
   comments: string;
@@ -79,20 +80,53 @@ const CheckoutPage = () => {
     }
   }, [items, navigate]);
 
-  // Restore saved form
-useEffect(() => {
-  const saved = localStorage.getItem('sakina_checkout_form');
-  if (saved) {
-    try {
-      setFormData(JSON.parse(saved));
-    } catch {}
-  }
-}, []);
+  // Normalize payment method to ensure consistent values
+  const normalizePaymentMethod = (method: string): 'online' | 'cash' => {
+    if (typeof method !== 'string') return 'online';
+    const normalized = method.toLowerCase().trim();
+    // Handle both English and Russian values
+    if (normalized === 'online' || normalized === 'оплата онлайн' || normalized.includes('онлайн')) {
+      return 'online';
+    }
+    if (normalized === 'cash' || normalized === 'при получении' || normalized.includes('наличн')) {
+      return 'cash';
+    }
+    // Default to online if unclear
+    return 'online';
+  };
 
-// Save form on change
-useEffect(() => {
-  localStorage.setItem('sakina_checkout_form', JSON.stringify(formData));
-}, [formData]);
+  // Restore saved form
+  useEffect(() => {
+    const saved = localStorage.getItem('sakina_checkout_form');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        // Normalize paymentMethod when loading from localStorage
+        if (parsed.paymentMethod) {
+          parsed.paymentMethod = normalizePaymentMethod(parsed.paymentMethod);
+        }
+        setFormData(parsed);
+      } catch {}
+    }
+  }, []);
+
+  // Ensure paymentMethod is always normalized in state
+  useEffect(() => {
+    const normalized = normalizePaymentMethod(formData.paymentMethod);
+    if (normalized !== formData.paymentMethod) {
+      setFormData(prev => ({ ...prev, paymentMethod: normalized }));
+    }
+  }, [formData.paymentMethod]);
+
+  // Save form on change
+  useEffect(() => {
+    // Ensure paymentMethod is normalized before saving
+    const normalizedData = {
+      ...formData,
+      paymentMethod: normalizePaymentMethod(formData.paymentMethod)
+    };
+    localStorage.setItem('sakina_checkout_form', JSON.stringify(normalizedData));
+  }, [formData]);
 
 
   const validateCurrentStep = (): boolean => {
@@ -112,9 +146,8 @@ useEffect(() => {
         newErrors.name = 'Имя должно содержать минимум 2 символа';
       }
 
-      if (!formData.email.trim()) {
-        newErrors.email = 'Email обязателен';
-      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      // Email is optional, but if provided, must be valid format
+      if (formData.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
         newErrors.email = 'Неверный формат email';
       }
     }
@@ -135,6 +168,11 @@ useEffect(() => {
   };
 
   const handleInputChange = (field: keyof FormData, value: string | boolean) => {
+    // Normalize paymentMethod if it's being changed
+    if (field === 'paymentMethod' && typeof value === 'string') {
+      value = normalizePaymentMethod(value) as any;
+    }
+    
     setFormData(prev => ({ ...prev, [field]: value }));
     
     // Clear error when user starts typing
@@ -210,11 +248,111 @@ useEffect(() => {
   const createOrder = async () => {
     setLoading(true);
     try {
-      // Create order without payment for cash/installment
+      // For pickup orders, create order record with cash payment method
+      if (formData.deliveryType === 'pickup') {
+        // Generate unique order ID for pickup orders
+        const orderId = `SAKINA_PICKUP_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        const { error: orderError } = await supabase
+          .from('payments')
+          .insert({
+            alif_order_id: orderId,
+            amount: calculateFinalTotal(),
+            currency: 'TJS',
+            status: 'pending',
+            customer_name: formData.name,
+            customer_phone: formData.phone,
+            customer_email: formData.email || null,
+            delivery_type: 'pickup',
+            delivery_address: null,
+            payment_gateway: 'cash',
+            order_summary: {
+              items: items.map(item => ({
+                id: item.id,
+                name: item.name,
+                price: item.price,
+                quantity: item.quantity
+              })),
+              total_amount: calculateFinalTotal(),
+              currency: 'TJS',
+              customer_info: {
+                name: formData.name,
+                phone: formData.phone,
+                email: formData.email || null
+              },
+              delivery_info: {
+                delivery_type: 'pickup',
+                delivery_address: null
+              },
+              timestamp: new Date().toISOString()
+            }
+          })
+          .select()
+          .single();
+
+        if (orderError) {
+          console.error('Error creating pickup order:', orderError);
+          toast.error('Ошибка при оформлении заказа');
+          return;
+        }
+
+        toast.success('Заказ оформлен! Вы можете забрать его в магазине.');
+        clearCart();
+        localStorage.removeItem('sakina_checkout_form');
+        navigate('/order-confirmation');
+        return;
+      }
+
+      // For home delivery with cash payment, create order record
+      const { error: orderError } = await supabase
+        .from('payments')
+        .insert({
+          amount: calculateFinalTotal(),
+          currency: 'TJS',
+          status: 'pending',
+          customer_name: formData.name,
+          customer_phone: formData.phone,
+          customer_email: formData.email || null,
+          delivery_type: formData.deliveryType,
+          delivery_address: formData.address,
+          payment_gateway: 'cash',
+          order_summary: {
+            items: items.map(item => ({
+              id: item.id,
+              name: item.name,
+              price: item.price,
+              quantity: item.quantity
+            })),
+            total_amount: calculateFinalTotal(),
+            currency: 'TJS',
+            customer_info: {
+              name: formData.name,
+              phone: formData.phone,
+              email: formData.email || null
+            },
+            delivery_info: {
+              delivery_type: formData.deliveryType,
+              delivery_address: formData.address,
+              city: formData.city,
+              apartment: formData.apartment,
+              entrance: formData.entrance,
+              floor: formData.floor,
+              intercom: formData.intercom
+            },
+            timestamp: new Date().toISOString()
+          }
+        })
+        .select()
+        .single();
+
+      if (orderError) throw orderError;
+
       toast.success('Заказ успешно оформлен!');
       clearCart();
+      localStorage.removeItem('sakina_checkout_form');
       navigate('/order-confirmation');
     } catch (error) {
+      console.error('Error creating order:', error);
       toast.error('Ошибка при оформлении заказа');
     } finally {
       setLoading(false);
@@ -245,7 +383,7 @@ useEffect(() => {
               email: formData.email
             }}
             errors={errors}
-            onInputChange={handleInputChange}
+            onInputChange={(field: string, value: string | boolean) => handleInputChange(field as keyof FormData, value)}
             onPhoneChange={handlePhoneChange}
           />
         );
@@ -262,7 +400,7 @@ useEffect(() => {
               intercom: formData.intercom
             }}
             errors={errors}
-            onInputChange={handleInputChange}
+            onInputChange={(field: string, value: string | boolean) => handleInputChange(field as keyof FormData, value)}
           />
         );
       case 3:
@@ -301,9 +439,9 @@ useEffect(() => {
               <div className="border-b pb-4">
                 <h3 className="font-medium mb-2">Способ оплаты</h3>
                 <p className="text-sm text-gray-600">
-                  {formData.paymentMethod === 'online' ? 'Оплата онлайн' : 
+                  {normalizePaymentMethod(formData.paymentMethod) === 'online' ? 'Оплата онлайн' : 
                    'При получении'}
-                  {formData.paymentMethod === 'online' && formData.selectedGateway && (
+                  {normalizePaymentMethod(formData.paymentMethod) === 'online' && formData.selectedGateway && (
                     <span className="block text-xs text-teal-600">
                       через {formData.selectedGateway === 'korti_milli' ? 'Корти Милли' : 
                             formData.selectedGateway === 'vsa' ? 'Visa' :
@@ -321,7 +459,7 @@ useEffect(() => {
               </div>
             </div>
             {/* Final Payment/Submit */}
-            {formData.paymentMethod === 'online' ? (
+            {normalizePaymentMethod(formData.paymentMethod) === 'online' ? (
               <PaymentButton
                 amount={calculateFinalTotal()}
                 currency="TJS"
@@ -336,7 +474,7 @@ useEffect(() => {
                   })),
                   customerInfo: {
                     name: formData.name,
-                    email: formData.email,
+                    email: formData.email || undefined,
                     phone: formData.phone
                   },
                   deliveryInfo: {
@@ -347,16 +485,6 @@ useEffect(() => {
                     entrance: formData.entrance,
                     floor: formData.floor,
                     intercom: formData.intercom
-                  },
-                  invoices: {
-                    invoices: items.map(item => ({
-                      category: 'products',
-                      name: item.name,
-                      price: item.price,
-                      quantity: item.quantity
-                    })),
-                    is_hold_required: false,
-                    is_outbox_marked: false
                   }
                 }}
                 onSuccess={handlePaymentSuccess}
