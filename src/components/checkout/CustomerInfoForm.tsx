@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, Phone, Mail, AlertCircle } from 'lucide-react';
+import { User, Phone, Mail, AlertCircle, Award } from 'lucide-react';
 
 interface CustomerInfoFormProps {
   formData: {
@@ -10,13 +10,15 @@ interface CustomerInfoFormProps {
   errors: Record<string, string>;
   onInputChange: (field: string, value: string) => void;
   onPhoneChange: (value: string) => void;
+  clubMember?: { discount_percentage: number; member_tier: string; full_name: string } | null;
 }
 
 const CustomerInfoForm: React.FC<CustomerInfoFormProps> = ({
   formData,
   errors,
   onInputChange,
-  onPhoneChange
+  onPhoneChange,
+  clubMember
 }) => {
   return (
     <div className="bg-white rounded-lg shadow p-6">
@@ -47,6 +49,16 @@ const CustomerInfoForm: React.FC<CustomerInfoFormProps> = ({
               <AlertCircle size={16} className="mr-1" />
               {errors.phone}
             </p>
+          )}
+          {clubMember && clubMember.discount_percentage > 0 && (
+            <div className="mt-2 p-2 bg-teal-50 border border-teal-200 rounded-lg">
+              <div className="flex items-center gap-2 text-sm text-teal-700">
+                <Award size={16} className="text-teal-600" />
+                <span className="font-medium">
+                  Скидка {clubMember.discount_percentage}% применена (Клуб Sakina)
+                </span>
+              </div>
+            </div>
           )}
         </div>
 

@@ -20,8 +20,11 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({ isOpen, onClose, 
   const [phoneDigits, setPhoneDigits]   = useState('');     // digits only, starts with 992...
   const [fullName, setFullName]         = useState('');
   const [dateOfBirth, setDateOfBirth]   = useState('');
+  const [referralCode, setReferralCode] = useState('');     // optional referral code
+  const [referralCodeValid, setReferralCodeValid] = useState<boolean | null>(null); // null = not checked, true = valid, false = invalid
   const [error, setError]               = useState('');
   const [loading, setLoading]           = useState(false);
+  const [validatingReferral, setValidatingReferral] = useState(false);
 
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -125,6 +128,12 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({ isOpen, onClose, 
     const dobErr = validateDOB();
     if (dobErr) return setError(dobErr);
 
+    // Validate referral code if provided
+    if (referralCode.trim() && referralCodeValid !== true) {
+      setError('Пожалуйста, дождитесь проверки реферального кода или удалите его.');
+      return;
+    }
+
     setLoading(true);
     try {
       // Generate a temporary email from phone number for auth
@@ -203,20 +212,43 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({ isOpen, onClose, 
 
       if (profileError) throw profileError;
 
-      // Step 3: Create or update club member
-      // Generate referral code (fallback if RPC fails)
-      let referralCode = `SK${phoneDigits.slice(-6).toUpperCase()}`;
+      // Step 3: Validate referral code if provided
+      let referrerId: string | null = null;
+      if (referralCode.trim()) {
+        const { data: referrer, error: refError } = await supabase
+          .from('club_members')
+          .select('id')
+          .eq('referral_code', referralCode.trim().toUpperCase())
+          .eq('is_active', true)
+          .maybeSingle();
+
+        if (refError || !referrer) {
+          throw new Error('Неверный реферальный код. Проверьте код и попробуйте снова.');
+        }
+
+        referrerId = referrer.id;
+      }
+
+      // Step 4: Create or update club member
+      // Generate referral code for new member (fallback if RPC fails)
+      let newMemberReferralCode = `SK${phoneDigits.slice(-6).toUpperCase()}`;
       try {
         const { data: codeData, error: codeError } = await supabase.rpc('generate_referral_code');
         if (!codeError && codeData) {
-          referralCode = codeData;
+          newMemberReferralCode = codeData;
         }
       } catch (e) {
         // Use fallback code
         console.warn('Could not generate referral code, using fallback:', e);
       }
 
-      const { error: clubMemberError } = await supabase
+      // Initial points: 0, but will add referral bonus if applicable
+      let initialPoints = 0;
+      if (referrerId) {
+        initialPoints = 100; // Welcome bonus for using referral code
+      }
+
+      const { data: newMember, error: clubMemberError } = await supabase
         .from('club_members')
         .upsert({
           user_id: userId,
@@ -224,15 +256,18 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({ isOpen, onClose, 
           full_name: fullName.trim(),
           email: tempEmail,
           date_of_birth: dateOfBirth,
-          referral_code: referralCode,
+          referral_code: newMemberReferralCode,
+          referred_by: referrerId,
           member_tier: 'bronze',
-          points: 0,
+          points: initialPoints,
           total_purchases: 0,
           discount_percentage: 0,
           is_active: true,
         }, {
           onConflict: 'phone',
-        });
+        })
+        .select()
+        .single();
 
       if (clubMemberError) {
         console.error('Club member creation error:', clubMemberError);
@@ -241,12 +276,47 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({ isOpen, onClose, 
       } else {
         // Save phone to localStorage for quick access
         localStorage.setItem('club_member_phone', e164Phone || phoneDisplay);
+
+        // Award referral bonus if applicable
+        if (referrerId && newMember) {
+          try {
+            // Award points to the referrer (person who shared the code)
+            await supabase.rpc('add_member_points', {
+              p_member_id: referrerId,
+              p_points: 200, // Reward for successful referral
+              p_reason: 'referral_bonus',
+              p_order_id: null
+            });
+
+            // Record points for new member in history
+            if (initialPoints > 0) {
+              await supabase
+                .from('club_member_points_history')
+                .insert({
+                  member_id: newMember.id,
+                  points_change: initialPoints,
+                  reason: 'referral_welcome_bonus',
+                  order_id: null
+                });
+            }
+          } catch (refBonusError) {
+            console.error('Error awarding referral bonus:', refBonusError);
+            // Don't fail registration if bonus fails
+          }
+        }
       }
 
       // reset form
       setPhoneDisplay(''); setPhoneDigits('');
       setFullName(''); setDateOfBirth('');
-      toast.success('Регистрация успешна! Добро пожаловать в Клуб Sakina!');
+      setReferralCode('');
+      setReferralCodeValid(null);
+      
+      if (referrerId) {
+        toast.success('Регистрация успешна! Вы получили 100 баллов за использование реферального кода!');
+      } else {
+        toast.success('Регистрация успешна! Добро пожаловать в Клуб Sakina!');
+      }
       onClose();
       if (onSuccess) onSuccess();
     } catch (err: any) {
@@ -358,6 +428,90 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({ isOpen, onClose, 
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
                 max={new Date().toISOString().slice(0, 10)} // no future dates
               />
+            </div>
+
+            {/* Referral Code (Optional) */}
+            <div>
+              <label htmlFor="referral-code" className="block text-sm font-medium text-gray-700 mb-1">
+                Реферальный код <span className="text-gray-400 font-normal">(необязательно)</span>
+              </label>
+              <div className="relative">
+                <input
+                  id="referral-code"
+                  type="text"
+                  value={referralCode}
+                  onChange={async (e) => {
+                    const code = e.target.value.toUpperCase().trim();
+                    setReferralCode(code);
+                    setReferralCodeValid(null);
+                    
+                    // Validate referral code if provided
+                    if (code.length >= 6) {
+                      setValidatingReferral(true);
+                      try {
+                        const { data, error } = await supabase
+                          .from('club_members')
+                          .select('id, full_name')
+                          .eq('referral_code', code)
+                          .eq('is_active', true)
+                          .maybeSingle();
+                        
+                        if (!error && data) {
+                          setReferralCodeValid(true);
+                        } else {
+                          setReferralCodeValid(false);
+                        }
+                      } catch (err) {
+                        setReferralCodeValid(false);
+                      } finally {
+                        setValidatingReferral(false);
+                      }
+                    } else if (code.length === 0) {
+                      setReferralCodeValid(null);
+                    } else {
+                      setReferralCodeValid(false);
+                    }
+                  }}
+                  placeholder="SK123456"
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                    referralCodeValid === true
+                      ? 'border-green-500 focus:ring-green-500 bg-green-50'
+                      : referralCodeValid === false
+                      ? 'border-red-500 focus:ring-red-500 bg-red-50'
+                      : 'border-gray-300 focus:ring-teal-500'
+                  }`}
+                />
+                {validatingReferral && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-teal-500"></div>
+                  </div>
+                )}
+                {referralCodeValid === true && !validatingReferral && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500">
+                    ✓
+                  </div>
+                )}
+                {referralCodeValid === false && !validatingReferral && referralCode.length > 0 && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-red-500">
+                    ✗
+                  </div>
+                )}
+              </div>
+              {referralCodeValid === true && (
+                <p className="mt-1 text-xs text-green-600">
+                  ✓ Код подтвержден! Вы получите 100 баллов при регистрации
+                </p>
+              )}
+              {referralCodeValid === false && referralCode.length > 0 && (
+                <p className="mt-1 text-xs text-red-600">
+                  ✗ Неверный код. Проверьте код и попробуйте снова
+                </p>
+              )}
+              {referralCode.length === 0 && (
+                <p className="mt-1 text-xs text-gray-500">
+                  Есть реферальный код? Введите его и получите 100 баллов при регистрации!
+                </p>
+              )}
             </div>
 
             <button
