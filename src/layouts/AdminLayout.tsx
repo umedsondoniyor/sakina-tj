@@ -106,6 +106,9 @@ const AdminLayout = () => {
       items: [
         { path: '/admin/carousel', label: 'Карусель', icon: Image },
         { path: '/admin/about', label: 'О компании', icon: Target },
+        { path: '/admin/mattresses', label: 'Матрасы', icon: Package },
+        { path: '/admin/services', label: 'Услуги', icon: Package },
+        { path: '/admin/delivery-payment', label: 'Доставка и оплата', icon: CreditCard },
         { path: '/admin/reviews', label: 'Отзывы', icon: Star },
         { path: '/admin/blog', label: 'Блог', icon: FileText },
         { path: '/admin/navigation', label: 'Навигация', icon: Navigation },
@@ -140,6 +143,7 @@ const AdminLayout = () => {
       title: 'Пользователи',
       items: [
         { path: '/admin/users', label: 'Пользователи', icon: Users },
+        { path: '/admin/club-members', label: 'Участники клуба', icon: Users },
       ],
     },
     {

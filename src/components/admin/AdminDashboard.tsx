@@ -10,8 +10,12 @@ import {
   Clock,
   CheckCircle,
   XCircle,
-  AlertCircle
+  AlertCircle,
+  Star,
+  Award,
+  ArrowRight
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { formatCurrency } from '../../lib/utils';
 import toast from 'react-hot-toast';
@@ -29,9 +33,19 @@ interface DashboardStats {
   completedPayments: number;
   pendingPayments: number;
   revenueChange: number; // percentage change from yesterday
+  // Club Members stats
+  totalClubMembers: number;
+  activeClubMembers: number;
+  bronzeMembers: number;
+  silverMembers: number;
+  goldMembers: number;
+  platinumMembers: number;
+  totalClubPoints: number;
+  totalClubPurchases: number;
 }
 
 const AdminDashboard: React.FC = () => {
+  const navigate = useNavigate();
   const [stats, setStats] = useState<DashboardStats>({
     totalRevenue: 0,
     todayRevenue: 0,
@@ -45,6 +59,14 @@ const AdminDashboard: React.FC = () => {
     completedPayments: 0,
     pendingPayments: 0,
     revenueChange: 0,
+    totalClubMembers: 0,
+    activeClubMembers: 0,
+    bronzeMembers: 0,
+    silverMembers: 0,
+    goldMembers: 0,
+    platinumMembers: 0,
+    totalClubPoints: 0,
+    totalClubPurchases: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -66,9 +88,17 @@ const AdminDashboard: React.FC = () => {
       })
       .subscribe();
 
+    const clubMembersSubscription = supabase
+      .channel('dashboard_club_members')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'club_members' }, () => {
+        fetchDashboardStats();
+      })
+      .subscribe();
+
     return () => {
       supabase.removeChannel(paymentsSubscription);
       supabase.removeChannel(ordersSubscription);
+      supabase.removeChannel(clubMembersSubscription);
     };
   }, []);
 
@@ -93,6 +123,7 @@ const AdminDashboard: React.FC = () => {
         paymentsResult,
         todayPaymentsResult,
         yesterdayPaymentsResult,
+        clubMembersResult,
       ] = await Promise.all([
         supabase.from('products').select('id', { count: 'exact', head: true }),
         supabase.from('one_click_orders').select('*'),
@@ -107,6 +138,7 @@ const AdminDashboard: React.FC = () => {
           .gte('created_at', yesterdayStart)
           .lt('created_at', yesterdayEnd)
           .eq('status', 'completed'),
+        supabase.from('club_members').select('*'),
       ]);
 
       // Calculate statistics
@@ -116,6 +148,7 @@ const AdminDashboard: React.FC = () => {
       const payments = paymentsResult.data || [];
       const todayPayments = todayPaymentsResult.data || [];
       const yesterdayPayments = yesterdayPaymentsResult.data || [];
+      const clubMembers = clubMembersResult.data || [];
 
       // Calculate revenue
       const totalRevenue = payments
@@ -143,6 +176,15 @@ const AdminDashboard: React.FC = () => {
         p.status === 'pending' || p.status === 'processing'
       ).length;
 
+      // Calculate club members statistics
+      const activeClubMembers = clubMembers.filter(m => m.is_active).length;
+      const bronzeMembers = clubMembers.filter(m => m.member_tier === 'bronze').length;
+      const silverMembers = clubMembers.filter(m => m.member_tier === 'silver').length;
+      const goldMembers = clubMembers.filter(m => m.member_tier === 'gold').length;
+      const platinumMembers = clubMembers.filter(m => m.member_tier === 'platinum').length;
+      const totalClubPoints = clubMembers.reduce((sum, m) => sum + (m.points || 0), 0);
+      const totalClubPurchases = clubMembers.reduce((sum, m) => sum + (Number(m.total_purchases) || 0), 0);
+
       setStats({
         totalRevenue,
         todayRevenue,
@@ -156,6 +198,14 @@ const AdminDashboard: React.FC = () => {
         completedPayments,
         pendingPayments,
         revenueChange,
+        totalClubMembers: clubMembers.length,
+        activeClubMembers,
+        bronzeMembers,
+        silverMembers,
+        goldMembers,
+        platinumMembers,
+        totalClubPoints,
+        totalClubPurchases,
       });
     } catch (error: any) {
       console.error('Error fetching dashboard stats:', error);
@@ -406,6 +456,81 @@ const AdminDashboard: React.FC = () => {
                     ? Math.round((stats.completedPayments / stats.totalPayments) * 100) 
                     : 0}% успешных платежей
                 </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Club Members Section */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-gray-900">Клуб Sakina</h2>
+          <button
+            onClick={() => navigate('/admin/club-members')}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-teal-600 hover:text-teal-700 hover:bg-teal-50 rounded-lg transition-colors"
+          >
+            Управление участниками
+            <ArrowRight size={16} />
+          </button>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard
+            title="Всего участников"
+            value={stats.totalClubMembers}
+            icon={Users}
+            iconColor="text-purple-600"
+            subtitle={`${stats.activeClubMembers} активных`}
+          />
+          <StatCard
+            title="Всего баллов"
+            value={stats.totalClubPoints.toLocaleString()}
+            icon={Star}
+            iconColor="text-yellow-600"
+            subtitle="Накоплено участниками"
+          />
+          <StatCard
+            title="Покупки участников"
+            value={formatCurrency(stats.totalClubPurchases)}
+            icon={DollarSign}
+            iconColor="text-green-600"
+            subtitle="Общая сумма"
+          />
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                <Award className="text-purple-500" size={18} />
+                Уровни участников
+              </h3>
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                  Бронза
+                </span>
+                <span className="font-semibold text-gray-900">{stats.bronzeMembers}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-gray-400"></span>
+                  Серебро
+                </span>
+                <span className="font-semibold text-gray-900">{stats.silverMembers}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
+                  Золото
+                </span>
+                <span className="font-semibold text-gray-900">{stats.goldMembers}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-purple-500"></span>
+                  Платина
+                </span>
+                <span className="font-semibold text-gray-900">{stats.platinumMembers}</span>
               </div>
             </div>
           </div>

@@ -2,16 +2,17 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
+import toast from 'react-hot-toast';
 
 interface RegistrationModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
 const TAJ_CODE = '992'; // Tajikistan
-const E164_PREFIX = `+${TAJ_CODE}`;
 
-const RegistrationModal: React.FC<RegistrationModalProps> = ({ isOpen, onClose }) => {
+const RegistrationModal: React.FC<RegistrationModalProps> = ({ isOpen, onClose, onSuccess }) => {
   const dialogRef = useRef<HTMLDivElement>(null);
   const firstFieldRef = useRef<HTMLInputElement>(null);
 
@@ -60,8 +61,6 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({ isOpen, onClose }
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, [isOpen, onClose]);
-
-  if (!isOpen) return null;
 
   // Formatting helpers
   const formatDisplay = useCallback((digitsOnly: string) => {
@@ -128,29 +127,138 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({ isOpen, onClose }
 
     setLoading(true);
     try {
-      // store normalized phone (E.164), plus unformatted label if you want
+      // Generate a temporary email from phone number for auth
+      const tempEmail = `phone_${phoneDigits}@sakina.tj`;
+      // Generate a random password (user won't need to use it for phone-based auth)
+      const tempPassword = `Sakina${phoneDigits.slice(-6)}!`;
+
+      // Step 1: Create auth user
+      let authData: { user: { id: string } | null } | null = null;
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        email: tempEmail,
+        password: tempPassword,
+        options: {
+          data: {
+            phone: e164Phone || phoneDisplay,
+            full_name: fullName.trim(),
+          },
+        },
+      });
+
+      if (signUpError) {
+        // If user already exists, try to sign in and get the user ID
+        if (signUpError.message.includes('already registered') || signUpError.message.includes('already exists')) {
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+            email: tempEmail,
+            password: tempPassword,
+          });
+
+          if (signInError) {
+            // If sign in fails, the user exists but password might be different
+            // Try to get user by checking if profile exists with this phone
+            const { data: existingProfile } = await supabase
+              .from('user_profiles')
+              .select('id')
+              .eq('phone', e164Phone || phoneDisplay)
+              .maybeSingle();
+
+            if (existingProfile) {
+              throw new Error('Пользователь с таким номером телефона уже зарегистрирован. Пожалуйста, войдите в систему.');
+            }
+            throw new Error('Ошибка при входе. Попробуйте позже.');
+          }
+          authData = signInData;
+        } else {
+          throw signUpError;
+        }
+      } else {
+        authData = signUpData;
+      }
+
+      // Ensure we have a user ID
+      let userId: string;
+      if (authData?.user?.id) {
+        userId = authData.user.id;
+      } else {
+        // Try to get current user as fallback
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user?.id) {
+          throw new Error('Не удалось создать пользователя. Попробуйте позже.');
+        }
+        userId = user.id;
+      }
+
+      // Step 2: Create or update user profile
       const { error: profileError } = await supabase
         .from('user_profiles')
-        .insert([{
-          phone: e164Phone || phoneDisplay,  // prefer normalized
-          phone_raw: phoneDigits,            // optional raw storage
+        .upsert({
+          id: userId,
+          phone: e164Phone || phoneDisplay,  // E.164 format: +992XXXXXXXXX
           full_name: fullName.trim(),
           date_of_birth: dateOfBirth,
           role: 'user',
-        }]);
+        }, {
+          onConflict: 'id',
+        });
 
       if (profileError) throw profileError;
+
+      // Step 3: Create or update club member
+      // Generate referral code (fallback if RPC fails)
+      let referralCode = `SK${phoneDigits.slice(-6).toUpperCase()}`;
+      try {
+        const { data: codeData, error: codeError } = await supabase.rpc('generate_referral_code');
+        if (!codeError && codeData) {
+          referralCode = codeData;
+        }
+      } catch (e) {
+        // Use fallback code
+        console.warn('Could not generate referral code, using fallback:', e);
+      }
+
+      const { error: clubMemberError } = await supabase
+        .from('club_members')
+        .upsert({
+          user_id: userId,
+          phone: e164Phone || phoneDisplay,
+          full_name: fullName.trim(),
+          email: tempEmail,
+          date_of_birth: dateOfBirth,
+          referral_code: referralCode,
+          member_tier: 'bronze',
+          points: 0,
+          total_purchases: 0,
+          discount_percentage: 0,
+          is_active: true,
+        }, {
+          onConflict: 'phone',
+        });
+
+      if (clubMemberError) {
+        console.error('Club member creation error:', clubMemberError);
+        // Don't throw - profile was created successfully
+        toast.error('Профиль создан, но возникла ошибка при создании клубного участника');
+      } else {
+        // Save phone to localStorage for quick access
+        localStorage.setItem('club_member_phone', e164Phone || phoneDisplay);
+      }
 
       // reset form
       setPhoneDisplay(''); setPhoneDigits('');
       setFullName(''); setDateOfBirth('');
+      toast.success('Регистрация успешна! Добро пожаловать в Клуб Sakina!');
       onClose();
+      if (onSuccess) onSuccess();
     } catch (err: any) {
+      console.error('Registration error:', err);
       setError(err?.message || 'Произошла ошибка. Попробуйте позже.');
     } finally {
       setLoading(false);
     }
   };
+
+  // Early return after all hooks
+  if (!isOpen) return null;
 
   // Render via portal (safest for stacking + sticky parents)
   return createPortal(

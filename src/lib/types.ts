@@ -131,6 +131,35 @@ export interface AuthState {
   error: string | null;
 }
 
+export interface ClubMember {
+  id: string;
+  user_id: string | null;
+  phone: string;
+  full_name: string;
+  email: string | null;
+  date_of_birth: string | null;
+  member_tier: 'bronze' | 'silver' | 'gold' | 'platinum';
+  points: number;
+  total_purchases: number;
+  discount_percentage: number;
+  is_active: boolean;
+  last_purchase_at: string | null;
+  birthday_bonus_claimed_at: string | null;
+  referral_code: string | null;
+  referred_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ClubMemberPointsHistory {
+  id: string;
+  member_id: string;
+  points_change: number;
+  reason: string;
+  order_id: string | null;
+  created_at: string;
+}
+
 export interface CartItem {
   id: string;
   name: string;

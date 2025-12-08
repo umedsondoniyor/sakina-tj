@@ -4,7 +4,7 @@ import HeroCarousel from '../components/HeroCarousel';
 import CategoryGrid from '../components/CategoryGrid';
 import ProductPickers from '../components/ProductPickers';
 import Promotions from '../components/Promotions';
-import AskonaClub from '../components/AskonaClub';
+import AskonaClub from '../components/SakinaClub';
 import BestSellers from '../components/BestSellers';
 import CustomerReviews from '../components/CustomerReviews';
 import RecommendedProducts from '../components/RecommendedProducts';

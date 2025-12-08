@@ -1,10 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Star, PackageOpen } from 'lucide-react';
 import { getBestSellers } from '../../lib/api';
 import type { Product } from '../../lib/types';
 import { formatCurrency } from '../../lib/utils';
 
-const HitSalesSection = () => {
+interface HitSalesSectionProps {
+  sectionTitle?: string;
+}
+
+const HitSalesSection = ({ sectionTitle = 'Хиты продаж' }: HitSalesSectionProps) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -90,7 +94,7 @@ const HitSalesSection = () => {
   return (
     <section className="mb-12">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold">Хиты продаж</h2>
+        <h2 className="text-2xl font-bold">{sectionTitle}</h2>
         <div className="flex space-x-2">
           <button
             onClick={goToPrev}

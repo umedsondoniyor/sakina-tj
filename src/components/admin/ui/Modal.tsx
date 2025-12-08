@@ -2,19 +2,29 @@ import React from "react";
 
 interface ModalProps {
   title: string;
-  isOpen: boolean;
+  isOpen?: boolean;
   onClose: () => void;
   children: React.ReactNode;
   widthClass?: string;
+  size?: "small" | "medium" | "large";
 }
 
 const Modal: React.FC<ModalProps> = ({
   title,
-  isOpen,
+  isOpen = true,
   onClose,
   children,
-  widthClass = "max-w-xl",
+  widthClass,
+  size,
 }) => {
+  // Determine width class from size prop or use provided widthClass
+  const getWidthClass = () => {
+    if (widthClass) return widthClass;
+    if (size === "large") return "max-w-4xl";
+    if (size === "medium") return "max-w-2xl";
+    return "max-w-xl";
+  };
+
   if (!isOpen) return null;
   return (
     <div
@@ -22,7 +32,7 @@ const Modal: React.FC<ModalProps> = ({
       onClick={onClose}
     >
       <div
-        className={`bg-white rounded-lg w-full ${widthClass} max-h-[90vh] overflow-y-auto`}
+        className={`bg-white rounded-lg w-full ${getWidthClass()} max-h-[90vh] overflow-y-auto`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="px-5 py-4 border-b flex items-center justify-between">
