@@ -26,6 +26,8 @@ import PaymentFailedPage from './pages/PaymentFailedPage';
 import AboutUsPage from './pages/AboutUsPage';
 import BlogPage from './pages/BlogPage';
 import BlogPostPage from './pages/BlogPostPage';
+import ServicesPage from './pages/ServicesPage';
+import DeliveryPaymentPage from './pages/DeliveryPaymentPage';
 
 // Admin (unchanged here, but you can do an AdminLayout similarly)
 import AdminRoute from './components/admin/AdminRoute';
@@ -45,6 +47,10 @@ import AdminSmsTemplates from './components/admin/AdminSmsTemplates';
 import AdminPayments from './components/admin/AdminPayments';
 import AdminAbout from './components/admin/AdminAbout';
 import AdminRelatedProducts from './components/admin/AdminRelatedProducts';
+import AdminServices from './components/admin/AdminServices';
+import AdminDeliveryPayment from './components/admin/AdminDeliveryPayment';
+import AdminMattresses from './components/admin/AdminMattresses';
+import AdminClubMembers from './components/admin/AdminClubMembers';
 
 // Optional: NotFound
 const NotFound = () => <div className="p-8 text-center">Page not found</div>;
@@ -72,6 +78,8 @@ function App() {
               <Route path="/mattresses" element={<Mattresses />} />
               <Route path="/checkout" element={<CheckoutPage />} />
               <Route path="/about" element={<AboutUsPage />} />
+              <Route path="/services" element={<ServicesPage />} />
+              <Route path="/delivery-payment" element={<DeliveryPaymentPage />} />
               <Route path="/blog" element={<BlogPage />} />
               <Route path="/blog/:slug" element={<BlogPostPage />} />
             </Route>
@@ -105,6 +113,10 @@ function App() {
               <Route path="sms-templates" element={<AdminSmsTemplates />} />
               <Route path="payments" element={<AdminPayments />} />
               <Route path="showrooms" element={<AdminShowrooms />} />
+              <Route path="services" element={<AdminServices />} />
+              <Route path="delivery-payment" element={<AdminDeliveryPayment />} />
+              <Route path="mattresses" element={<AdminMattresses />} />
+              <Route path="club-members" element={<AdminClubMembers />} />
             </Route>
 
             <Route path="*" element={<NotFound />} />

@@ -32,6 +32,18 @@ const AdminUsers = () => {
     password: '',
   });
   const [formData, setFormData] = useState(createDefaultFormState);
+  
+  // State for add user modal
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newUser, setNewUser] = useState({
+    email: '',
+    password: '',
+    full_name: '',
+    phone: '',
+    role: 'user' as 'user' | 'admin',
+    date_of_birth: ''
+  });
+  const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -60,6 +72,16 @@ const AdminUsers = () => {
     setFormError(null);
     setShowPassword(false);
     setIsModalOpen(true);
+    setShowAddModal(true);
+    setNewUser({
+      email: '',
+      password: '',
+      full_name: '',
+      phone: '',
+      role: 'user',
+      date_of_birth: ''
+    });
+    setCreating(false);
   };
 
   const openEditModal = (user: UserProfile) => {
@@ -80,6 +102,7 @@ const AdminUsers = () => {
   const closeModal = () => {
     if (formLoading) return;
     setIsModalOpen(false);
+    setShowAddModal(false);
     setActiveUser(null);
     setFormData(createDefaultFormState());
     setFormError(null);
@@ -256,6 +279,7 @@ const AdminUsers = () => {
 
       toast.success('Пользователь успешно создан');
       setShowAddModal(false);
+      setIsModalOpen(false);
       setNewUser({
         email: '',
         password: '',

@@ -1,65 +1,165 @@
-import React from 'react';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '../../lib/supabaseClient';
 
 interface Collection {
   id: string;
   title: string;
   description: string;
-  image: string;
+  image_url: string;
+  collection_type: string;
+  price_min: number | null;
+  price_max: number | null;
+  preferences: string[] | null;
 }
 
-const collections: Collection[] = [
-  {
-    id: 'budget',
-    title: 'Бюджетные матрасы',
-    description: 'Доступные матрасы с превосходным качеством для комфортного сна',
-    image: 'https://images.unsplash.com/photo-1631679706909-1844bbd07221?auto=format&fit=crop&w=400&q=80'
-  },
-  {
-    id: 'premium',
-    title: 'Матрасы Премиум',
-    description: 'Элитные матрасы с IT-технологиями и дорогими премиальными материалами',
-    image: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=400&q=80'
-  },
-  {
-    id: 'relaxation',
-    title: 'Серия релаксации',
-    description: 'Специальные матрасы для максимального расслабления и восстановления',
-    image: 'https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?auto=format&fit=crop&w=400&q=80'
-  },
-  {
-    id: 'business',
-    title: 'Бизнес коллекция',
-    description: 'Матрасы с идеальным соотношением цены и качества',
-    image: 'https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&w=400&q=80'
-  },
-  {
-    id: 'sleep',
-    title: 'Серия матрасов',
-    description: 'Инновационные матрасы для здорового сна',
-    image: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=400&q=80'
-  },
-  {
-    id: 'healthy-sleep',
-    title: 'Для здорового сна',
-    description: 'Ортопедические матрасы для профилактики и лечения проблем со спиной',
-    image: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=400&q=80'
-  }
-];
+interface CollectionsGridProps {
+  sectionTitle?: string;
+  viewAllButtonText?: string;
+}
 
-const CollectionsGrid = () => {
+const CollectionsGrid = ({ sectionTitle = 'По коллекции', viewAllButtonText = 'Смотреть все матрасы' }: CollectionsGridProps) => {
+  const navigate = useNavigate();
+  const [collections, setCollections] = useState<Collection[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from('mattress_collections')
+          .select('*')
+          .eq('is_active', true)
+          .order('order_index', { ascending: true });
+
+        if (error) {
+          console.error('Error loading collections:', error);
+          return;
+        }
+
+        if (data) {
+          setCollections(data as Collection[]);
+          console.log('Loaded collections:', data.length);
+        } else {
+          console.warn('No collections data returned');
+        }
+      } catch (e) {
+        console.error('Error loading collections:', e);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const handleCollectionClick = (collection: Collection) => {
+    const baseFilters = {
+      age: [] as string[],
+      hardness: [] as string[],
+      width: [] as number[],
+      length: [] as number[],
+      height: [] as number[],
+      price: [] as number[],
+      inStock: false,
+      productType: ['mattresses'],
+      mattressType: [] as string[],
+      preferences: [] as string[],
+      functions: [] as string[],
+      weightCategory: [] as string[],
+    };
+
+    let filters = { ...baseFilters };
+
+    // Apply price filters if available
+    if (collection.price_min !== null || collection.price_max !== null) {
+      filters.price = [
+        collection.price_min ?? 0,
+        collection.price_max ?? -1, // -1 means no upper limit
+      ];
+    }
+
+    // Apply preferences if available
+    if (collection.preferences && collection.preferences.length > 0) {
+      filters.preferences = collection.preferences;
+    }
+
+    navigate('/products', {
+      state: {
+        selectedCategories: ['mattresses'],
+        filters,
+        fromCollection: collection.collection_type,
+      },
+    });
+  };
+
+  const handleViewAll = () => {
+    navigate('/products', {
+      state: {
+        selectedCategories: ['mattresses'],
+        filters: {
+          age: [],
+          hardness: [],
+          width: [],
+          length: [],
+          height: [],
+          price: [],
+          inStock: false,
+          productType: ['mattresses'],
+          mattressType: [],
+          preferences: [],
+          functions: [],
+          weightCategory: [],
+        },
+      },
+    });
+  };
+
+  if (loading) {
+    return (
+      <section className="mb-12">
+        <h2 className="text-2xl font-bold mb-6">{sectionTitle}</h2>
+        <div className="animate-pulse grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="h-64 bg-gray-200 rounded-lg"></div>
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  if (collections.length === 0) {
+    return null;
+  }
+
   return (
     <section className="mb-12">
-      <h2 className="text-2xl font-bold mb-6">По коллекции</h2>
+      <h2 className="text-2xl font-bold mb-6">{sectionTitle}</h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {collections.map((collection) => (
-          <div key={collection.id} className="group cursor-pointer">
+          <div
+            key={collection.id}
+            onClick={() => handleCollectionClick(collection)}
+            className="group cursor-pointer"
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleCollectionClick(collection);
+              }
+            }}
+            aria-label={`Посмотреть коллекцию ${collection.title}`}
+          >
             <div className="relative rounded-lg overflow-hidden mb-4">
               <img
-                src={collection.image}
+                src={collection.image_url}
                 alt={collection.title}
-                className="w-full h-48 object-cover group-hover:scale-105 transition-transform"
+                className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = 'https://via.placeholder.com/400x200/e5e7eb/9ca3af?text=Collection';
+                }}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent group-hover:from-black/50 transition-colors"></div>
             </div>
             <h3 className="font-bold mb-2 group-hover:text-teal-600 transition-colors">
               {collection.title}
@@ -69,8 +169,12 @@ const CollectionsGrid = () => {
         ))}
       </div>
       <div className="text-center mt-8">
-        <button className="bg-teal-500 text-white px-8 py-3 rounded-lg hover:bg-teal-600 transition-colors">
-          Смотреть все матрасы
+        <button
+          onClick={handleViewAll}
+          className="bg-teal-500 text-white px-8 py-3 rounded-lg hover:bg-teal-600 transition-colors font-medium"
+          aria-label={viewAllButtonText}
+        >
+          {viewAllButtonText}
         </button>
       </div>
     </section>
