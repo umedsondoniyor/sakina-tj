@@ -18,7 +18,8 @@ import {
   CreditCard,
   ChevronRight,
   Menu,
-  X
+  X,
+  MapPin
 } from 'lucide-react';
 import { supabase } from "../lib/supabaseClient";
 import Logo from "../components/Logo";
@@ -146,6 +147,7 @@ const AdminLayout = () => {
       items: [
         { path: '/admin/quiz', label: 'Опросник', icon: HelpCircle },
         { path: '/admin/sms-templates', label: 'SMS Шаблоны', icon: MessageSquare },
+        { path: '/admin/showrooms', label: 'Шоурумы', icon: MapPin },
       ],
     },
   ];

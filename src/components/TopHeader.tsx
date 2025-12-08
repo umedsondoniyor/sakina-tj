@@ -1,15 +1,53 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronDown, MapPin } from 'lucide-react';
+import { supabase } from '../lib/supabaseClient';
+
+interface Showroom {
+  id: string;
+  name: string;
+  address: string;
+  map_link: string;
+  phone?: string;
+  order_index: number;
+}
 
 const TopHeader: React.FC = () => {
   const [open, setOpen] = useState(false);
+  const [showrooms, setShowrooms] = useState<Showroom[]>([]);
+  const [loading, setLoading] = useState(true);
   const rowRef = useRef<HTMLDivElement>(null);
   const [panelRect, setPanelRect] = useState<{ left: number; top: number; width: number } | null>(null);
 
-  const address = 'Душанбе, Пулоди 4';
-  // ✅ Your fixed maps short link
-  const shopLink = 'https://maps.app.goo.gl/5exgpkraKy9foeD27';
+  // Fetch showrooms from database
+  useEffect(() => {
+    const fetchShowrooms = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('showrooms')
+          .select('id, name, address, map_link, phone, order_index')
+          .eq('is_active', true)
+          .order('order_index', { ascending: true });
+
+        if (error) throw error;
+        setShowrooms(data || []);
+      } catch (error) {
+        console.error('Error fetching showrooms:', error);
+        // Fallback to default showroom if fetch fails
+        setShowrooms([{
+          id: 'default',
+          name: 'Душанбе, Пулоди 4',
+          address: 'Душанбе, Пулоди 4',
+          map_link: 'https://maps.app.goo.gl/5exgpkraKy9foeD27',
+          order_index: 0
+        }]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchShowrooms();
+  }, []);
 
   // measure where to place the fixed dropdown
   const measure = () => {
@@ -54,7 +92,7 @@ const TopHeader: React.FC = () => {
     };
   }, [open]);
 
-  const Panel = open && panelRect
+  const Panel = open && panelRect && !loading
     ? createPortal(
         <div
           id="showrooms-panel"
@@ -67,17 +105,33 @@ const TopHeader: React.FC = () => {
         >
           <div className="rounded-xl bg-white shadow-xl border border-gray-100">
             <div className="p-5">
-              {/* 🔗 Direct link to your map. Keeps dropdown structure for future multiple locations */}
-              <a
-                href={shopLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-start gap-2 text-left text-gray-700 hover:text-teal-600"
-                onClick={() => setOpen(false)}
-              >
-                <MapPin size={18} className="mt-0.5 shrink-0" />
-                <span>{address}</span>
-              </a>
+              {showrooms.length === 0 ? (
+                <div className="text-sm text-gray-500">Шоурумы не найдены</div>
+              ) : (
+                <div className="space-y-3">
+                  {showrooms.map((showroom) => (
+                    <a
+                      key={showroom.id}
+                      href={showroom.map_link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-start gap-2 text-left text-gray-700 hover:text-teal-600 transition-colors"
+                      onClick={() => setOpen(false)}
+                    >
+                      <MapPin size={18} className="mt-0.5 shrink-0 text-teal-600" />
+                      <div className="flex-1">
+                        <div className="font-medium">{showroom.name}</div>
+                        {showroom.address !== showroom.name && (
+                          <div className="text-sm text-gray-500">{showroom.address}</div>
+                        )}
+                        {showroom.phone && (
+                          <div className="text-sm text-gray-500 mt-1">{showroom.phone}</div>
+                        )}
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>,

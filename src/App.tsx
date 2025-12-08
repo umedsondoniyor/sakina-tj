@@ -1,5 +1,5 @@
 // src/App.tsx
-import React, { Suspense } from 'react';
+import { Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { CartProvider } from './contexts/CartContext';
@@ -40,6 +40,7 @@ import AdminQuiz from './components/admin/AdminQuiz';
 import AdminNavigation from './components/admin/AdminNavigation';
 import AdminOneClickOrders from './components/admin/AdminOneClickOrders';
 import AdminUsers from './components/admin/AdminUsers';
+import AdminShowrooms from './components/admin/AdminShowrooms';
 import AdminSmsTemplates from './components/admin/AdminSmsTemplates';
 import AdminPayments from './components/admin/AdminPayments';
 import AdminAbout from './components/admin/AdminAbout';
@@ -103,6 +104,7 @@ function App() {
               <Route path="users" element={<AdminUsers />} />
               <Route path="sms-templates" element={<AdminSmsTemplates />} />
               <Route path="payments" element={<AdminPayments />} />
+              <Route path="showrooms" element={<AdminShowrooms />} />
             </Route>
 
             <Route path="*" element={<NotFound />} />
