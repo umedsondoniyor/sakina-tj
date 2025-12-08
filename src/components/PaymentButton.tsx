@@ -29,6 +29,10 @@ interface PaymentButtonProps {
       floor?: string;
       intercom?: string;
     };
+    discount?: number;
+    discount_percentage?: number;
+    club_member_tier?: string | null;
+    subtotal?: number;
   };
   onSuccess?: (paymentId: string) => void;
   onError?: (error: string) => void;
@@ -61,58 +65,7 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
       return;
     }
 
-    // For pickup orders, skip payment gateway and create order directly
-    if (orderData.deliveryInfo?.delivery_type === 'pickup') {
-      setLoading(true);
-      try {
-        // Generate unique order ID for pickup orders
-        const orderId = `SAKINA_PICKUP_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        
-        // Create order directly without payment gateway
-        const { data: order, error: orderError } = await supabase
-          .from('payments')
-          .insert({
-            alif_order_id: orderId,
-            amount: amount,
-            currency: currency,
-            status: 'pending',
-            customer_name: orderData.customerInfo.name,
-            customer_phone: orderData.customerInfo.phone,
-            customer_email: orderData.customerInfo.email || null,
-            delivery_type: 'pickup',
-            delivery_address: null,
-            payment_gateway: 'cash',
-            order_summary: {
-              items: orderData.items,
-              total_amount: amount,
-              currency: currency,
-              customer_info: orderData.customerInfo,
-              delivery_info: orderData.deliveryInfo,
-              timestamp: new Date().toISOString()
-            }
-          })
-          .select()
-          .single();
-
-        if (orderError) throw orderError;
-
-        toast.success('Заказ оформлен! Вы можете забрать его в магазине.');
-        onSuccess?.(order.id);
-        
-        // Clear cart and navigate
-        sessionStorage.removeItem('sakina_payment_id');
-        window.location.href = '/payment/success?order_id=' + order.id;
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Ошибка при оформлении заказа';
-        setError(errorMessage);
-        onError?.(errorMessage);
-        toast.error(errorMessage);
-      } finally {
-        setLoading(false);
-      }
-      return;
-    }
-
+    // PaymentButton is only used for online payments, so always go through payment gateway
     setLoading(true);
     setError(null);
 
@@ -130,8 +83,6 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
         customerInfo: orderData.customerInfo,
         itemsCount: orderData.items.length,
       });
-
-      debugger;
 
       // --- 🧩 Fix variant_id formatting here ---
       const sanitizeVariantId = (val?: string): string | null => {
@@ -155,10 +106,12 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
           quantity: Number(item.quantity),
           category: item.category || 'general',
         })),
+        discount: orderData.discount || 0,
+        discount_percentage: orderData.discount_percentage || 0,
+        subtotal: orderData.subtotal || amount,
       };
 
       console.log('📋 Final order data with variant/location IDs:', orderDataWithDelivery);
-      debugger;
 
       const paymentPayload = {
         amount,
@@ -168,17 +121,27 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
       };
 
       console.log('📦 Payload:', JSON.stringify(paymentPayload));
-      debugger;
 
       const { data, error } = await supabase.functions.invoke('alif-payment-init', {
         body: paymentPayload,
       });
 
-      if (error) throw new Error(`Edge Function Error: ${error.message || 'Unknown error'}`);
-      if (!data?.success) throw new Error(data?.error || 'Payment initialization failed');
+      console.log('📥 Edge Function response:', { data, error });
+
+      if (error) {
+        console.error('❌ Edge Function error:', error);
+        // Try to extract error message from error object
+        const errorMsg = error.message || error.error || JSON.stringify(error);
+        throw new Error(`Edge Function Error: ${errorMsg}`);
+      }
+      
+      if (!data?.success) {
+        console.error('❌ Edge Function returned failure:', data);
+        const errorMsg = data?.error || data?.message || 'Payment initialization failed';
+        throw new Error(errorMsg);
+      }
 
       console.log('✅ Edge Function response received:', data);
-      debugger;
 
       // Save temporary data for callback
       sessionStorage.setItem('sakina_payment_id', data.payment_id);

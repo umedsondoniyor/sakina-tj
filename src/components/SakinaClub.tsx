@@ -170,25 +170,40 @@ const SakinaClub = () => {
 
                 {/* Referral Code */}
                 {member.referral_code && (
-                  <div className="bg-white p-4 rounded-lg shadow-sm mt-4">
-                    <p className="text-sm text-gray-600 mb-2">Ваш реферальный код:</p>
-                    <div className="flex items-center space-x-2">
-                      <code className="px-3 py-2 bg-gray-100 rounded-lg font-mono text-lg font-bold">
+                  <div className="bg-gradient-to-br from-teal-50 to-teal-100 p-4 rounded-lg shadow-sm mt-4 border border-teal-200">
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <p className="text-sm font-semibold text-gray-800 mb-1">Ваш реферальный код:</p>
+                        <p className="text-xs text-gray-600">
+                          Поделитесь кодом с друзьями и получайте 200 баллов за каждого приглашенного!
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2 mb-3">
+                      <code className="flex-1 px-4 py-3 bg-white rounded-lg font-mono text-xl font-bold text-center border-2 border-teal-300">
                         {member.referral_code}
                       </code>
                       <button
                         onClick={() => {
                           navigator.clipboard.writeText(member.referral_code!);
-                          toast.success('Код скопирован!');
+                          toast.success('Код скопирован! Поделитесь с друзьями');
                         }}
-                        className="px-3 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 text-sm"
+                        className="px-4 py-3 bg-teal-500 text-white rounded-lg hover:bg-teal-600 text-sm font-medium transition-colors"
                       >
                         Копировать
                       </button>
                     </div>
-                    <p className="text-xs text-gray-500 mt-2">
-                      Поделитесь этим кодом с друзьями и получите бонусы за каждого приглашенного!
-                    </p>
+                    <div className="bg-white rounded-lg p-3 border border-teal-200">
+                      <p className="text-xs text-gray-700 mb-1">
+                        <span className="font-semibold">Как это работает:</span>
+                      </p>
+                      <ul className="text-xs text-gray-600 space-y-1 list-disc list-inside">
+                        <li>Ваш друг вводит ваш код при регистрации</li>
+                        <li>Он получает <span className="font-semibold text-teal-600">100 баллов</span> приветственный бонус</li>
+                        <li>Вы получаете <span className="font-semibold text-teal-600">200 баллов</span> за успешное приглашение</li>
+                        <li>Баллы можно использовать для получения скидок</li>
+                      </ul>
+                    </div>
                   </div>
                 )}
               </div>

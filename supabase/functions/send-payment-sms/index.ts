@@ -145,12 +145,52 @@ Deno.serve(async (req) => {
     const customerName = payment.customer_name || orderSummary.customer_info?.name || 'Неизвестно';
     const customerPhone = payment.customer_phone || orderSummary.customer_info?.phone || 'Неизвестно';
     const customerEmail = payment.customer_email || orderSummary.customer_info?.email || '';
-    const orderAmount = payment.amount || orderSummary.total_amount || '0';
+    
+    // Use discounted amount (total_amount is the final discounted amount)
+    // Priority: orderSummary.total_amount (discounted) > payment.amount (should be discounted) > fallback
+    const orderAmount = orderSummary.total_amount || payment.amount || '0';
     const orderCurrency = payment.currency || orderSummary.currency || 'TJS';
+    
+    // Get discount info if available
+    const discountAmount = orderSummary.discount || 0;
+    const discountPercentage = orderSummary.discount_percentage || 0;
+    const subtotal = orderSummary.subtotal || orderAmount;
+    
+    // Format amount with discount info for display
+    const formatAmountWithDiscount = (includeCurrency: boolean = true) => {
+      const amountStr = orderAmount.toString();
+      const subtotalStr = subtotal.toString();
+      if (discountAmount > 0 && discountPercentage > 0 && subtotal && Number(subtotal) > Number(orderAmount)) {
+        if (includeCurrency) {
+          return `${amountStr} ${orderCurrency} (было ${subtotalStr} ${orderCurrency}, скидка ${discountPercentage}% = -${discountAmount} ${orderCurrency})`;
+        } else {
+          return `${amountStr} (было ${subtotalStr} ${orderCurrency}, скидка ${discountPercentage}% = -${discountAmount} ${orderCurrency})`;
+        }
+      }
+      return includeCurrency ? `${amountStr} ${orderCurrency}` : amountStr;
+    };
     const deliveryType = payment.delivery_type || orderSummary.delivery_info?.delivery_type || '';
     const deliveryTypeText = deliveryType === 'home' ? 'Доставка на дом' : deliveryType === 'pickup' ? 'Самовывоз' : 'Не указан';
     const deliveryAddress = payment.delivery_address || orderSummary.delivery_info?.delivery_address || (deliveryType === 'pickup' ? 'Самовывоз' : 'Не указан');
-    const paymentMethodText = payment.payment_gateway === 'cash' ? 'Наличные' : payment.payment_gateway === 'alif_bank' ? 'Alif Bank' : payment.payment_gateway || 'Не указан';
+    
+    // Map payment gateway to user-friendly text
+    const getPaymentMethodText = (gateway: string) => {
+      const gatewayMap: Record<string, string> = {
+        'cash': 'Наличные',
+        'alif_bank': 'Alif Bank',
+        'korti_milli': 'Корти Милли',
+        'vsa': 'Visa',
+        'mcr': 'Mastercard',
+        'wallet': 'Alif Wallet',
+        'salom': 'Alif Salom',
+        'tcell': 'Tcell',
+        'megafon': 'Megafon',
+        'babilon': 'Babilon',
+        'zetmobile': 'Zet Mobile'
+      };
+      return gatewayMap[gateway] || gateway || 'Не указан';
+    };
+    const paymentMethodText = getPaymentMethodText(payment.payment_gateway || '');
     
     // Compact delivery info - combine if same
     const deliveryInfo = deliveryTypeText === deliveryAddress || deliveryType === 'pickup' 
@@ -163,7 +203,7 @@ Deno.serve(async (req) => {
         PhoneNumber: cleanPhoneNumber(managerPhone),
         Text: `⏰ Новый заказ: ${orderTitle}
 
-Сумма: ${orderAmount} ${orderCurrency} | ${paymentMethodText} | ${deliveryInfo}
+Сумма: ${formatAmountWithDiscount()} | ${paymentMethodText} | ${deliveryInfo}
 Клиент: ${customerName} | ${customerPhone}${customerEmail ? ` | ${customerEmail}` : ''}
 
 Товары (${itemsCount} позиций):
@@ -179,7 +219,7 @@ ${itemsListText}`,
         PhoneNumber: cleanPhoneNumber(deliveryPhone),
         Text: `🚚 Заказ для доставки: ${orderTitle}
 
-Сумма: ${orderAmount} ${orderCurrency} | ${paymentMethodText} | ${deliveryInfo}
+Сумма: ${formatAmountWithDiscount()} | ${paymentMethodText} | ${deliveryInfo}
 Клиент: ${customerName} | ${customerPhone}${customerEmail ? ` | ${customerEmail}` : ''}
 
 Товары (${itemsCount} позиций):
@@ -235,29 +275,79 @@ ${itemsListText}`,
         // Determine status text
         const statusText = status === 'confirmed' ? 'Подтвержден' : status === 'pending' ? 'Ожидает' : payment.status || 'Неизвестно';
         
-        // Determine payment method text
-        const paymentMethodText = payment.payment_gateway === 'cash' ? 'Наличные' : payment.payment_gateway === 'alif_bank' ? 'Alif Bank' : payment.payment_gateway || 'Не указан';
+        // Map payment gateway to user-friendly text
+        const getPaymentMethodText = (gateway: string) => {
+          const gatewayMap: Record<string, string> = {
+            'cash': 'Наличные',
+            'alif_bank': 'Alif Bank',
+            'korti_milli': 'Корти Милли',
+            'vsa': 'Visa',
+            'mcr': 'Mastercard',
+            'wallet': 'Alif Wallet',
+            'salom': 'Alif Salom',
+            'tcell': 'Tcell',
+            'megafon': 'Megafon',
+            'babilon': 'Babilon',
+            'zetmobile': 'Zet Mobile'
+          };
+          return gatewayMap[gateway] || gateway || 'Не указан';
+        };
+        const paymentMethodText = getPaymentMethodText(payment.payment_gateway || '');
         
         // Get customer info
         const customerName = payment.customer_name || orderSummary.customer_info?.name || 'Клиент';
         const customerPhone = payment.customer_phone || orderSummary.customer_info?.phone || '';
         const customerEmail = payment.customer_email || orderSummary.customer_info?.email || '';
-        const orderAmount = payment.amount?.toString() || orderSummary.total_amount?.toString() || '0';
+        
+        // Use discounted amount (total_amount is the final discounted amount)
+        // Priority: orderSummary.total_amount (discounted) > payment.amount (should be discounted) > fallback
+        const orderAmount = (orderSummary.total_amount || payment.amount || 0).toString();
         const orderCurrency = payment.currency || orderSummary.currency || 'TJS';
         const transactionId = payment.alif_transaction_id || payment.alif_order_id || '';
         
-        // Create a clean order title without "Заказ" prefix for use in "Заказ" lines
+        // Get discount info for template variables
+        const discountAmount = orderSummary.discount || 0;
+        const discountPercentage = orderSummary.discount_percentage || 0;
+        const subtotal = orderSummary.subtotal || orderAmount;
+        
+        // Format amount with discount for display in templates
+        // Returns just the number part (without currency) for use in contexts that already have currency
+        const formatAmountWithDiscount = (includeCurrency: boolean = true) => {
+          const amountStr = orderAmount.toString();
+          const subtotalStr = subtotal.toString();
+          if (discountAmount > 0 && discountPercentage > 0 && subtotal && Number(subtotal) > Number(orderAmount)) {
+            if (includeCurrency) {
+              return `${amountStr} ${orderCurrency} (было ${subtotalStr} ${orderCurrency}, скидка ${discountPercentage}% = -${discountAmount} ${orderCurrency})`;
+            } else {
+              return `${amountStr} (было ${subtotalStr} ${orderCurrency}, скидка ${discountPercentage}% = -${discountAmount} ${orderCurrency})`;
+            }
+          }
+          return includeCurrency ? `${amountStr} ${orderCurrency}` : amountStr;
+        };
+        
+        // Get order ID for use in "Заказ №" lines (not the product title)
+        const orderIdDisplay = payment.alif_order_id || payment.id || 'N/A';
+        
+        // Create a clean order title without "Заказ" prefix for use in headers
         const cleanOrderTitle = orderTitle.startsWith('Заказ') ? orderTitle.replace(/^Заказ\s*№?\s*/, '') : orderTitle;
         
         // Replace text template variables - do multiple passes to handle nested replacements
         let messageText = template.text_template
-          // First pass: replace all orderTitle occurrences
+          // First pass: replace orderTitle in headers/descriptions (use product title)
           .replace(/\{\{orderTitle\}\}/g, orderTitle)
-          // Handle "Заказ" lines - use clean title to avoid duplication
-          .replace(/Заказ\s*\{\{orderTitle\}\}/g, `Заказ №${cleanOrderTitle}`)
-          .replace(/Заказ:\s*\{\{orderTitle\}\}/g, `Заказ: №${cleanOrderTitle}`)
-          .replace(/Заказ\s*\(/g, `Заказ №${cleanOrderTitle} (`)
-          .replace(/Заказ:\s*\(/g, `Заказ: №${cleanOrderTitle} (`)
+          // Handle "Заказ №" lines - use order ID, not product title
+          .replace(/Заказ\s*№\s*\{\{orderTitle\}\}/g, `Заказ №${orderIdDisplay}`)
+          .replace(/Заказ:\s*№\s*\{\{orderTitle\}\}/g, `Заказ: №${orderIdDisplay}`)
+          .replace(/Заказ\s*№\s*\{\{payment\.alif_order_id\}\}/g, `Заказ №${orderIdDisplay}`)
+          .replace(/Заказ:\s*№\s*\{\{payment\.alif_order_id\}\}/g, `Заказ: №${orderIdDisplay}`)
+          // Handle cases where template has "Заказ" followed by orderTitle (should use order ID)
+          .replace(/Заказ\s*№\s*[^\(]+\(/g, (match) => {
+            // Replace the part between "Заказ №" and "(" with order ID
+            return match.replace(/Заказ\s*№\s*[^\(]+/, `Заказ №${orderIdDisplay}`);
+          })
+          .replace(/Заказ:\s*№\s*[^\(]+\(/g, (match) => {
+            return match.replace(/Заказ:\s*№\s*[^\(]+/, `Заказ: №${orderIdDisplay}`);
+          })
           // Also handle cases where template might have "Заказ" followed by orderTitle variable
           .replace(/Заказ\s+Заказ\s*№/g, 'Заказ №')
           .replace(/Заказ:\s+Заказ\s*№/g, 'Заказ: №')
@@ -265,14 +355,26 @@ ${itemsListText}`,
           .replace(/\{\{payment\.customer_name\}\}/g, customerName)
           .replace(/\{\{payment\.customer_phone\}\}/g, customerPhone)
           .replace(/\{\{payment\.customer_email\}\}/g, customerEmail || 'Не указан')
-          // Order details
-          .replace(/\{\{payment\.amount\}\}/g, orderAmount)
+          // Order details - use discounted amount (total_amount) with discount info if applicable
+          .replace(/\{\{payment\.amount\}\}/g, formatAmountWithDiscount(true)) // Use formatted amount with discount details
           .replace(/\{\{payment\.currency\}\}/g, orderCurrency)
+          // Also replace order ID variable
+          .replace(/\{\{payment\.alif_order_id\}\}/g, orderIdDisplay)
+          .replace(/\{\{order_id\}\}/g, orderIdDisplay)
           .replace(/\{\{payment\.status\}\}/g, statusText)
           .replace(/\{\{payment\.alif_transaction_id\}\}/g, transactionId)
-          .replace(/\{\{payment\.payment_gateway\}\}/g, paymentMethodText)
+          .replace(/\{\{payment\.payment_gateway\}\}/g, paymentMethodText) // Use formatted payment method text
           .replace(/\{\{payment\.delivery_type\}\}/g, deliveryTypeText)
           .replace(/\{\{payment\.delivery_address\}\}/g, deliveryAddress)
+          // Also replace any raw gateway values that might appear
+          .replace(/korti_milli/g, 'Корти Милли')
+          .replace(/alif_bank/g, 'Alif Bank')
+          .replace(/vsa/g, 'Visa')
+          .replace(/mcr/g, 'Mastercard')
+          // Discount info
+          .replace(/\{\{discount\.amount\}\}/g, discountAmount.toString())
+          .replace(/\{\{discount\.percentage\}\}/g, discountPercentage.toString())
+          .replace(/\{\{order\.subtotal\}\}/g, subtotal.toString())
           // Items
           .replace(/\{\{items_list\}\}/g, itemsListText)
           .replace(/\{\{items_count\}\}/g, itemsCount.toString())
@@ -280,6 +382,21 @@ ${itemsListText}`,
           // Phone numbers
           .replace(/\{\{manager_phone\}\}/g, managerPhone)
           .replace(/\{\{delivery_phone\}\}/g, deliveryPhone);
+        
+        // Ensure amount is included in the message
+        const amountText = formatAmountWithDiscount();
+        if (!messageText.includes(amountText) && !messageText.includes(orderAmount) && !messageText.includes('Сумма:')) {
+          // Try to insert amount after the header
+          const headerMatch = messageText.match(/^([^\n]+)\n/);
+          if (headerMatch) {
+            const header = headerMatch[1];
+            const rest = messageText.substring(headerMatch[0].length);
+            messageText = `${header}\n\nСумма: ${amountText}\n${rest}`;
+          } else {
+            // If no header, prepend amount
+            messageText = `Сумма: ${amountText}\n\n${messageText}`;
+          }
+        }
         
         // If items list is missing from template, append it
         if (!messageText.includes(itemsListText) && itemsListText !== 'Товары не указаны') {
@@ -297,9 +414,32 @@ ${itemsListText}`,
           .replace(/Покупатель подтвердил оплату\.?\s*\n\s*\n/g, '\n')
           // Remove redundant "Пожалуйста, свяжитесь с клиентом и доставьте вовремя."
           .replace(/Пожалуйста, свяжитесь с клиентом и доставьте вовремя\.?\s*\n\s*\n/g, '\n')
-          // Remove redundant "Заказ №" line if order title already in header
-          .replace(/Заказ\s*№[^\n]+\s*\([^)]+\)\s*\n/g, '')
-          .replace(/Заказ:\s*№[^\n]+\s*\([^)]+\)\s*\n/g, '')
+          // Fix malformed "Заказ №" lines that use product title instead of order ID
+          .replace(/Заказ\s*№[^\(]+\(/g, (match) => {
+            // Replace with proper format using order ID
+            return `Заказ №${orderIdDisplay} (`;
+          })
+          .replace(/Заказ:\s*№[^\(]+\(/g, (match) => {
+            return `Заказ: №${orderIdDisplay} (`;
+          })
+          // Remove redundant "Заказ №" line if order title already in header (but keep if it has proper order ID)
+          .replace(/Заказ\s*№[^\n]+\s*\([^)]+\)\s*\n/g, (match) => {
+            // Only remove if it contains the product title (long text), not if it's a proper order ID
+            if (match.length > 50 || match.includes('и еще')) {
+              return ''; // Remove malformed lines with product titles
+            }
+            return match; // Keep proper order ID lines
+          })
+          .replace(/Заказ:\s*№[^\n]+\s*\([^)]+\)\s*\n/g, (match) => {
+            if (match.length > 50 || match.includes('и еще')) {
+              return '';
+            }
+            return match;
+          })
+          // Fix duplicate TJS in amount lines
+          .replace(/(\d+)\s*TJS\s*TJS/g, '$1 TJS')
+          .replace(/\(TJS\s+(\d+)/g, '($1')
+          .replace(/(\d+)\s*TJS\s*\(TJS/g, '$1 TJS (')
           // Remove redundant "Статус:" line
           .replace(/Статус:\s*[^\n]+\s*\n/g, '')
           // Remove redundant "Транзакция:" line (same as order ID)
@@ -330,8 +470,19 @@ ${itemsListText}`,
           if (headerMatch) {
             const header = headerMatch[1];
             const rest = messageText.substring(headerMatch[0].length);
-            messageText = `${header}\n\nСумма: ${orderAmount} ${orderCurrency} | ${paymentMethodText} | ${compactDeliveryInfo}\nКлиент: ${customerName} | ${customerPhone}${customerEmail && customerEmail !== 'Не указан' ? ` | ${customerEmail}` : ''}\n\n${rest}`;
+            // Format amount with discount info if applicable
+            const amountText = formatAmountWithDiscount();
+            messageText = `${header}\n\nСумма: ${amountText} | ${paymentMethodText} | ${compactDeliveryInfo}\nКлиент: ${customerName} | ${customerPhone}${customerEmail && customerEmail !== 'Не указан' ? ` | ${customerEmail}` : ''}\n\n${rest}`;
           }
+        }
+        
+        // Also replace any remaining {{payment.amount}} with formatted amount if discount exists
+        if (discountAmount > 0 && discountPercentage > 0) {
+          // Replace standalone amount references with formatted version where appropriate
+          messageText = messageText.replace(
+            new RegExp(`(${orderAmount}\\s*${orderCurrency})(?!\\s*\\(было)`, 'g'),
+            formatAmountWithDiscount()
+          );
         }
 
         return {

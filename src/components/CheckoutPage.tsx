@@ -63,13 +63,14 @@ const CheckoutPage = () => {
     floor: '',
     intercom: '',
     paymentMethod: 'online',
-    selectedGateway: 'alif_bank', // **FIX**: Ensure consistent gateway selection
+    selectedGateway: 'korti_milli', // Default to korti_milli (Alif Bank)
     comments: '',
     sameAsBilling: true
   });
   
   const [errors, setErrors] = useState<FormErrors>({});
   const [showOrderSummary, setShowOrderSummary] = useState(true);
+  const [clubMember, setClubMember] = useState<{ discount_percentage: number; member_tier: string; full_name: string } | null>(null);
 
   // Redirect if cart is empty
   useEffect(() => {
@@ -79,6 +80,45 @@ const CheckoutPage = () => {
       toast.error('Корзина пуста');
     }
   }, [items, navigate]);
+
+  // Check for club member when phone number is entered
+  useEffect(() => {
+    const checkClubMember = async () => {
+      if (!formData.phone || formData.phone.length < 12) {
+        setClubMember(null);
+        return;
+      }
+
+      // Clean phone number for lookup
+      const cleanPhone = formData.phone.replace(/\D/g, '');
+      const e164Phone = cleanPhone.length === 12 ? `+${cleanPhone}` : formData.phone;
+
+      try {
+        const { data: member, error } = await supabase
+          .from('club_members')
+          .select('discount_percentage, member_tier, full_name')
+          .eq('phone', e164Phone)
+          .eq('is_active', true)
+          .maybeSingle();
+
+        if (!error && member) {
+          setClubMember(member);
+          if (member.discount_percentage > 0) {
+            toast.success(`Скидка ${member.discount_percentage}% применена!`, { duration: 3000 });
+          }
+        } else {
+          setClubMember(null);
+        }
+      } catch (err) {
+        console.error('Error checking club member:', err);
+        setClubMember(null);
+      }
+    };
+
+    // Debounce the check
+    const timeoutId = setTimeout(checkClubMember, 500);
+    return () => clearTimeout(timeoutId);
+  }, [formData.phone]);
 
   // Normalize payment method to ensure consistent values
   const normalizePaymentMethod = (method: string): 'online' | 'cash' => {
@@ -93,6 +133,23 @@ const CheckoutPage = () => {
     }
     // Default to online if unclear
     return 'online';
+  };
+
+  // Map gateway selection to Alif Bank API gate values
+  const mapGatewayToGate = (gateway: string): string => {
+    const gatewayMap: Record<string, string> = {
+      'alif_bank': 'korti_milli', // Alif Bank uses korti_milli gateway
+      'korti_milli': 'korti_milli', // Korti Milli is a valid gate
+      'salom': 'salom',
+      'vsa': 'vsa',
+      'mcr': 'mcr',
+      'wallet': 'wallet',
+      'tcell': 'tcell',
+      'megafon': 'megafon',
+      'babilon': 'babilon',
+      'zetmobile': 'zetmobile'
+    };
+    return gatewayMap[gateway] || 'korti_milli'; // Default to 'korti_milli' if unknown
   };
 
   // Restore saved form
@@ -238,7 +295,10 @@ const CheckoutPage = () => {
   };
 
   const calculateDiscount = () => {
-    return Math.round(total * 0.05); // 5% discount
+    if (clubMember && clubMember.discount_percentage > 0) {
+      return Math.round(total * (clubMember.discount_percentage / 100));
+    }
+    return 0; // No discount if not a club member
   };
 
   const calculateFinalTotal = () => {
@@ -273,6 +333,9 @@ const CheckoutPage = () => {
                 price: item.price,
                 quantity: item.quantity
               })),
+              subtotal: total,
+              discount: calculateDiscount(),
+              discount_percentage: clubMember?.discount_percentage || 0,
               total_amount: calculateFinalTotal(),
               currency: 'TJS',
               customer_info: {
@@ -304,9 +367,13 @@ const CheckoutPage = () => {
       }
 
       // For home delivery with cash payment, create order record
+      // Generate unique order ID for cash payment orders
+      const orderId = `SAKINA_CASH_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
       const { error: orderError } = await supabase
         .from('payments')
         .insert({
+          alif_order_id: orderId,
           amount: calculateFinalTotal(),
           currency: 'TJS',
           status: 'pending',
@@ -323,6 +390,9 @@ const CheckoutPage = () => {
               price: item.price,
               quantity: item.quantity
             })),
+            subtotal: total,
+            discount: calculateDiscount(),
+            discount_percentage: clubMember?.discount_percentage || 0,
             total_amount: calculateFinalTotal(),
             currency: 'TJS',
             customer_info: {
@@ -385,6 +455,7 @@ const CheckoutPage = () => {
             errors={errors}
             onInputChange={(field: string, value: string | boolean) => handleInputChange(field as keyof FormData, value)}
             onPhoneChange={handlePhoneChange}
+            clubMember={clubMember}
           />
         );
       case 2:
@@ -463,7 +534,7 @@ const CheckoutPage = () => {
               <PaymentButton
                 amount={calculateFinalTotal()}
                 currency="TJS"
-                gate={formData.selectedGateway}
+                gate={mapGatewayToGate(formData.selectedGateway)}
                 orderData={{
                   items: items.map(item => ({
                     id: item.id,
@@ -474,7 +545,7 @@ const CheckoutPage = () => {
                   })),
                   customerInfo: {
                     name: formData.name,
-                    email: formData.email || undefined,
+                    email: formData.email || '', // Always include email, even if empty
                     phone: formData.phone
                   },
                   deliveryInfo: {
@@ -485,7 +556,11 @@ const CheckoutPage = () => {
                     entrance: formData.entrance,
                     floor: formData.floor,
                     intercom: formData.intercom
-                  }
+                  },
+                  discount: calculateDiscount(),
+                  discount_percentage: clubMember?.discount_percentage || 0,
+                  club_member_tier: clubMember?.member_tier || null,
+                  subtotal: total
                 }}
                 onSuccess={handlePaymentSuccess}
                 onError={handlePaymentError}
@@ -566,6 +641,7 @@ const CheckoutPage = () => {
               calculateDeliveryFee={calculateDeliveryFee}
               calculateDiscount={calculateDiscount}
               calculateFinalTotal={calculateFinalTotal}
+              clubMember={clubMember}
             />
           </div>
         </div>

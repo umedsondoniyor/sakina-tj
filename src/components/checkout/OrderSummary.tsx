@@ -11,6 +11,7 @@ interface OrderSummaryProps {
   calculateDeliveryFee: () => number;
   calculateDiscount: () => number;
   calculateFinalTotal: () => number;
+  clubMember?: { discount_percentage: number; member_tier: string; full_name: string } | null;
 }
 
 const OrderSummary: React.FC<OrderSummaryProps> = ({
@@ -20,7 +21,8 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   onToggleOrderSummary,
   calculateDeliveryFee,
   calculateDiscount,
-  calculateFinalTotal
+  calculateFinalTotal,
+  clubMember
 }) => {
   return (
     <div className="bg-white rounded-lg shadow p-6 sticky top-4">
@@ -63,10 +65,19 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
             <span>{formatCurrency(total)}</span>
           </div>
           
-          <div className="flex justify-between text-sm">
-            <span>Скидка</span>
-            <span className="text-red-600">-{formatCurrency(calculateDiscount())}</span>
-          </div>
+          {calculateDiscount() > 0 && (
+            <div className="flex justify-between text-sm">
+              <div className="flex items-center gap-2">
+                <span>Скидка</span>
+                {clubMember && (
+                  <span className="px-2 py-0.5 bg-teal-100 text-teal-700 text-xs rounded-full font-medium">
+                    Клуб Sakina {clubMember.discount_percentage}%
+                  </span>
+                )}
+              </div>
+              <span className="text-red-600 font-semibold">-{formatCurrency(calculateDiscount())}</span>
+            </div>
+          )}
           
           <div className="flex justify-between text-sm">
             <span>Доставка</span>
