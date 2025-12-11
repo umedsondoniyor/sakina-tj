@@ -236,7 +236,7 @@ const RecommendedProducts: React.FC = () => {
                     <span className="text-base md:text-lg font-bold">
                       {formatCurrency(product.price)}
                     </span>
-                    {product.old_price && (
+                    {product.old_price && product.old_price > 0 && (
                       <span className="text-sm text-gray-500 line-through">
                         {formatCurrency(product.old_price)}
                       </span>

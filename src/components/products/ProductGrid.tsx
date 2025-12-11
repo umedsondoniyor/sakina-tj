@@ -178,11 +178,22 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) =
               )}
               <div className="flex items-center space-x-2">
                 <span className="text-lg font-bold">{formatCurrency(product.price)}</span>
-                {product.old_price && (
-                  <span className="text-sm text-gray-500 line-through">
-                    {formatCurrency(product.old_price)}
-                  </span>
-                )}
+                {(() => {
+                  const oldPrice = product.old_price;
+                  // Explicitly check for null, undefined, 0, and string "0"
+                  if (oldPrice == null || oldPrice === 0 || oldPrice === '0') {
+                    return null;
+                  }
+                  const numPrice = typeof oldPrice === 'string' ? parseFloat(oldPrice) : oldPrice;
+                  if (isNaN(numPrice) || numPrice <= 0) {
+                    return null;
+                  }
+                  return (
+                    <span className="text-sm text-gray-500 line-through">
+                      {formatCurrency(numPrice)}
+                    </span>
+                  );
+                })()}
               </div>
               <button 
                 className="w-full mt-4 bg-teal-500 text-white py-2 rounded hover:bg-teal-600 transition-colors"

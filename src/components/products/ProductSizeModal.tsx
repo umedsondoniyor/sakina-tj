@@ -133,7 +133,7 @@ const ProductSizeModal: React.FC<ProductSizeModalProps> = ({
                         <div className={`text-lg font-bold ${!isAvailable ? 'text-gray-400' : 'text-gray-900'}`}>
                           {formatCurrency(variant.price)}
                         </div>
-                        {variant.old_price && variant.old_price > variant.price && (
+                        {variant.old_price && variant.old_price > 0 && variant.old_price > variant.price && (
                           <div className="text-sm text-gray-500 line-through mt-1">
                             {formatCurrency(variant.old_price)}
                           </div>
