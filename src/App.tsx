@@ -30,6 +30,7 @@ const DeliveryPaymentPage = lazy(() => import('./pages/DeliveryPaymentPage'));
 
 // Admin - AdminRoute is not lazy loaded as it's a wrapper component
 import AdminRoute from './components/admin/AdminRoute';
+import RoleProtectedRoute from './components/admin/RoleProtectedRoute';
 const AdminLogin = lazy(() => import('./components/admin/AdminLogin'));
 const AdminDashboard = lazy(() => import('./components/admin/AdminDashboard'));
 const AdminProducts = lazy(() => import('./components/admin/AdminProducts'));
@@ -41,6 +42,7 @@ const AdminQuiz = lazy(() => import('./components/admin/AdminQuiz'));
 const AdminNavigation = lazy(() => import('./components/admin/AdminNavigation'));
 const AdminOneClickOrders = lazy(() => import('./components/admin/AdminOneClickOrders'));
 const AdminUsers = lazy(() => import('./components/admin/AdminUsers'));
+const AdminRoleManagement = lazy(() => import('./components/admin/AdminRoleManagement'));
 const AdminShowrooms = lazy(() => import('./components/admin/AdminShowrooms'));
 const AdminSmsTemplates = lazy(() => import('./components/admin/AdminSmsTemplates'));
 const AdminPayments = lazy(() => import('./components/admin/AdminPayments'));
@@ -102,24 +104,25 @@ function App() {
               element={<AdminRoute><AdminLayout /></AdminRoute>}
             >
               <Route index element={<AdminDashboard />} /> {/* 👈 this renders inside layout */}
-              <Route path="carousel" element={<AdminCarousel />} />
-              <Route path="about" element={<AdminAbout />} />
-              <Route path="reviews" element={<AdminReviews />} />
-              <Route path="blog" element={<AdminBlog />} />
-              <Route path="products" element={<AdminProducts />} />
-              <Route path="variants" element={<AdminProductVariants />} />
-              <Route path="related-products" element={<AdminRelatedProducts />} />
-              <Route path="quiz" element={<AdminQuiz />} />
-              <Route path="navigation" element={<AdminNavigation />} />
-              <Route path="one-click-orders" element={<AdminOneClickOrders />} />
-              <Route path="users" element={<AdminUsers />} />
-              <Route path="sms-templates" element={<AdminSmsTemplates />} />
-              <Route path="payments" element={<AdminPayments />} />
-              <Route path="showrooms" element={<AdminShowrooms />} />
-              <Route path="services" element={<AdminServices />} />
-              <Route path="delivery-payment" element={<AdminDeliveryPayment />} />
-              <Route path="mattresses" element={<AdminMattresses />} />
-              <Route path="club-members" element={<AdminClubMembers />} />
+              <Route path="carousel" element={<RoleProtectedRoute requiredRoles={['admin', 'editor']}><AdminCarousel /></RoleProtectedRoute>} />
+              <Route path="about" element={<RoleProtectedRoute requiredRoles={['admin', 'editor']}><AdminAbout /></RoleProtectedRoute>} />
+              <Route path="reviews" element={<RoleProtectedRoute requiredRoles={['admin', 'moderator', 'editor']}><AdminReviews /></RoleProtectedRoute>} />
+              <Route path="blog" element={<RoleProtectedRoute requiredRoles={['admin', 'editor']}><AdminBlog /></RoleProtectedRoute>} />
+              <Route path="products" element={<RoleProtectedRoute requiredRoles={['admin', 'editor']}><AdminProducts /></RoleProtectedRoute>} />
+              <Route path="variants" element={<RoleProtectedRoute requiredRoles={['admin']}><AdminProductVariants /></RoleProtectedRoute>} />
+              <Route path="related-products" element={<RoleProtectedRoute requiredRoles={['admin', 'editor']}><AdminRelatedProducts /></RoleProtectedRoute>} />
+              <Route path="quiz" element={<RoleProtectedRoute requiredRoles={['admin', 'editor']}><AdminQuiz /></RoleProtectedRoute>} />
+              <Route path="navigation" element={<RoleProtectedRoute requiredRoles={['admin']}><AdminNavigation /></RoleProtectedRoute>} />
+              <Route path="one-click-orders" element={<RoleProtectedRoute requiredRoles={['admin', 'moderator']}><AdminOneClickOrders /></RoleProtectedRoute>} />
+              <Route path="users" element={<RoleProtectedRoute requiredRoles={['admin']}><AdminUsers /></RoleProtectedRoute>} />
+              <Route path="role-management" element={<RoleProtectedRoute requiredRoles={['admin']}><AdminRoleManagement /></RoleProtectedRoute>} />
+              <Route path="sms-templates" element={<RoleProtectedRoute requiredRoles={['admin']}><AdminSmsTemplates /></RoleProtectedRoute>} />
+              <Route path="payments" element={<RoleProtectedRoute requiredRoles={['admin']}><AdminPayments /></RoleProtectedRoute>} />
+              <Route path="showrooms" element={<RoleProtectedRoute requiredRoles={['admin', 'editor']}><AdminShowrooms /></RoleProtectedRoute>} />
+              <Route path="services" element={<RoleProtectedRoute requiredRoles={['admin', 'editor']}><AdminServices /></RoleProtectedRoute>} />
+              <Route path="delivery-payment" element={<RoleProtectedRoute requiredRoles={['admin', 'editor']}><AdminDeliveryPayment /></RoleProtectedRoute>} />
+              <Route path="mattresses" element={<RoleProtectedRoute requiredRoles={['admin', 'editor']}><AdminMattresses /></RoleProtectedRoute>} />
+              <Route path="club-members" element={<RoleProtectedRoute requiredRoles={['admin', 'moderator']}><AdminClubMembers /></RoleProtectedRoute>} />
             </Route>
 
             <Route path="*" element={<NotFound />} />

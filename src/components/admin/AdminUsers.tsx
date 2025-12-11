@@ -1,7 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../lib/supabaseClient';
-import { User, Mail, Phone, Calendar, Shield, Eye, EyeOff, Trash2, Edit2, Plus, X } from 'lucide-react';
+import { User, Mail, Phone, Calendar, Shield, Eye, EyeOff, Trash2, Edit2, Plus, X, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { UserRole } from '../../hooks/useUserRole';
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const IS_DEV = import.meta.env.DEV;
 
 interface UserProfile {
   id: string;
@@ -9,21 +14,31 @@ interface UserProfile {
   phone?: string;
   full_name?: string;
   date_of_birth?: string;
-  role?: string;
+  role?: UserRole;
   created_at: string;
   updated_at: string;
+}
+
+interface UserFormData {
+  email: string;
+  full_name: string;
+  phone: string;
+  date_of_birth: string;
+  role: UserRole;
+  password: string;
 }
 
 const AdminUsers = () => {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filterRole, setFilterRole] = useState<string>('all');
+  const [filterRole, setFilterRole] = useState<UserRole | 'all'>('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [activeUser, setActiveUser] = useState<UserProfile | null>(null);
-  const createDefaultFormState = () => ({
+  
+  const createDefaultFormState = (): UserFormData => ({
     email: '',
     full_name: '',
     phone: '',
@@ -31,22 +46,131 @@ const AdminUsers = () => {
     role: 'user',
     password: '',
   });
-  const [formData, setFormData] = useState(createDefaultFormState);
   
-  // State for add user modal
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [newUser, setNewUser] = useState({
-    email: '',
-    password: '',
-    full_name: '',
-    phone: '',
-    role: 'user' as 'user' | 'admin',
-    date_of_birth: ''
-  });
-  const [creating, setCreating] = useState(false);
+  const [formData, setFormData] = useState<UserFormData>(createDefaultFormState());
+  const [updatingRoleId, setUpdatingRoleId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchUsers();
+  }, []);
+
+  // Helper function to validate and refresh session
+  const ensureValidSession = useCallback(async () => {
+    let { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    
+    if (sessionError || !sessionData?.session) {
+      throw new Error('Сессия истекла. Пожалуйста, войдите снова.');
+    }
+
+    // Check if session is expired or about to expire
+    const expiresAt = sessionData.session.expires_at;
+    const now = Math.floor(Date.now() / 1000);
+    if (expiresAt && expiresAt - now < 60) {
+      // Refresh the session if it's about to expire
+      const { data: refreshedSession, error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError || !refreshedSession?.session) {
+        throw new Error('Не удалось обновить сессию. Пожалуйста, войдите снова.');
+      }
+      sessionData = refreshedSession;
+    }
+
+    if (!sessionData.session) {
+      throw new Error('Сессия недоступна. Пожалуйста, войдите снова.');
+    }
+
+    return sessionData.session;
+  }, []);
+
+  // Helper function to verify admin role
+  const verifyAdminRole = useCallback(async (userId: string) => {
+    const { data: profile, error } = await supabase
+      .from('user_profiles')
+      .select('role')
+      .eq('id', userId)
+      .single();
+    
+    if (error || !profile) {
+      throw new Error('Не удалось проверить права доступа.');
+    }
+
+    if (profile.role !== 'admin') {
+      throw new Error('У вас нет прав администратора для выполнения этого действия.');
+    }
+
+    return true;
+  }, []);
+
+  // Helper function to call edge function with proper auth
+  const callEdgeFunction = useCallback(async (
+    functionName: string,
+    body: Record<string, any>
+  ) => {
+    const session = await ensureValidSession();
+    await verifyAdminRole(session.user.id);
+
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/${functionName}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+        'apikey': SUPABASE_ANON_KEY || '',
+      },
+      body: JSON.stringify(body)
+    });
+
+    const responseData = await response.json();
+    const data = response.ok ? responseData : null;
+    const error = response.ok ? null : { 
+      message: responseData.message || responseData.error || 'Operation failed' 
+    };
+
+    if (IS_DEV) {
+      console.log(`${functionName} response:`, { data, error });
+    }
+
+    return { data, error };
+  }, [ensureValidSession, verifyAdminRole]);
+
+  // Helper function to handle edge function responses
+  const handleEdgeFunctionResponse = useCallback((
+    data: any, 
+    error: any, 
+    defaultErrorMsg: string
+  ): { success: boolean; message?: string } => {
+    if (error) {
+      if (IS_DEV) {
+        console.error('Edge function error:', error);
+      }
+      
+      // For 401 errors, provide a more helpful message
+      if (error.message?.includes('401') || (error as any)?.status === 401) {
+        return { 
+          success: false, 
+          message: 'Ошибка авторизации. Пожалуйста, войдите снова или убедитесь, что у вас есть права администратора.' 
+        };
+      }
+      
+      // Try multiple ways to extract error message
+      const errorMsg = 
+        data?.message || 
+        data?.error || 
+        error.message || 
+        (error as any)?.context?.message ||
+        (error as any)?.error_description ||
+        defaultErrorMsg;
+      return { success: false, message: errorMsg };
+    }
+
+    if (!data) {
+      return { success: false, message: 'Не получен ответ от сервера' };
+    }
+
+    if (!data.success) {
+      const errorMsg = data.message || data.error || defaultErrorMsg;
+      return { success: false, message: errorMsg };
+    }
+
+    return { success: true, message: data.message };
   }, []);
 
   const fetchUsers = async () => {
@@ -72,16 +196,6 @@ const AdminUsers = () => {
     setFormError(null);
     setShowPassword(false);
     setIsModalOpen(true);
-    setShowAddModal(true);
-    setNewUser({
-      email: '',
-      password: '',
-      full_name: '',
-      phone: '',
-      role: 'user',
-      date_of_birth: ''
-    });
-    setCreating(false);
   };
 
   const openEditModal = (user: UserProfile) => {
@@ -91,7 +205,7 @@ const AdminUsers = () => {
       full_name: user.full_name || '',
       phone: user.phone || '',
       date_of_birth: user.date_of_birth ? user.date_of_birth.slice(0, 10) : '',
-      role: user.role || 'user',
+      role: (user.role as UserRole) || 'user',
       password: '',
     });
     setFormError(null);
@@ -102,34 +216,14 @@ const AdminUsers = () => {
   const closeModal = () => {
     if (formLoading) return;
     setIsModalOpen(false);
-    setShowAddModal(false);
     setActiveUser(null);
     setFormData(createDefaultFormState());
     setFormError(null);
+    setShowPassword(false);
   };
 
-  const handleFormChange = (field: keyof typeof formData, value: string) => {
+  const handleFormChange = (field: keyof UserFormData, value: string | UserRole) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const upsertProfile = async (userId: string) => {
-    const now = new Date().toISOString();
-    const payload = {
-      id: userId,
-      email: formData.email.trim(),
-      phone: formData.phone.trim() || null,
-      full_name: formData.full_name.trim() || null,
-      date_of_birth: formData.date_of_birth || null,
-      role: formData.role,
-      updated_at: now,
-      created_at: activeUser?.created_at ?? now,
-    };
-
-    const { error } = await supabase
-      .from('user_profiles')
-      .upsert(payload, { onConflict: 'id' });
-
-    if (error) throw error;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -142,196 +236,214 @@ const AdminUsers = () => {
       return;
     }
 
-    if (!activeUser && formData.password.trim().length < 6) {
-      setFormError('Пароль должен содержать минимум 6 символов');
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      setFormError('Неверный формат email адреса');
       return;
+    }
+
+    if (!activeUser) {
+      // Creating new user - password is required
+      if (!formData.password.trim()) {
+        setFormError('Пароль обязателен для нового пользователя');
+        return;
+      }
+      if (formData.password.trim().length < 6) {
+        setFormError('Пароль должен содержать минимум 6 символов');
+        return;
+      }
+    } else {
+      // Updating user - password is optional
+      if (formData.password.trim() && formData.password.trim().length < 6) {
+        setFormError('Пароль должен содержать минимум 6 символов');
+        return;
+      }
     }
 
     setFormLoading(true);
     try {
       if (activeUser) {
-        const updatePayload: {
-          email?: string;
-          password?: string;
-          user_metadata?: Record<string, any>;
-        } = {
+        // Update existing user via edge function
+        const { data, error } = await callEdgeFunction('manage-user', {
+          action: 'update',
+          userId: activeUser.id,
           email: trimmedEmail,
-          user_metadata: { role: formData.role },
-        };
+          password: formData.password.trim() || undefined,
+          role: formData.role,
+          full_name: formData.full_name.trim() || null,
+          phone: formData.phone.trim() || null,
+          date_of_birth: formData.date_of_birth || null,
+        });
 
-        if (formData.password.trim()) {
-          updatePayload.password = formData.password.trim();
+        const result = handleEdgeFunctionResponse(data, error, 'Не удалось обновить пользователя');
+        if (!result.success) {
+          throw new Error(result.message);
         }
 
-        const { error: authError } = await supabase.auth.admin.updateUserById(
-          activeUser.id,
-          updatePayload
-        );
-        if (authError) throw authError;
-
-        await upsertProfile(activeUser.id);
-        toast.success('Пользователь обновлён');
+        toast.success(result.message || 'Пользователь успешно обновлён');
       } else {
-        const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
-          email: trimmedEmail,
-          password: formData.password.trim(),
-          email_confirm: true,
-          user_metadata: { role: formData.role },
+        // Create new user via edge function
+        const { data, error } = await supabase.functions.invoke('create-user', {
+          body: {
+            email: trimmedEmail,
+            password: formData.password.trim(),
+            full_name: formData.full_name.trim() || null,
+            phone: formData.phone.trim() || null,
+            date_of_birth: formData.date_of_birth || null,
+            role: formData.role
+          }
         });
-        if (createError || !newUser?.user) throw createError || new Error('User not created');
 
-        await upsertProfile(newUser.user.id);
-        toast.success('Пользователь создан');
+        if (error) {
+          const errorMsg = data?.message || error.message || 'Не удалось создать пользователя';
+          throw new Error(errorMsg);
+        }
+
+        if (!data) {
+          throw new Error('Не получен ответ от сервера');
+        }
+
+        if (!data.success) {
+          const errorMsg = data.message || data.error || 'Не удалось создать пользователя';
+          throw new Error(errorMsg);
+        }
+
+        toast.success('Пользователь успешно создан');
       }
 
       await fetchUsers();
       closeModal();
     } catch (error: any) {
       console.error('Error saving user:', error);
-      setFormError(error?.message || 'Не удалось сохранить пользователя');
+      const errorMessage = error?.message || 'Не удалось сохранить пользователя';
+      setFormError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setFormLoading(false);
     }
   };
 
-  const updateUserRole = async (userId: string, newRole: string) => {
-    try {
-      const { error } = await supabase
-        .from('user_profiles')
-        .update({ 
-          role: newRole,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', userId);
+  const updateUserRole = async (userId: string, newRole: UserRole) => {
+    if (!confirm(`Вы уверены, что хотите изменить роль пользователя на "${getRoleText(newRole)}"?`)) {
+      return;
+    }
 
-      if (error) throw error;
-      
+    setUpdatingRoleId(userId);
+    try {
+      const { data, error } = await callEdgeFunction('manage-user', {
+        action: 'update',
+        userId: userId,
+        role: newRole,
+      });
+
+      const result = handleEdgeFunctionResponse(data, error, 'Не удалось обновить роль');
+      if (!result.success) {
+        throw new Error(result.message);
+      }
+
+      // Update local state optimistically
       setUsers(users.map(user => 
         user.id === userId ? { ...user, role: newRole } : user
       ));
-      toast.success('User role updated successfully');
-    } catch (error) {
-      console.error('Error updating user role:', error);
-      toast.error('Failed to update user role');
+      toast.success('Роль пользователя успешно обновлена');
+    } catch (error: any) {
+      if (IS_DEV) {
+        console.error('Error updating user role:', error);
+      }
+      const errorMessage = error?.message || 'Не удалось обновить роль пользователя';
+      toast.error(errorMessage);
+    } finally {
+      setUpdatingRoleId(null);
     }
   };
 
   const deleteUser = async (userId: string) => {
-    if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+    const user = users.find(u => u.id === userId);
+    const userName = user?.full_name || user?.email || 'этого пользователя';
+    
+    if (!confirm(`Вы уверены, что хотите удалить ${userName}? Это действие нельзя отменить.`)) {
       return;
     }
 
     try {
-      // Delete from auth.users (this will cascade to user_profiles due to foreign key)
-      const { error: authError } = await supabase.auth.admin.deleteUser(userId);
+      const { data, error } = await callEdgeFunction('manage-user', {
+        action: 'delete',
+        userId: userId
+      });
+
+      const result = handleEdgeFunctionResponse(data, error, 'Не удалось удалить пользователя');
+      if (!result.success) {
+        throw new Error(result.message);
+      }
       
-      if (authError) throw authError;
-      
+      // Remove from local state
       setUsers(users.filter(user => user.id !== userId));
-      toast.success('User deleted successfully');
-    } catch (error) {
-      console.error('Error deleting user:', error);
-      toast.error('Failed to delete user');
-    }
-  };
-
-  const createUser = async () => {
-    if (!newUser.email || !newUser.password) {
-      toast.error('Email и пароль обязательны');
-      return;
-    }
-
-    if (newUser.password.length < 6) {
-      toast.error('Пароль должен содержать минимум 6 символов');
-      return;
-    }
-
-    setCreating(true);
-    let responseData: any = null;
-    try {
-      // Call edge function to create user (uses service role key)
-      const { data, error } = await supabase.functions.invoke('create-user', {
-        body: {
-          email: newUser.email,
-          password: newUser.password,
-          full_name: newUser.full_name || null,
-          phone: newUser.phone || null,
-          date_of_birth: newUser.date_of_birth || null,
-          role: newUser.role
-        }
-      });
-
-      responseData = data;
-
-      if (error) {
-        // Extract user-friendly error message
-        const errorMessage = data?.message || error.message || data?.error || 'Неизвестная ошибка';
-        toast.error(errorMessage);
-        return;
-      }
-
-      if (!data?.success) {
-        // Use the message field if available, otherwise fall back to error field
-        const errorMessage = data?.message || data?.error || 'Не удалось создать пользователя';
-        toast.error(errorMessage);
-        return;
-      }
-
-      toast.success('Пользователь успешно создан');
-      setShowAddModal(false);
-      setIsModalOpen(false);
-      setNewUser({
-        email: '',
-        password: '',
-        full_name: '',
-        phone: '',
-        role: 'user',
-        date_of_birth: ''
-      });
-      fetchUsers();
+      toast.success('Пользователь успешно удалён');
     } catch (error: any) {
-      console.error('Error creating user:', error);
-      // Prioritize message field, then error field, then error.message
-      const errorMessage = responseData?.message || error.message || responseData?.error || error.error || 'Произошла неизвестная ошибка при создании пользователя. Попробуйте еще раз или обратитесь к администратору.';
+      if (IS_DEV) {
+        console.error('Error deleting user:', error);
+      }
+      const errorMessage = error?.message || 'Не удалось удалить пользователя';
       toast.error(errorMessage);
-    } finally {
-      setCreating(false);
     }
   };
 
-  const getRoleIcon = (role?: string) => {
+  const getRoleIcon = (role?: UserRole) => {
     switch (role) {
       case 'admin':
         return <Shield className="text-red-500" size={16} />;
+      case 'editor':
+        return <Edit2 className="text-purple-500" size={16} />;
+      case 'moderator':
+        return <Shield className="text-orange-500" size={16} />;
       case 'user':
       default:
         return <User className="text-blue-500" size={16} />;
     }
   };
 
-  const getRoleText = (role?: string) => {
+  const getRoleText = (role?: UserRole | 'all') => {
     switch (role) {
       case 'admin':
         return 'Администратор';
+      case 'editor':
+        return 'Редактор';
+      case 'moderator':
+        return 'Модератор';
       case 'user':
+        return 'Пользователь';
+      case 'all':
+        return 'Все';
       default:
         return 'Пользователь';
     }
   };
 
-  const getRoleColor = (role?: string) => {
+  const getRoleColor = (role?: UserRole) => {
     switch (role) {
       case 'admin':
         return 'bg-red-100 text-red-800';
+      case 'editor':
+        return 'bg-purple-100 text-purple-800';
+      case 'moderator':
+        return 'bg-orange-100 text-orange-800';
       case 'user':
       default:
         return 'bg-blue-100 text-blue-800';
     }
   };
 
+  const getAllRoles = (): UserRole[] => ['admin', 'editor', 'moderator', 'user'];
+
   const filteredUsers = filterRole === 'all' 
     ? users 
     : users.filter(user => (user.role || 'user') === filterRole);
+  
+  const getRoleCount = (role: UserRole | 'all') => {
+    if (role === 'all') return users.length;
+    return users.filter(u => (u.role || 'user') === role).length;
+  };
 
   if (loading) {
     return (
@@ -365,26 +477,23 @@ const AdminUsers = () => {
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setFilterRole('all')}
-            className={`px-3 py-1 rounded-full text-sm ${
-              filterRole === 'all' ? 'bg-brand-turquoise text-white' : 'bg-gray-200 text-gray-700'
+            className={`px-3 py-1 rounded-full text-sm transition-colors ${
+              filterRole === 'all' ? 'bg-brand-turquoise text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
             }`}
           >
-            Все ({users.length})
+            Все ({getRoleCount('all')})
           </button>
-          {['user', 'admin'].map(role => {
-            const count = users.filter(u => (u.role || 'user') === role).length;
-            return (
-              <button
-                key={role}
-                onClick={() => setFilterRole(role)}
-                className={`px-3 py-1 rounded-full text-sm ${
-                  filterRole === role ? 'bg-brand-turquoise text-white' : 'bg-gray-200 text-gray-700'
-                }`}
-              >
-                {getRoleText(role)} ({count})
-              </button>
-            );
-          })}
+          {getAllRoles().map(role => (
+            <button
+              key={role}
+              onClick={() => setFilterRole(role)}
+              className={`px-3 py-1 rounded-full text-sm transition-colors ${
+                filterRole === role ? 'bg-brand-turquoise text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              {getRoleText(role)} ({getRoleCount(role)})
+            </button>
+          ))}
         </div>
       </div>
 
@@ -463,22 +572,30 @@ const AdminUsers = () => {
                     <div className="flex items-center space-x-2">
                       <select
                         value={user.role || 'user'}
-                        onChange={(e) => updateUserRole(user.id, e.target.value)}
-                        className="text-sm border rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        onChange={(e) => updateUserRole(user.id, e.target.value as UserRole)}
+                        disabled={updatingRoleId === user.id}
+                        className="text-sm border rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Изменить роль"
                       >
-                        <option value="user">Пользователь</option>
-                        <option value="admin">Администратор</option>
+                        {getAllRoles().map(role => (
+                          <option key={role} value={role}>
+                            {getRoleText(role)}
+                          </option>
+                        ))}
                       </select>
+                      {updatingRoleId === user.id && (
+                        <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                      )}
                       <button
                         onClick={() => openEditModal(user)}
-                        className="p-1 text-gray-600 hover:text-gray-900 transition-colors"
+                        className="p-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors"
                         title="Редактировать"
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => deleteUser(user.id)}
-                        className="p-1 text-red-600 hover:text-red-800 transition-colors"
+                        className="p-1.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
                         title="Удалить пользователя"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -492,128 +609,6 @@ const AdminUsers = () => {
         </div>
       )}
 
-      {/* Add User Modal */}
-      {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg w-full max-w-md">
-            <div className="flex items-center justify-between p-6 border-b">
-              <h2 className="text-xl font-semibold">Добавить пользователя</h2>
-              <button
-                onClick={() => setShowAddModal(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <X size={24} />
-              </button>
-            </div>
-
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email *
-                </label>
-                <input
-                  type="email"
-                  value={newUser.email}
-                  onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-                  placeholder="user@example.com"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Пароль *
-                </label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={newUser.password}
-                    onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-                    placeholder="Минимум 6 символов"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
-                  >
-                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Полное имя
-                </label>
-                <input
-                  type="text"
-                  value={newUser.full_name}
-                  onChange={(e) => setNewUser({ ...newUser, full_name: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-                  placeholder="Иван Иванов"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Телефон
-                </label>
-                <input
-                  type="tel"
-                  value={newUser.phone}
-                  onChange={(e) => setNewUser({ ...newUser, phone: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-                  placeholder="+992 93 123 45 67"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Дата рождения
-                </label>
-                <input
-                  type="date"
-                  value={newUser.date_of_birth}
-                  onChange={(e) => setNewUser({ ...newUser, date_of_birth: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Роль *
-                </label>
-                <select
-                  value={newUser.role}
-                  onChange={(e) => setNewUser({ ...newUser, role: e.target.value as 'user' | 'admin' })}
-                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-                >
-                  <option value="user">Пользователь</option>
-                  <option value="admin">Администратор</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-3 p-6 border-t">
-              <button
-                onClick={() => setShowAddModal(false)}
-                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                disabled={creating}
-              >
-                Отмена
-              </button>
-              <button
-                onClick={createUser}
-                disabled={creating || !newUser.email || !newUser.password}
-                className="px-4 py-2 bg-brand-turquoise text-white rounded-lg hover:bg-brand-navy transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
-              >
-                {creating ? 'Создание...' : 'Создать пользователя'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
 
       {isModalOpen && (
@@ -723,12 +718,15 @@ const AdminUsers = () => {
                   <label className="text-sm font-medium text-gray-700">Роль</label>
                   <select
                     value={formData.role}
-                    onChange={(e) => handleFormChange('role', e.target.value)}
-                    className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    onChange={(e) => handleFormChange('role', e.target.value as UserRole)}
+                    className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
                     disabled={formLoading}
                   >
-                    <option value="user">Пользователь</option>
-                    <option value="admin">Администратор</option>
+                    {getAllRoles().map(role => (
+                      <option key={role} value={role}>
+                        {getRoleText(role)}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>

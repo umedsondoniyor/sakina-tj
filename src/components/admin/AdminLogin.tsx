@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import Logo from '../Logo';
 import toast from 'react-hot-toast';
+import { Loader2 } from 'lucide-react';
 
 const AdminLogin = () => {
   const [email, setEmail] = useState('');
@@ -15,6 +16,7 @@ const AdminLogin = () => {
     setLoading(true);
 
     try {
+      // Use standard Supabase Auth login
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -23,17 +25,61 @@ const AdminLogin = () => {
       if (error) throw error;
 
       if (data.user) {
-        // Check if user has admin role
-        const { data: profile, error: profileError } = await supabase
+        // Check if user profile exists, use maybeSingle to handle missing profiles
+        let { data: profile, error: profileError } = await supabase
           .from('user_profiles')
-          .select('role')
+          .select('role, email')
           .eq('id', data.user.id)
-          .single();
+          .maybeSingle();
 
-        if (profileError) throw profileError;
+        if (profileError) {
+          // Some error occurred
+          console.error('Profile retrieval error:', profileError);
+          throw profileError;
+        }
 
-        if (profile?.role !== 'admin') {
-          throw new Error('Unauthorized access');
+        // If profile doesn't exist, create one with default role
+        if (!profile) {
+          // Profile doesn't exist, create it
+          const defaultRole = (data.user.user_metadata?.role as string) || 'user';
+          const { error: createError } = await supabase
+            .from('user_profiles')
+            .insert({
+              id: data.user.id,
+              email: data.user.email || '',
+              role: defaultRole,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            });
+
+          if (createError) {
+            console.error('Error creating user profile:', createError);
+            throw new Error('Failed to create user profile. Please contact administrator.');
+          }
+
+          // Fetch the newly created profile
+          const { data: newProfile, error: fetchError } = await supabase
+            .from('user_profiles')
+            .select('role, email')
+            .eq('id', data.user.id)
+            .maybeSingle();
+
+          if (fetchError) {
+            console.error('Error fetching new profile:', fetchError);
+            throw fetchError;
+          }
+          
+          if (!newProfile) {
+            throw new Error('Profile was created but could not be retrieved');
+          }
+          
+          profile = newProfile;
+        }
+
+        // Allow admin, editor, and moderator roles to access admin area
+        const allowedRoles = ['admin', 'editor', 'moderator'];
+        if (!profile || !allowedRoles.includes(profile.role)) {
+          throw new Error('Unauthorized access. Admin, editor, or moderator role required.');
         }
 
         toast.success('Успешный вход');
@@ -88,9 +134,16 @@ const AdminLogin = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-brand-turquoise text-white hover:bg-brand-navy transition-colors disabled:bg-gray-400"
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-brand-turquoise text-white rounded-lg hover:bg-brand-navy transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-brand-turquoise font-semibold shadow-sm hover:shadow-md"
           >
-            {loading ? 'Вход...' : 'Войти'}
+            {loading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                <span>Вход...</span>
+              </>
+            ) : (
+              <span>Войти</span>
+            )}
           </button>
         </form>
       </div>
