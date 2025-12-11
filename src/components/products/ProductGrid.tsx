@@ -148,6 +148,10 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) =
                 src={product.image_url}
                 alt={product.name}
                 className="w-full h-64 object-cover rounded-lg"
+                loading="lazy"
+                decoding="async"
+                width="400"
+                height="256"
               />
               {product.sale_percentage && (
                 <span className="absolute top-4 left-4 bg-red-500 text-white px-2 py-1 rounded text-sm">

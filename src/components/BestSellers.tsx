@@ -184,6 +184,9 @@ const BestSellers: React.FC = () => {
                 src={product.image_url}
                 alt={product.name}
                 className="w-full h-64 object-cover transition-transform duration-300 group-hover:scale-105"
+                decoding="async"
+                width="400"
+                height="256"
               />
               {product.sale_percentage && (
                 <span className="absolute top-4 left-4 bg-red-500 text-white px-2 py-1 rounded text-sm">
@@ -258,6 +261,9 @@ const BestSellers: React.FC = () => {
                     src={product.image_url}
                     alt={product.name}
                     className="w-full h-48 object-cover transition-transform duration-300 hover:scale-105"
+                    decoding="async"
+                    width="300"
+                    height="192"
                   />
                   {product.sale_percentage && (
                     <span className="absolute top-3 left-3 bg-red-500 text-white px-2 py-1 rounded text-sm">
