@@ -48,7 +48,7 @@ const CheckoutSteps: React.FC<CheckoutStepsProps> = ({ currentStep }) => {
                     'flex items-center justify-center',
                     'w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 shrink-0',
                     isActive
-                      ? 'bg-teal-500 border-teal-500 text-white'
+                      ? 'bg-brand-turquoise border-teal-500 text-white'
                       : 'border-gray-300 text-gray-400'
                   ].join(' ')}
                 >
@@ -74,7 +74,7 @@ const CheckoutSteps: React.FC<CheckoutStepsProps> = ({ currentStep }) => {
                       // mobile: short connector; desktop: flexible line
                       'mx-3 sm:mx-4 h-0.5',
                       'w-8 sm:w-12 md:w-auto md:flex-1',
-                      isDone ? 'bg-teal-500' : 'bg-gray-300'
+                      isDone ? 'bg-brand-turquoise' : 'bg-gray-300'
                     ].join(' ')}
                     aria-hidden="true"
                   />

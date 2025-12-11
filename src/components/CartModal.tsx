@@ -98,7 +98,7 @@ const CartModal: React.FC = () => {
           
           <button 
             onClick={handleCheckout}
-            className="w-full bg-teal-500 text-white py-3 rounded-lg hover:bg-teal-600 transition-colors"
+            className="w-full bg-brand-turquoise text-white hover:bg-brand-navy transition-colors"
           >
             Оформить заказ
           </button>

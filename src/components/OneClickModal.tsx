@@ -191,7 +191,7 @@ const OneClickModal: React.FC<OneClickModalProps> = ({
             <button
               type="submit"
               disabled={loading || !phoneNumber}
-              className="w-full bg-teal-500 text-white py-4 rounded-lg font-semibold hover:bg-teal-600 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+              className="w-full bg-brand-turquoise text-white py-4 rounded-lg hover:bg-brand-navy transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
               {loading ? 'Отправить заказ...' : 'Отправить заказ'}
             </button>

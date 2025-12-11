@@ -398,7 +398,7 @@ const AdminClubMembers = () => {
               </button>
               <button
                 onClick={handleSave}
-                className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
+                className="px-4 py-2 bg-brand-turquoise text-white rounded-lg hover:bg-brand-navy"
               >
                 Сохранить
               </button>

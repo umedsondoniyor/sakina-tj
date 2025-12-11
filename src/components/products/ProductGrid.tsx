@@ -200,7 +200,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) =
                 })()}
               </div>
               <button 
-                className="w-full mt-4 bg-teal-500 text-white py-2 rounded hover:bg-teal-600 transition-colors"
+                className="w-full mt-4 bg-brand-turquoise text-white py-2 rounded hover:bg-brand-navy transition-colors"
                 onClick={(e) => handleAddToCart(product, e)}
                 disabled={loadingVariants}
               >

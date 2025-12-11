@@ -82,7 +82,7 @@ const PaymentFailedPage: React.FC = () => {
               toast('Попробуйте оплатить заказ повторно 💳', { icon: '💳' });
               navigate('/checkout');
             }}
-            className="w-full bg-teal-500 text-white py-3 rounded-lg hover:bg-teal-600 transition-colors flex items-center justify-center"
+            className="w-full bg-brand-turquoise text-white py-3 rounded-lg hover:bg-brand-navy transition-colors flex items-center justify-center"
           >
             <RefreshCw size={20} className="mr-2" />
             Повторить оплату
@@ -111,7 +111,7 @@ const PaymentFailedPage: React.FC = () => {
           <div className="flex flex-col sm:flex-row justify-center gap-3">
             <a
               href="tel:+992905339595"
-              className="flex items-center justify-center bg-teal-500 text-white px-4 py-2 rounded-lg hover:bg-teal-600 text-sm"
+              className="flex items-center justify-center bg-brand-turquoise text-white px-4 py-2 rounded-lg hover:bg-brand-navy text-sm"
             >
               📞 Позвонить
             </a>

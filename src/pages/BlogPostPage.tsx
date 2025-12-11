@@ -114,7 +114,7 @@ const BlogPostPage: React.FC = () => {
           <p className="text-gray-500 mb-6">Попробуйте вернуться в блог.</p>
           <button
             onClick={() => navigate('/blog')}
-            className="px-6 py-3 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors font-medium"
+            className="px-6 py-3 bg-brand-turquoise text-white rounded-lg hover:bg-brand-navy transition-colors font-medium"
           >
             Вернуться к статьям
           </button>
@@ -407,7 +407,7 @@ const BlogPostPage: React.FC = () => {
         <div className="mt-12 pt-8 border-t border-gray-200 text-center">
           <Link
             to="/blog"
-            className="inline-flex items-center px-6 py-3 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors font-medium shadow-lg shadow-teal-500/30"
+            className="inline-flex items-center px-6 py-3 bg-brand-turquoise text-white rounded-lg hover:bg-brand-navy transition-colors font-medium shadow-lg shadow-brand-turquoise/30"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Все статьи блога

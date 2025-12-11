@@ -255,7 +255,7 @@ const Footer = () => {
                   />
                 </div>
               </div>
-              <div className="text-xs text-gray-500 text-center md:text-right">
+              <div className="text-xs text-gray-200 text-center md:text-right">
                 <p>ИП "Sakina"</p>
                 <p>ИНН: указать при наличии</p>
               </div>

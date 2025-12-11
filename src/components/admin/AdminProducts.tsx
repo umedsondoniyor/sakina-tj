@@ -138,7 +138,7 @@ const AdminProducts = () => {
         <h1 className="text-2xl font-bold">Управление товарами</h1>
         <button
           onClick={handleAdd}
-          className="flex items-center px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+          className="flex items-center px-4 py-2 bg-brand-turquoise text-white rounded-lg hover:bg-brand-navy transition-colors"
           aria-label="Добавить товар"
         >
           <Plus className="w-4 h-4 mr-2" />

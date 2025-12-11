@@ -142,7 +142,7 @@ const MobileFilters: React.FC<MobileFiltersProps> = ({
         
         <div className="absolute bottom-0 left-0 right-0 p-4 bg-white border-t">
           <button 
-            className="w-full bg-teal-500 text-white py-3 rounded-lg"
+            className="w-full bg-brand-turquoise text-white py-3 rounded-lg"
             onClick={onClose}
           >
             Показать {productsCount} товаров

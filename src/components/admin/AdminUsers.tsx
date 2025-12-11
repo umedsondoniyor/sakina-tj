@@ -353,7 +353,7 @@ const AdminUsers = () => {
         </div>
         <button
           onClick={openCreateModal}
-          className="inline-flex items-center gap-2 bg-teal-500 text-white px-4 py-2 rounded-lg hover:bg-teal-600 transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-brand-turquoise text-white rounded-lg hover:bg-brand-navy transition-colors"
         >
           <Plus size={16} />
           Добавить пользователя
@@ -366,7 +366,7 @@ const AdminUsers = () => {
           <button
             onClick={() => setFilterRole('all')}
             className={`px-3 py-1 rounded-full text-sm ${
-              filterRole === 'all' ? 'bg-teal-500 text-white' : 'bg-gray-200 text-gray-700'
+              filterRole === 'all' ? 'bg-brand-turquoise text-white' : 'bg-gray-200 text-gray-700'
             }`}
           >
             Все ({users.length})
@@ -378,7 +378,7 @@ const AdminUsers = () => {
                 key={role}
                 onClick={() => setFilterRole(role)}
                 className={`px-3 py-1 rounded-full text-sm ${
-                  filterRole === role ? 'bg-teal-500 text-white' : 'bg-gray-200 text-gray-700'
+                  filterRole === role ? 'bg-brand-turquoise text-white' : 'bg-gray-200 text-gray-700'
                 }`}
               >
                 {getRoleText(role)} ({count})
@@ -606,7 +606,7 @@ const AdminUsers = () => {
               <button
                 onClick={createUser}
                 disabled={creating || !newUser.email || !newUser.password}
-                className="px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-brand-turquoise text-white rounded-lg hover:bg-brand-navy transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {creating ? 'Создание...' : 'Создать пользователя'}
               </button>
@@ -745,7 +745,7 @@ const AdminUsers = () => {
                 <button
                   type="submit"
                   disabled={formLoading}
-                  className="px-4 py-2 rounded-lg bg-teal-500 text-white hover:bg-teal-600 transition-colors disabled:opacity-70"
+                  className="px-4 py-2 rounded-lg bg-brand-turquoise text-white hover:bg-brand-navy transition-colors disabled:opacity-70"
                 >
                   {formLoading ? 'Сохранение...' : activeUser ? 'Сохранить' : 'Создать'}
                 </button>

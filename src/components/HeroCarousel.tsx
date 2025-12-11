@@ -128,7 +128,7 @@ const HeroCarousel: React.FC = () => {
         <p className="text-gray-600">{error}</p>
         <button
           onClick={loadSlides}
-          className="mt-4 px-4 py-2 bg-teal-500 text-white rounded hover:bg-teal-600"
+          className="mt-4 px-4 py-2 bg-brand-turquoise text-white rounded hover:bg-brand-navy"
         >
           Retry
         </button>

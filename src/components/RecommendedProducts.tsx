@@ -91,7 +91,7 @@ const RecommendedProducts: React.FC = () => {
           <p className="mt-1 text-sm text-gray-600">Проверьте позже для новых товаров.</p>
           <button
             onClick={() => location.reload()}
-            className="mt-4 px-4 py-2 bg-teal-500 text-white rounded hover:bg-teal-600"
+            className="mt-4 px-4 py-2 bg-brand-turquoise text-white rounded hover:bg-brand-navy"
           >
             Retry
           </button>
@@ -244,7 +244,7 @@ const RecommendedProducts: React.FC = () => {
                       </span>
                     )}
                   </div>
-                  <button className="w-full bg-teal-500 text-white py-2 rounded text-sm hover:bg-teal-600 transition-colors">
+                  <button className="w-full bg-brand-turquoise text-white py-2 rounded hover:bg-brand-navy transition-colors">
                     Подробнее
                   </button>
                 </div>
@@ -256,7 +256,7 @@ const RecommendedProducts: React.FC = () => {
         {/* Mobile progress bar */}
         <div className="md:hidden h-0.5 bg-gray-100 mt-4 rounded-full overflow-hidden">
           <div
-            className="h-full bg-teal-500 transition-all duration-300 ease-out"
+            className="h-full bg-brand-turquoise transition-all duration-300 ease-out"
             style={{ width: `${scrollProgress}%` }}
           />
         </div>

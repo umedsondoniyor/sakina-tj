@@ -70,7 +70,7 @@ const HitSalesSection = ({ sectionTitle = 'Хиты продаж' }: HitSalesSec
           <p className="mt-1 text-sm text-gray-500">Check back later for new products.</p>
           <button
             onClick={loadBestSellers}
-            className="mt-4 px-4 py-2 bg-teal-500 text-white rounded hover:bg-teal-600"
+            className="mt-4 px-4 py-2 bg-brand-turquoise text-white rounded hover:bg-brand-navy"
           >
             Retry
           </button>
@@ -163,7 +163,7 @@ const HitSalesSection = ({ sectionTitle = 'Хиты продаж' }: HitSalesSec
                 );
               })()}
             </div>
-            <button className="w-full bg-teal-500 text-white py-2 rounded-lg hover:bg-teal-600 transition-colors">
+            <button className="w-full bg-brand-turquoise text-white py-2 rounded hover:bg-brand-navy transition-colors">
               Подробнее
             </button>
           </div>

@@ -68,7 +68,7 @@ const ValueForm: React.FC<Props> = ({ initial, onSave }) => {
       <div className="pt-2 flex justify-end">
         <button
           type="submit"
-          className="px-4 py-2 rounded bg-teal-600 text-white hover:bg-teal-700"
+          className="px-4 py-2 rounded bg-brand-turquoise text-white hover:bg-brand-navy"
         >
           Сохранить
         </button>

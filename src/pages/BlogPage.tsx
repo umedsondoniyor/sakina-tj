@@ -183,7 +183,7 @@ const BlogPage: React.FC = () => {
                 onClick={() => handleCategoryClick('')}
                 className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
                   !selectedCategorySlug
-                    ? 'bg-teal-600 text-white'
+                    ? 'bg-brand-turquoise text-white'
                     : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
                 }`}
               >

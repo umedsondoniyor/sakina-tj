@@ -208,7 +208,7 @@ const AdminDeliveryPayment: React.FC = () => {
             <button
               onClick={handleSave}
               disabled={saving || !settings.title}
-              className="px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+              className="px-4 py-2 bg-brand-turquoise text-white hover:bg-brand-navy transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
             >
               <Save className="w-4 h-4 mr-2" />
               {saving ? 'Сохранение...' : 'Сохранить'}

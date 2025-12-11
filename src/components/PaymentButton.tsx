@@ -175,7 +175,7 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
         className={`w-full flex items-center justify-center py-3 px-6 rounded-lg font-semibold transition-colors ${
           disabled || loading
             ? 'bg-gray-400 cursor-not-allowed'
-            : 'bg-teal-500 hover:bg-teal-600 text-white'
+            : 'bg-brand-turquoise hover:bg-brand-navy text-white'
         } ${className}`}
       >
         {loading ? (

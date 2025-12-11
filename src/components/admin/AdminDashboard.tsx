@@ -273,7 +273,7 @@ const AdminDashboard: React.FC = () => {
         </div>
         <button
           onClick={fetchDashboardStats}
-          className="px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors text-sm font-medium"
+          className="px-4 py-2 bg-brand-turquoise text-white rounded-lg hover:bg-brand-navy transition-colors text-sm font-medium"
         >
           Обновить
         </button>

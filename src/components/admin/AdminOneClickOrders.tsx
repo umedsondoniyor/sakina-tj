@@ -121,7 +121,7 @@ const AdminOneClickOrders = () => {
           <button
             onClick={() => setFilterStatus('all')}
             className={`px-3 py-1 rounded-full text-sm ${
-              filterStatus === 'all' ? 'bg-teal-500 text-white' : 'bg-gray-200 text-gray-700'
+              filterStatus === 'all' ? 'bg-brand-turquoise text-white' : 'bg-gray-200 text-gray-700'
             }`}
           >
             Все ({orders.length})
@@ -133,7 +133,7 @@ const AdminOneClickOrders = () => {
                 key={status}
                 onClick={() => setFilterStatus(status)}
                 className={`px-3 py-1 rounded-full text-sm ${
-                  filterStatus === status ? 'bg-teal-500 text-white' : 'bg-gray-200 text-gray-700'
+                  filterStatus === status ? 'bg-brand-turquoise text-white' : 'bg-gray-200 text-gray-700'
                 }`}
               >
                 {getStatusText(status)} ({count})

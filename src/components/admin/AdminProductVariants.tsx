@@ -209,7 +209,7 @@ const AdminProductVariants: React.FC = () => {
         <h1 className="text-2xl font-bold">Управление вариантами товаров</h1>
         <button
           onClick={handleAdd}
-          className="flex items-center px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+          className="flex items-center px-4 py-2 bg-brand-turquoise text-white rounded-lg hover:bg-brand-navy transition-colors"
           aria-label="Добавить вариант товара"
         >
           <Plus className="w-4 h-4 mr-2" />
@@ -242,7 +242,7 @@ const AdminProductVariants: React.FC = () => {
           <button
             onClick={() => setFilterType('all')}
             className={`px-3 py-1 rounded-full text-sm transition-colors ${
-              filterType === 'all' ? 'bg-teal-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              filterType === 'all' ? 'bg-brand-turquoise text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
             }`}
           >
             Все ({variants.length})
@@ -254,7 +254,7 @@ const AdminProductVariants: React.FC = () => {
                 key={type}
                 onClick={() => setFilterType(type)}
                 className={`px-3 py-1 rounded-full text-sm transition-colors ${
-                  filterType === type ? 'bg-teal-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  filterType === type ? 'bg-brand-turquoise text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                 }`}
               >
                 {sizeTypeLabels[type] || type} ({count})
