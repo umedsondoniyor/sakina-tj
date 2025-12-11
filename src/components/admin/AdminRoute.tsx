@@ -31,20 +31,63 @@ const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
           throw new Error('No active session');
         }
 
-        // Get user profile to check role
-        const { data: profile, error: profileError } = await supabase
+        // Get user profile to check role, use maybeSingle to handle missing profiles
+        let { data: profile, error: profileError } = await supabase
           .from('user_profiles')
           .select('role')
           .eq('id', session.user.id)
-          .single();
+          .maybeSingle();
 
         if (profileError) {
+          // Some error occurred
           console.error('Profile retrieval error:', profileError);
           throw profileError;
         }
 
-        if (!profile || profile.role !== 'admin') {
-          console.log('User is not an admin:', profile?.role);
+        // If profile doesn't exist, create one with default role
+        if (!profile) {
+          // Profile doesn't exist, create it
+          const defaultRole = (session.user.user_metadata?.role as string) || 'user';
+          const { error: createError } = await supabase
+            .from('user_profiles')
+            .insert({
+              id: session.user.id,
+              email: session.user.email || '',
+              role: defaultRole,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            });
+
+          if (createError) {
+            console.error('Profile creation error:', createError);
+            // If creation fails, still try to proceed - might be RLS issue
+            // But we'll deny access since we can't verify role
+            throw new Error('Failed to create user profile. Please contact administrator.');
+          }
+
+          // Fetch the newly created profile
+          const { data: newProfile, error: fetchError } = await supabase
+            .from('user_profiles')
+            .select('role')
+            .eq('id', session.user.id)
+            .maybeSingle();
+
+          if (fetchError) {
+            console.error('Profile retrieval error after creation:', fetchError);
+            throw fetchError;
+          }
+          
+          if (!newProfile) {
+            throw new Error('Profile was created but could not be retrieved');
+          }
+          
+          profile = newProfile;
+        }
+
+        // Allow admin, editor, and moderator roles to access admin area
+        const allowedRoles = ['admin', 'editor', 'moderator'];
+        if (!profile || !allowedRoles.includes(profile.role)) {
+          console.log('User does not have admin access:', profile?.role);
           throw new Error('Unauthorized access');
         }
 

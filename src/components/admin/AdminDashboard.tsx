@@ -13,7 +13,7 @@ import {
   AlertCircle,
   Star,
   Award,
-  ArrowRight
+  ArrowRight,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
@@ -271,12 +271,14 @@ const AdminDashboard: React.FC = () => {
           <h1 className="text-3xl font-bold text-gray-900">Панель управления</h1>
           <p className="text-gray-500 mt-1">Обзор статистики и показателей</p>
         </div>
-        <button
-          onClick={fetchDashboardStats}
-          className="px-4 py-2 bg-brand-turquoise text-white rounded-lg hover:bg-brand-navy transition-colors text-sm font-medium"
-        >
-          Обновить
-        </button>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={fetchDashboardStats}
+            className="px-4 py-2 bg-brand-turquoise text-white rounded-lg hover:bg-brand-navy transition-colors text-sm font-medium"
+          >
+            Обновить
+          </button>
+        </div>
       </div>
 
       {/* Revenue Section */}
