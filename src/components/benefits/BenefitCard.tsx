@@ -29,7 +29,8 @@ const BenefitCard: React.FC<BenefitCardProps> = ({
         <img
           src={benefit.icon}
           alt={benefit.title}
-          className="w-32 h-32 flex-shrink-0 p-4"
+          className="w-32 h-32 flex-shrink-0 p-4 object-contain"
+          style={{ aspectRatio: 'auto' }}
         />
         <h3 className="text-lg font-medium">
           <span className="block">{benefit.title}</span>
