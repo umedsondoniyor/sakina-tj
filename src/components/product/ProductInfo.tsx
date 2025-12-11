@@ -114,7 +114,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
             {(() => {
               const oldPrice = getCurrentOldPrice();
               return oldPrice != null && oldPrice > 0 ? (
-                <span className="ml-2 text-lg text-gray-500 line-through">
+                <span className="ml-2 text-lg text-gray-600 line-through">
                   {formatCurrency(oldPrice)}
                 </span>
               ) : null;

@@ -88,7 +88,7 @@ const RecommendedProducts: React.FC = () => {
         <div className="text-center">
           <PackageOpen className="mx-auto h-12 w-12 text-gray-400" />
           <h3 className="mt-2 text-sm font-semibold text-gray-900">{error}</h3>
-          <p className="mt-1 text-sm text-gray-500">Check back later for new products.</p>
+          <p className="mt-1 text-sm text-gray-600">Проверьте позже для новых товаров.</p>
           <button
             onClick={() => location.reload()}
             className="mt-4 px-4 py-2 bg-teal-500 text-white rounded hover:bg-teal-600"
@@ -105,8 +105,8 @@ const RecommendedProducts: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 py-8 md:py-12">
         <div className="text-center">
           <PackageOpen className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-semibold text-gray-900">No products available</h3>
-          <p className="mt-1 text-sm text-gray-500">Check back later for new products.</p>
+          <h3 className="mt-2 text-sm font-semibold text-gray-900">Товары недоступны</h3>
+          <p className="mt-1 text-sm text-gray-600">Проверьте позже для новых товаров.</p>
         </div>
       </div>
     );
@@ -223,14 +223,14 @@ const RecommendedProducts: React.FC = () => {
                 </div>
 
                 <div>
-                  <div className="text-xs md:text-sm text-gray-500 mb-1.5 md:mb-2">
+                  <div className="text-xs md:text-sm text-gray-600 mb-1.5 md:mb-2">
                     {product.review_count} оценок
                   </div>
                   <h3 className="text-sm md:text-base font-medium mb-1.5 md:mb-2 line-clamp-2">
                     {product.name}
                   </h3>
                   {product.weight_category && (
-                    <p className="text-xs text-gray-600 mb-2">
+                    <p className="text-xs text-gray-700 mb-2">
                       {product.weight_category}
                     </p>
                   )}
@@ -239,7 +239,7 @@ const RecommendedProducts: React.FC = () => {
                       {formatCurrency(product.price)}
                     </span>
                     {product.old_price && product.old_price > 0 && (
-                      <span className="text-sm text-gray-500 line-through">
+                      <span className="text-sm text-gray-600 line-through">
                         {formatCurrency(product.old_price)}
                       </span>
                     )}

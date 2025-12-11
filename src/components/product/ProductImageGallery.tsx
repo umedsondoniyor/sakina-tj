@@ -103,8 +103,9 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
           <button
             onClick={() => scrollThumbnails('left')}
             className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white rounded-full shadow-md flex items-center justify-center transition-all hover:scale-110"
+            aria-label="Прокрутить миниатюры влево"
           >
-            <ChevronLeft className="w-5 h-5 text-gray-600" />
+            <ChevronLeft className="w-5 h-5 text-gray-700" />
           </button>
         )}
 
@@ -119,6 +120,8 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
               className={`flex-none w-24 h-24 border rounded-lg overflow-hidden transition-colors ${
                 currentImageIndex === index ? 'border-teal-500' : 'hover:border-teal-500'
               }`}
+              aria-label={`Показать изображение ${index + 1} из ${images.length}`}
+              aria-pressed={currentImageIndex === index}
             >
               <img
                 src={image}
@@ -137,8 +140,9 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
           <button
             onClick={() => scrollThumbnails('right')}
             className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white rounded-full shadow-md flex items-center justify-center transition-all hover:scale-110"
+            aria-label="Прокрутить миниатюры вправо"
           >
-            <ChevronRight className="w-5 h-5 text-gray-600" />
+            <ChevronRight className="w-5 h-5 text-gray-700" />
           </button>
         )}
       </div>
