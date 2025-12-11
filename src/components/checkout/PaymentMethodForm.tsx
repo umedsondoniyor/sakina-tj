@@ -10,7 +10,7 @@ interface PaymentMethodFormProps {
 
 const paymentGateways = [
   {
-    value: 'alif_bank',
+    value: 'korti_milli',
     label: 'Alif Bank',
     description: 'Корти Милли или Alif Mobi',
     icon: CreditCard,
@@ -41,7 +41,7 @@ const paymentGateways = [
 const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
   paymentMethod,
   onPaymentMethodChange,
-  selectedGateway = 'alif_bank',
+  selectedGateway = 'korti_milli',
   onGatewayChange
 }) => {
 
