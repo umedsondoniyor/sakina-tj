@@ -208,7 +208,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ open, onClose, productType = 'mat
             type="button"
             onClick={onClose}
             ref={firstFocusableRef}
-            className="bg-teal-500 text-white px-4 py-2 rounded-lg"
+            className="bg-brand-turquoise text-white px-4 py-2 rounded-lg"
           >
             Закрыть
           </button>
@@ -254,7 +254,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ open, onClose, productType = 'mat
         <div className="px-5 md:px-6 pt-3">
           <div className="h-2 bg-gray-200 rounded-full mb-4 md:mb-6">
             <div
-              className="h-full bg-teal-500 rounded-full transition-all duration-300"
+              className="h-full bg-brand-turquoise rounded-full transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>

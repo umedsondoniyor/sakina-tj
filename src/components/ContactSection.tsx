@@ -4,7 +4,7 @@ import ContactCard from './contact/ContactCard';
 
 const ContactSection = () => {
   return (
-    <div className="bg-teal-700 text-white py-8 md:py-16">
+    <div className="bg-brand-turquoise text-white py-8 md:py-16">
       <div className="max-w-7xl mx-auto px-4">
         <h2 className="text-xl md:text-2xl font-bold mb-8 md:mb-12">Всегда на связи</h2>
         

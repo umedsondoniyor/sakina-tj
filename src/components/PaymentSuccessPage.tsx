@@ -287,7 +287,7 @@ const PaymentSuccessPage: React.FC = () => {
             <div className="space-y-3">
               <button
                 onClick={() => navigate('/products')}
-                className="w-full bg-teal-500 text-white py-3 rounded-lg hover:bg-teal-600 transition-colors flex items-center justify-center"
+                className="w-full bg-brand-turquoise text-white hover:bg-brand-navy transition-colors flex items-center justify-center"
               >
                 Продолжить покупки
                 <ArrowRight size={20} className="ml-2" />

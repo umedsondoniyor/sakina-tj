@@ -356,7 +356,7 @@ const AdminMattresses: React.FC = () => {
         <h1 className="text-2xl font-bold">Управление страницей матрасов</h1>
         <button
           onClick={() => setOpenSettings(true)}
-          className="px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 flex items-center"
+          className="px-4 py-2 bg-brand-turquoise text-white rounded-lg hover:bg-brand-navy transition-colors flex items-center"
         >
           <Pencil className="w-4 h-4 mr-2" />
           Настройки страницы
@@ -616,7 +616,7 @@ const Section = <T extends { id: string }>({
       <h2 className="text-xl font-semibold">{title}</h2>
       <button
         onClick={onAdd}
-        className="flex items-center px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600"
+        className="flex items-center px-4 py-2 bg-brand-turquoise text-white rounded-lg hover:bg-brand-navy transition-colors"
       >
         <Plus className="w-4 h-4 mr-2" />
         Добавить
@@ -758,7 +758,7 @@ const SettingsForm = ({
         </button>
         <button
           onClick={() => onSave(form)}
-          className="px-4 py-2 bg-teal-500 text-white rounded"
+          className="px-4 py-2 bg-brand-turquoise text-white rounded"
         >
           Сохранить
         </button>
@@ -875,7 +875,7 @@ const CollectionForm = ({
         </button>
         <button
           onClick={() => onSave(form)}
-          className="px-4 py-2 bg-teal-500 text-white rounded"
+          className="px-4 py-2 bg-brand-turquoise text-white rounded"
           disabled={!form.title || !form.description || !form.image_url}
         >
           Сохранить
@@ -981,7 +981,7 @@ const TypeForm = ({
         </button>
         <button
           onClick={() => onSave(form)}
-          className="px-4 py-2 bg-teal-500 text-white rounded"
+          className="px-4 py-2 bg-brand-turquoise text-white rounded"
           disabled={!form.name || !form.image_url || !form.type_id}
         >
           Сохранить
@@ -1068,7 +1068,7 @@ const HardnessForm = ({
         </button>
         <button
           onClick={() => onSave(form)}
-          className="px-4 py-2 bg-teal-500 text-white rounded"
+          className="px-4 py-2 bg-brand-turquoise text-white rounded"
           disabled={!form.name || !form.description || !form.level || !form.hardness_value}
         >
           Сохранить
@@ -1158,7 +1158,7 @@ const FilterForm = ({
         </button>
         <button
           onClick={() => onSave(form)}
-          className="px-4 py-2 bg-teal-500 text-white rounded"
+          className="px-4 py-2 bg-brand-turquoise text-white rounded"
           disabled={!form.name || !form.description || !form.image_url || !form.filter_id}
         >
           Сохранить
@@ -1253,7 +1253,7 @@ const ArticleForm = ({
         </button>
         <button
           onClick={() => onSave(form)}
-          className="px-4 py-2 bg-teal-500 text-white rounded"
+          className="px-4 py-2 bg-brand-turquoise text-white rounded"
           disabled={!form.title || !form.description || !form.image_url}
         >
           Сохранить

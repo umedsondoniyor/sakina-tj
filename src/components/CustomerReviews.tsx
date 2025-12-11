@@ -92,7 +92,7 @@ const CustomerReviews = () => {
           <p className="mt-1 text-sm text-gray-500">Please try again later.</p>
           <button
             onClick={loadReviews}
-            className="mt-4 px-4 py-2 bg-teal-500 text-white rounded hover:bg-teal-600"
+            className="mt-4 px-4 py-2 bg-brand-turquoise text-white hover:bg-brand-navy"
           >
             Retry
           </button>
@@ -138,7 +138,7 @@ const CustomerReviews = () => {
         {/* Mobile Progress Bar */}
         <div className="h-0.5 bg-gray-100 mt-4 rounded-full overflow-hidden md:hidden">
           <div
-            className="h-full bg-teal-500 transition-all duration-300 ease-out"
+            className="h-full bg-brand-turquoise transition-all duration-300 ease-out"
             style={{ width: `${scrollProgress}%` }}
           />
         </div>

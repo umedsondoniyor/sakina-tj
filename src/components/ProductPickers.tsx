@@ -18,7 +18,7 @@ const ProductPickers = () => {
             <p className="mb-4">
               создайте идеальное место для сна
             </p>
-            <button className="inline-block bg-teal-700 text-white px-6 py-2 rounded hover:bg-teal-800 transition-colors">
+            <button className="inline-block bg-brand-turquoise text-white px-6 py-2 rounded hover:bg-brand-navy transition-colors">
               Подобрать
             </button>
           </div>
@@ -41,7 +41,7 @@ const ProductPickers = () => {
             <p className="mb-4">
               более 100 моделей для детей и взрослых
             </p>
-            <button className="inline-block bg-teal-700 text-white px-6 py-2 rounded hover:bg-teal-800 transition-colors">
+            <button className="inline-block bg-brand-turquoise text-white px-6 py-2 rounded hover:bg-brand-navy transition-colors">
               Подобрать
             </button>
           </div>
@@ -64,7 +64,7 @@ const ProductPickers = () => {
             <p className="mb-4">
               спальное место начинается с подушки
             </p>
-            <button className="inline-block bg-teal-700 text-white px-6 py-2 rounded hover:bg-teal-800 transition-colors">
+            <button className="inline-block bg-brand-turquoise text-white px-6 py-2 rounded hover:bg-brand-navy transition-colors">
               Подобрать
             </button>
           </div>
@@ -87,7 +87,7 @@ const ProductPickers = () => {
             <p className="mb-4">
               поможем создать уют в вашем доме
             </p>
-            <button className="inline-block bg-teal-700 text-white px-6 py-2 rounded hover:bg-teal-800 transition-colors">
+            <button className="inline-block bg-brand-turquoise text-white px-6 py-2 rounded hover:bg-brand-navy transition-colors">
               Подобрать
             </button>
           </div>

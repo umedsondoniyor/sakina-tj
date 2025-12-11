@@ -117,7 +117,7 @@ const HardnessLevels = ({ sectionTitle = 'По жесткости' }: HardnessLe
                     key={index}
                     className={`w-2 h-2 rounded-full border ${
                       index < level.level 
-                        ? 'bg-teal-500 border-teal-500' 
+                        ? 'bg-brand-turquoise border-teal-500' 
                         : 'border-gray-300'
                     }`}
                   />

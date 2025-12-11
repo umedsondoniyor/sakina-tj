@@ -188,7 +188,7 @@ const SakinaClub = () => {
                           navigator.clipboard.writeText(member.referral_code!);
                           toast.success('Код скопирован! Поделитесь с друзьями');
                         }}
-                        className="px-4 py-3 bg-teal-700 text-white rounded-lg hover:bg-teal-800 text-sm font-medium transition-colors"
+                        className="px-4 py-3 bg-brand-turquoise text-white rounded-lg hover:bg-brand-navy text-sm font-medium transition-colors"
                       >
                         Копировать
                       </button>
@@ -220,13 +220,13 @@ const SakinaClub = () => {
                 <div className="flex flex-col sm:flex-row gap-3 mt-6">
                   <button
                     onClick={() => setIsRegistrationModalOpen(true)}
-                    className="flex-1 bg-teal-700 text-white px-6 py-2 rounded-lg hover:bg-teal-800 transition-colors"
+                    className="flex-1 bg-brand-turquoise text-white px-6 py-2 rounded-lg hover:bg-brand-navy transition-colors"
                   >
                     Зарегистрироваться
                   </button>
             <button
                     onClick={() => setIsLoginModalOpen(true)}
-                    className="flex-1 bg-white border-2 border-teal-600 text-teal-700 px-6 py-2 rounded-lg hover:bg-teal-600 hover:text-white transition-colors"
+                    className="flex-1 bg-white border-2 border-teal-600 text-teal-700 px-6 py-2 rounded-lg hover:bg-brand-turquoise hover:text-white transition-colors"
             >
                     Войти
             </button>

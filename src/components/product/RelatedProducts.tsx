@@ -199,7 +199,7 @@ const RelatedProducts: React.FC<RelatedProductsProps> = ({
                       w-full h-8 rounded-lg flex items-center justify-center transition-all
                       ${
                         isInStock
-                          ? 'bg-teal-500 text-white hover:bg-teal-600 hover:scale-105 shadow-md'
+                          ? 'bg-brand-turquoise text-white hover:bg-brand-navy hover:scale-105 shadow-md'
                           : 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-50'
                       }
                     `}

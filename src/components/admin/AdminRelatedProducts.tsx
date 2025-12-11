@@ -232,7 +232,7 @@ const AdminRelatedProducts: React.FC = () => {
               </h2>
               <button
                 onClick={openAddModal}
-                className="flex items-center gap-2 px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-brand-turquoise text-white hover:bg-brand-navy transition-colors"
               >
                 <Plus size={20} />
                 Добавить товар

@@ -186,7 +186,7 @@ const DeliveryPaymentPage: React.FC = () => {
             <div className="text-center">
               <a
                 href="tel:+992905339595"
-                className="inline-block bg-teal-500 text-white px-6 py-3 rounded-lg hover:bg-teal-600 transition-colors font-medium"
+                className="inline-block bg-brand-turquoise text-white px-6 py-3 rounded-lg hover:bg-brand-navy transition-colors font-medium"
               >
                 +992 90 533 9595
               </a>

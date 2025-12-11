@@ -129,7 +129,7 @@ const SleepClubBlog: React.FC = () => {
           <p className="text-gray-600 mb-4">Не удалось загрузить статьи блога</p>
           <button
             onClick={loadBlogPosts}
-            className="px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600"
+            className="px-4 py-2 bg-brand-turquoise text-white rounded hover:bg-brand-navy"
           >
             Попробовать снова
           </button>
@@ -169,7 +169,7 @@ const SleepClubBlog: React.FC = () => {
         <div className="text-center mt-8">
           <a
             href="/blog"
-            className="inline-flex items-center px-6 py-3 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors"
+            className="inline-flex items-center px-6 py-3 bg-brand-turquoise text-white rounded-lg hover:bg-brand-navy transition-colors"
           >
             Все статьи блога
           </a>

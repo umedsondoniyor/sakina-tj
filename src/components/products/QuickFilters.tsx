@@ -45,7 +45,7 @@ const QuickFilters: React.FC<QuickFiltersProps> = ({
                 className={[
                   "flex-none px-4 py-2 rounded-full text-sm whitespace-nowrap transition-colors",
                   isActive
-                    ? "bg-teal-500 text-white"
+                    ? "bg-brand-turquoise text-white"
                     : "bg-gray-100 text-gray-900 hover:bg-gray-200",
                 ].join(" ")}
               >

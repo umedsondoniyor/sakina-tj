@@ -94,7 +94,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
       {product.weight_category && (
         <div className="bg-teal-50 border border-teal-200 rounded-lg p-3 mb-4">
           <div className="flex items-center">
-            <div className="w-2 h-2 bg-teal-500 rounded-full mr-2"></div>
+            <div className="w-2 h-2 bg-brand-turquoise rounded-full mr-2"></div>
             <span className="text-sm font-medium text-teal-700">
               Рекомендуемый вес: {product.weight_category}
             </span>
@@ -202,7 +202,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
       <div className="flex items-center space-x-4 mb-6">
         <button
           onClick={onAddToCart}
-          className="flex-1 bg-teal-500 text-white py-3 rounded-lg hover:bg-teal-600 transition-colors"
+          className="flex-1 bg-brand-turquoise text-white py-3 rounded-lg hover:bg-brand-navy transition-colors"
         >
           В корзину
         </button>

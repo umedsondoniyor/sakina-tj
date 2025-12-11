@@ -303,7 +303,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSuccess }) =
                 type="submit"
                 disabled={sendingOtp || !e164Phone}
                 aria-busy={sendingOtp}
-                className="w-full bg-teal-500 text-white py-2.5 rounded-lg hover:bg-teal-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+                className="w-full bg-brand-turquoise text-white hover:bg-brand-navy transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
               >
                 {sendingOtp ? 'Отправка кода…' : 'Получить код'}
               </button>
@@ -362,7 +362,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSuccess }) =
                 type="submit"
                 disabled={loading || otpCode.length !== 6}
                 aria-busy={loading}
-                className="w-full bg-teal-500 text-white py-2.5 rounded-lg hover:bg-teal-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+                className="w-full bg-brand-turquoise text-white hover:bg-brand-navy transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
               >
                 {loading ? 'Проверка…' : 'Войти'}
               </button>

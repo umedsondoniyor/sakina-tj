@@ -401,7 +401,7 @@ useEffect(() => {
             <div className="sticky bottom-0 p-4 bg-white border-t">
               <button
                 onClick={() => handleNavigate(selectedCategory)}
-                className="w-full bg-teal-500 text-white py-3 rounded-lg hover:bg-teal-600 transition-colors"
+                className="w-full bg-brand-turquoise text-white hover:bg-brand-navy transition-colors"
               >
                 Посмотреть все товары
               </button>

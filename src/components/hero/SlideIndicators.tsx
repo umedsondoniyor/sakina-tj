@@ -27,7 +27,7 @@ const SlideIndicators: React.FC<SlideIndicatorsProps> = ({
           className={`
             rounded-full transition-colors
             w-2 h-2 md:w-3 md:h-3
-            ${index === currentSlide ? 'bg-teal-500' : 'bg-gray-300'}
+            ${index === currentSlide ? 'bg-brand-turquoise' : 'bg-gray-300'}
             hover:bg-teal-400
           `}
           aria-label={`Перейти к слайду ${index + 1}`}

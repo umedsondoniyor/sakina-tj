@@ -519,8 +519,8 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({ isOpen, onClose, 
               disabled={loading || !e164Phone || !fullName.trim() || !dateOfBirth}
               aria-busy={loading}
               className="
-                w-full bg-teal-500 text-white py-2.5 rounded-lg
-                hover:bg-teal-600 transition-colors
+                w-full bg-brand-turquoise text-white py-2.5 rounded-lg
+                hover:bg-brand-turquoise transition-colors
                 disabled:bg-gray-300 disabled:cursor-not-allowed
               "
             >

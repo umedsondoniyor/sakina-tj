@@ -115,7 +115,7 @@ const BestSellers: React.FC = () => {
           </p>
           <button
             onClick={() => window.location.reload()}
-            className="mt-4 px-4 py-2 bg-teal-500 text-white rounded hover:bg-teal-600 transition-colors"
+            className="mt-4 px-4 py-2 bg-brand-turquoise text-white rounded hover:bg-brand-navy transition-colors"
           >
             Обновить
           </button>
@@ -239,7 +239,7 @@ const BestSellers: React.FC = () => {
 
               <button
                 onClick={() => navigate(`/products/${product.id}`)}
-                className="w-full mt-4 bg-teal-500 text-white py-2 rounded hover:bg-teal-600 transition-colors"
+                className="w-full mt-4 bg-brand-turquoise text-white py-2 rounded hover:bg-brand-navy transition-colors"
               >
                 Подробнее
               </button>
@@ -314,7 +314,7 @@ const BestSellers: React.FC = () => {
                   </div>
                   <button
                     onClick={() => navigate(`/products/${product.id}`)}
-                    className="w-full bg-teal-500 text-white py-2 rounded text-sm hover:bg-teal-600 transition-colors"
+                    className="w-full bg-brand-turquoise text-white py-2 rounded hover:bg-brand-navy transition-colors"
                   >
                     Подробнее
                   </button>
@@ -327,7 +327,7 @@ const BestSellers: React.FC = () => {
         {/* Mobile Progress Bar */}
         <div className="h-0.5 bg-gray-100 mt-4 rounded-full overflow-hidden">
           <div
-            className="h-full bg-teal-500 transition-all duration-300 ease-out"
+            className="h-full bg-brand-turquoise transition-all duration-300 ease-out"
             style={{ width: `${scrollProgress}%` }}
           />
         </div>

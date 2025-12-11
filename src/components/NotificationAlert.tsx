@@ -67,7 +67,7 @@ const NotificationAlert = () => {
             <div className="mt-4 flex space-x-3">
               <button
                 onClick={handleEnable}
-                className="bg-teal-500 text-white px-4 py-2 rounded hover:bg-teal-600 transition-colors"
+                className="bg-brand-turquoise text-white px-4 py-2 rounded hover:bg-brand-navy transition-colors"
               >
                 Включить
               </button>

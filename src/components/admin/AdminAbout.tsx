@@ -337,7 +337,7 @@ const AdminAbout: React.FC = () => {
           <h2 className="text-2xl font-bold">О нас — Главный экран / Настройки</h2>
           <button
             onClick={() => setOpenSettings(true)}
-            className="inline-flex items-center px-3 py-2 rounded-lg bg-teal-600 text-white hover:bg-teal-700 transition-colors"
+            className="inline-flex items-center px-3 py-2 rounded-lg bg-brand-turquoise text-white hover:bg-brand-navy transition-colors"
             aria-label="Редактировать настройки"
           >
             <Pencil className="w-4 h-4 mr-2" />
@@ -391,7 +391,7 @@ const AdminAbout: React.FC = () => {
               });
               setOpenStatModal(true);
             }}
-            className="inline-flex items-center px-3 py-2 rounded-lg bg-teal-600 text-white hover:bg-teal-700 transition-colors"
+            className="inline-flex items-center px-3 py-2 rounded-lg bg-brand-turquoise text-white hover:bg-brand-navy transition-colors"
             aria-label="Добавить статистику"
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -464,7 +464,7 @@ const AdminAbout: React.FC = () => {
               });
               setOpenValueModal(true);
             }}
-            className="inline-flex items-center px-3 py-2 rounded-lg bg-teal-600 text-white hover:bg-teal-700 transition-colors"
+            className="inline-flex items-center px-3 py-2 rounded-lg bg-brand-turquoise text-white hover:bg-brand-navy transition-colors"
             aria-label="Добавить ценность"
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -534,7 +534,7 @@ const AdminAbout: React.FC = () => {
               });
               setOpenTimelineModal(true);
             }}
-            className="inline-flex items-center px-3 py-2 rounded-lg bg-teal-600 text-white hover:bg-teal-700 transition-colors"
+            className="inline-flex items-center px-3 py-2 rounded-lg bg-brand-turquoise text-white hover:bg-brand-navy transition-colors"
             aria-label="Добавить элемент временной шкалы"
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -600,7 +600,7 @@ const AdminAbout: React.FC = () => {
               });
               setOpenTeamModal(true);
             }}
-            className="inline-flex items-center px-3 py-2 rounded-lg bg-teal-600 text-white hover:bg-teal-700 transition-colors"
+            className="inline-flex items-center px-3 py-2 rounded-lg bg-brand-turquoise text-white hover:bg-brand-navy transition-colors"
             aria-label="Добавить участника команды"
           >
             <Plus className="w-4 h-4 mr-2" />

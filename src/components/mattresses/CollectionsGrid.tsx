@@ -171,7 +171,7 @@ const CollectionsGrid = ({ sectionTitle = 'По коллекции', viewAllButt
       <div className="text-center mt-8">
         <button
           onClick={handleViewAll}
-          className="bg-teal-500 text-white px-8 py-3 rounded-lg hover:bg-teal-600 transition-colors font-medium"
+          className="bg-brand-turquoise text-white px-8 py-3 rounded-lg hover:bg-brand-navy transition-colors font-medium"
           aria-label={viewAllButtonText}
         >
           {viewAllButtonText}

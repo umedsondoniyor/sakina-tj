@@ -100,7 +100,7 @@ const SubmitSection: React.FC<SubmitSectionProps> = ({
           type="submit"
           disabled={loading}
           onClick={onSubmit}
-          className="w-full bg-teal-500 text-white py-4 rounded-lg font-semibold hover:bg-teal-600 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center"
+          className="w-full bg-brand-turquoise text-white hover:bg-brand-navy transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center"
         >
           {loading ? (
             <>

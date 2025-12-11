@@ -210,7 +210,7 @@ const ShowroomModal: React.FC<ShowroomModalProps> = ({ isOpen, onClose, showroom
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 disabled:bg-gray-400"
+              className="px-4 py-2 bg-brand-turquoise text-white hover:bg-brand-navy disabled:bg-gray-400"
             >
               {loading ? 'Сохранение...' : showroom ? 'Обновить' : 'Создать'}
             </button>

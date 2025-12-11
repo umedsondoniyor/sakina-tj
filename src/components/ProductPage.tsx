@@ -225,7 +225,7 @@ const ProductPage: React.FC = () => {
 
           <button
             onClick={() => setShowCharacteristicsModal(true)}
-            className="mt-4 text-teal-600 hover:text-teal-700 text-sm font-medium"
+            className="mt-4 text-brand-turquoise hover:text-brand-navy text-sm font-medium"
           >
             Смотреть все характеристики →
           </button>

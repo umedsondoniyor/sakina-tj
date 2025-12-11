@@ -120,7 +120,7 @@ const AdminCarousel = () => {
           <h1 className="text-2xl font-bold">Управление каруселью</h1>
           <button
             onClick={handleAdd}
-            className="flex items-center px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+            className="flex items-center px-4 py-2 bg-brand-turquoise text-white rounded-lg hover:bg-brand-navy transition-colors"
             aria-label="Добавить слайд"
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -142,7 +142,7 @@ const AdminCarousel = () => {
         <h1 className="text-2xl font-bold">Управление каруселью</h1>
         <button
           onClick={handleAdd}
-          className="flex items-center px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+          className="flex items-center px-4 py-2 bg-brand-turquoise text-white rounded-lg hover:bg-brand-navy transition-colors"
           aria-label="Добавить слайд"
         >
           <Plus className="w-4 h-4 mr-2" />

@@ -290,7 +290,7 @@ const ProductConfirmationModal: React.FC<ProductConfirmationModalProps> = ({
               onClick={() => setPurchaseMode('oneclick')}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
                 purchaseMode === 'oneclick'
-                  ? 'bg-teal-500 text-white shadow-sm'
+                  ? 'bg-brand-turquoise text-white shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
@@ -302,7 +302,7 @@ const ProductConfirmationModal: React.FC<ProductConfirmationModalProps> = ({
               onClick={() => setPurchaseMode('cart')}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
                 purchaseMode === 'cart'
-                  ? 'bg-teal-500 text-white shadow-sm'
+                  ? 'bg-brand-turquoise text-white shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
@@ -349,7 +349,7 @@ const ProductConfirmationModal: React.FC<ProductConfirmationModalProps> = ({
               <button
                 type="submit"
                 disabled={loading || !phoneNumber || !isInStock}
-                className="w-full bg-teal-500 text-white py-4 rounded-lg font-semibold hover:bg-teal-600 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-teal-500/30"
+                className="w-full bg-brand-turquoise text-white hover:bg-brand-navy transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-teal-500/30"
               >
                 {loading ? (
                   <>
@@ -382,7 +382,7 @@ const ProductConfirmationModal: React.FC<ProductConfirmationModalProps> = ({
               <button
                 onClick={handleAddToCart}
                 disabled={!isInStock}
-                className="w-full bg-teal-500 text-white py-4 rounded-lg font-semibold hover:bg-teal-600 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-teal-500/30"
+                className="w-full bg-brand-turquoise text-white hover:bg-brand-navy transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-teal-500/30"
               >
                 <ShoppingBag size={20} />
                 <span>Добавить в корзину</span>

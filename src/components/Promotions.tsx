@@ -120,7 +120,7 @@ const Promotions = () => {
         {/* Mobile Progress Bar */}
         <div className="h-0.5 bg-gray-100 mt-4 rounded-full overflow-hidden">
           <div
-            className="h-full bg-teal-500 transition-all duration-300 ease-out"
+            className="h-full bg-brand-turquoise transition-all duration-300 ease-out"
             style={{ width: `${scrollProgress}%` }}
           />
         </div>
