@@ -66,3 +66,46 @@ export const buildDeliveryAddress = (formData: {
 
   return addressParts.join(', ');
 };
+
+/**
+ * Darken a hex color for better contrast on light backgrounds
+ * @param color - Hex color string (e.g., "#10b981" or "rgb(16, 185, 129)")
+ * @returns Darker hex color string
+ */
+export const darkenColorForContrast = (color: string): string => {
+  if (!color) return '#0f766e'; // Default dark teal
+  
+  // Handle hex colors
+  if (color.startsWith('#')) {
+    const hex = color.slice(1);
+    const r = parseInt(hex.slice(0, 2), 16);
+    const g = parseInt(hex.slice(2, 4), 16);
+    const b = parseInt(hex.slice(4, 6), 16);
+    
+    // Darken by 30% for better contrast
+    const darkenedR = Math.max(0, Math.floor(r * 0.7));
+    const darkenedG = Math.max(0, Math.floor(g * 0.7));
+    const darkenedB = Math.max(0, Math.floor(b * 0.7));
+    
+    return `#${darkenedR.toString(16).padStart(2, '0')}${darkenedG.toString(16).padStart(2, '0')}${darkenedB.toString(16).padStart(2, '0')}`;
+  }
+  
+  // Handle rgb colors
+  if (color.startsWith('rgb')) {
+    const matches = color.match(/\d+/g);
+    if (matches && matches.length >= 3) {
+      const r = parseInt(matches[0]);
+      const g = parseInt(matches[1]);
+      const b = parseInt(matches[2]);
+      
+      const darkenedR = Math.max(0, Math.floor(r * 0.7));
+      const darkenedG = Math.max(0, Math.floor(g * 0.7));
+      const darkenedB = Math.max(0, Math.floor(b * 0.7));
+      
+      return `rgb(${darkenedR}, ${darkenedG}, ${darkenedB})`;
+    }
+  }
+  
+  // Return default if parsing fails
+  return '#0f766e';
+};

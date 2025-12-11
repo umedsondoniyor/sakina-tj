@@ -2,6 +2,7 @@ import React from 'react';
 import { Calendar, Clock, User, Tag } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { BlogPost } from '../../lib/types';
+import { darkenColorForContrast } from '../../lib/utils';
 
 interface BlogMainPostProps {
   post: BlogPost;
@@ -49,7 +50,10 @@ const BlogMainPost: React.FC<BlogMainPostProps> = ({ post }) => {
         {post.category && (
           <span
             className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
-            style={{ backgroundColor: `${post.category.color}20`, color: post.category.color }}
+            style={{ 
+              backgroundColor: `${post.category.color}20`, 
+              color: darkenColorForContrast(post.category.color) 
+            }}
           >
             {post.category.name}
           </span>
@@ -58,7 +62,10 @@ const BlogMainPost: React.FC<BlogMainPostProps> = ({ post }) => {
           <span
             key={tag.id}
             className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
-            style={{ backgroundColor: `${tag.color}20`, color: tag.color }}
+            style={{ 
+              backgroundColor: `${tag.color}20`, 
+              color: darkenColorForContrast(tag.color) 
+            }}
           >
             <Tag className="w-3 h-3 mr-1" />
             {tag.name}
@@ -70,7 +77,7 @@ const BlogMainPost: React.FC<BlogMainPostProps> = ({ post }) => {
         {post.title}
       </h3>
       <p className="text-gray-600 text-sm md:text-base mb-4">{post.excerpt}</p>
-      <button className="text-teal-600 text-sm md:text-base font-medium hover:text-teal-700">
+      <button className="text-teal-700 text-sm md:text-base font-medium hover:text-teal-800">
         Читать
       </button>
     </div>

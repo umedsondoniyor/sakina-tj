@@ -30,6 +30,8 @@ const SlideIndicators: React.FC<SlideIndicatorsProps> = ({
             ${index === currentSlide ? 'bg-teal-500' : 'bg-gray-300'}
             hover:bg-teal-400
           `}
+          aria-label={`Перейти к слайду ${index + 1}`}
+          aria-current={index === currentSlide ? 'true' : 'false'}
         />
       ))}
     </div>

@@ -2,6 +2,7 @@ import React from 'react';
 import { Clock, Tag } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { BlogPost } from '../../lib/types';
+import { darkenColorForContrast } from '../../lib/utils';
 
 interface BlogSidePostProps {
   post: BlogPost;
@@ -29,7 +30,10 @@ const BlogSidePost: React.FC<BlogSidePostProps> = ({ post }) => {
           {post.category && (
             <span
               className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium"
-              style={{ backgroundColor: `${post.category.color}20`, color: post.category.color }}
+              style={{ 
+                backgroundColor: `${post.category.color}20`, 
+                color: darkenColorForContrast(post.category.color) 
+              }}
             >
               {post.category.name}
             </span>
@@ -52,7 +56,10 @@ const BlogSidePost: React.FC<BlogSidePostProps> = ({ post }) => {
               <span
                 key={tag.id}
                 className="inline-flex items-center px-1.5 py-0.5 rounded text-xs"
-                style={{ backgroundColor: `${tag.color}20`, color: tag.color }}
+                style={{ 
+                  backgroundColor: `${tag.color}20`, 
+                  color: darkenColorForContrast(tag.color) 
+                }}
               >
                 <Tag className="w-2.5 h-2.5 mr-0.5" />
                 {tag.name}
@@ -61,7 +68,7 @@ const BlogSidePost: React.FC<BlogSidePostProps> = ({ post }) => {
           </div>
         )}
         
-        <button className="text-sm text-teal-600 font-medium hover:text-teal-700">
+        <button className="text-sm text-teal-700 font-medium hover:text-teal-800">
           Читать
         </button>
       </div>
