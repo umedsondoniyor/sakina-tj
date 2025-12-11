@@ -82,6 +82,7 @@ const NotificationAlert = () => {
           <button
             onClick={() => handleDismiss(false)}
             className="flex-shrink-0 ml-4 text-gray-400 hover:text-gray-600"
+            aria-label="Закрыть уведомление"
           >
             <X size={20} />
           </button>
