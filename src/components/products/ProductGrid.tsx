@@ -127,7 +127,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) =
   if (products.length === 0) {
     return (
       <div className="text-center py-12">
-        <div className="text-gray-500 mb-4">
+        <div className="text-gray-600 mb-4">
           Товары не найдены
         </div>
       </div>
@@ -193,7 +193,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) =
                     return null;
                   }
                   return (
-                    <span className="text-sm text-gray-500 line-through">
+                    <span className="text-sm text-gray-600 line-through">
                       {formatCurrency(numPrice)}
                     </span>
                   );

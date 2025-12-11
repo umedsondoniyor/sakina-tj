@@ -110,7 +110,7 @@ const BestSellers: React.FC = () => {
         <div className="text-center">
           <PackageOpen className="mx-auto h-12 w-12 text-gray-400" />
           <h3 className="mt-2 text-sm font-semibold text-gray-900">{error}</h3>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-gray-600">
             Попробуйте позже или обновите страницу.
           </p>
           <button
@@ -133,7 +133,7 @@ const BestSellers: React.FC = () => {
           <h3 className="mt-2 text-sm font-semibold text-gray-900">
             Хиты продаж отсутствуют
           </h3>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-gray-600">
             Загляните позже — возможно появятся новые популярные модели.
           </p>
         </div>
@@ -157,6 +157,7 @@ const BestSellers: React.FC = () => {
                 ? 'hover:bg-gray-100 text-gray-700'
                 : 'text-gray-300 cursor-not-allowed'
             }`}
+            aria-label="Предыдущие товары"
           >
             <ChevronLeft size={24} />
           </button>
@@ -168,6 +169,7 @@ const BestSellers: React.FC = () => {
                 ? 'hover:bg-gray-100 text-gray-700'
                 : 'text-gray-300 cursor-not-allowed'
             }`}
+            aria-label="Следующие товары"
           >
             <ChevronRight size={24} />
           </button>
@@ -210,7 +212,7 @@ const BestSellers: React.FC = () => {
                     />
                   ))}
                 </div>
-                <span className="text-sm text-gray-500 ml-2">
+                <span className="text-sm text-gray-600 ml-2">
                   {product.review_count}
                 </span>
               </div>
@@ -229,7 +231,7 @@ const BestSellers: React.FC = () => {
                   {formatCurrency(product.price)}
                 </span>
                 {product.old_price && product.old_price > 0 && (
-                  <span className="text-sm text-gray-500 line-through">
+                  <span className="text-sm text-gray-600 line-through">
                     {formatCurrency(product.old_price)}
                   </span>
                 )}
@@ -287,7 +289,7 @@ const BestSellers: React.FC = () => {
                         />
                       ))}
                     </div>
-                    <span className="text-sm text-gray-500 ml-2">
+                    <span className="text-sm text-gray-600 ml-2">
                       {product.review_count}
                     </span>
                   </div>
@@ -305,7 +307,7 @@ const BestSellers: React.FC = () => {
                       {formatCurrency(product.price)}
                     </span>
                     {product.old_price && (
-                      <span className="text-sm text-gray-500 line-through">
+                      <span className="text-sm text-gray-600 line-through">
                         {formatCurrency(product.old_price)}
                       </span>
                     )}
