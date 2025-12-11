@@ -181,7 +181,7 @@ const RelatedProducts: React.FC<RelatedProductsProps> = ({
                     <div className="text-sm font-bold text-gray-900">
                       {formatCurrency(product.price)}
                     </div>
-                    {product.old_price && product.old_price > product.price && (
+                    {product.old_price && product.old_price > 0 && product.old_price > product.price && (
                       <div className="text-[10px] text-gray-500 line-through">
                         {formatCurrency(product.old_price)}
                       </div>

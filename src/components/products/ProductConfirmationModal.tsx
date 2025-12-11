@@ -258,7 +258,7 @@ const ProductConfirmationModal: React.FC<ProductConfirmationModalProps> = ({
             <span className="text-sm text-teal-100">Цена:</span>
             <span className="text-2xl font-bold">{formatCurrency(selectedVariant.price)}</span>
           </div>
-          {selectedVariant.old_price && (
+          {selectedVariant.old_price && selectedVariant.old_price > 0 && (
             <div className="text-right mt-1">
               <span className="text-sm text-teal-200 line-through">
                 {formatCurrency(selectedVariant.old_price)}

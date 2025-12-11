@@ -1,5 +1,5 @@
 // src/components/ProductsPage.tsx
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { PackageOpen } from 'lucide-react';
 import { getProducts } from '../lib/api';
@@ -139,8 +139,8 @@ const ProductsPage: React.FC = () => {
         const data = await getProducts();
         setProducts(Array.isArray(data) ? data : []);
       } catch (err) {
-        console.error(err);
-        setError('Failed to load products');
+        console.error('Error loading products:', err);
+        setError('Не удалось загрузить товары');
       } finally {
         setLoading(false);
       }
@@ -312,10 +312,6 @@ const ProductsPage: React.FC = () => {
     return list;
   }, [products, selectedCategories, filters, sortBy]);
 
-  const handleProductClick = useCallback((productId: string) => {
-    navigate(`/products/${productId}`);
-  }, [navigate]);
-
   const handleQuickSizeSelect = useCallback(
   ({ label, width, length }: { label: string; width: number; length: number }) => {
     setActiveQuickSize((prev) => {
@@ -389,12 +385,12 @@ const handleOpenMattressWizard = useCallback(() => {
               setLoading(true);
               getProducts()
                 .then((data) => setProducts(Array.isArray(data) ? data : []))
-                .catch(() => setError('Failed to load products'))
+                .catch(() => setError('Не удалось загрузить товары'))
                 .finally(() => setLoading(false));
             }}
             className="mt-4 px-4 py-2 bg-teal-500 text-white rounded hover:bg-teal-600"
           >
-            Retry
+            Повторить попытку
           </button>
         </div>
       </div>

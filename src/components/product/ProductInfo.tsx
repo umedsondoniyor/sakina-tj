@@ -52,7 +52,22 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
   };
 
   const getCurrentPrice = () => (selectedVariant ? selectedVariant.price : product.price);
-  const getCurrentOldPrice = () => (selectedVariant ? selectedVariant.old_price : product.old_price);
+  const getCurrentOldPrice = () => {
+    const oldPrice = selectedVariant ? selectedVariant.old_price : product.old_price;
+    // Only return oldPrice if it exists, is a valid number, and is greater than 0
+    // Handle both number and string types, and explicitly exclude 0
+    if (oldPrice == null) {
+      return undefined;
+    }
+    if (oldPrice === 0 || (typeof oldPrice === 'string' && oldPrice === '0')) {
+      return undefined;
+    }
+    const numPrice = typeof oldPrice === 'string' ? parseFloat(oldPrice) : oldPrice;
+    if (isNaN(numPrice) || numPrice <= 0) {
+      return undefined;
+    }
+    return numPrice;
+  };
 
   const handleOneClickSuccess = (orderId: string) => {
     navigate(`/one-click-confirmation/${orderId}`);
@@ -96,11 +111,14 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
         <div className="flex items-center justify-between mb-2">
           <div className="text-3xl font-bold">
             {formatCurrency(getCurrentPrice())}
-            {getCurrentOldPrice() && (
-              <span className="ml-2 text-lg text-gray-500 line-through">
-                {formatCurrency(getCurrentOldPrice()!)}
-              </span>
-            )}
+            {(() => {
+              const oldPrice = getCurrentOldPrice();
+              return oldPrice != null && oldPrice > 0 ? (
+                <span className="ml-2 text-lg text-gray-500 line-through">
+                  {formatCurrency(oldPrice)}
+                </span>
+              ) : null;
+            })()}
           </div>
         </div>
       </div>
