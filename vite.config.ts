@@ -8,14 +8,18 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'ui-vendor': ['react-hot-toast', 'react-helmet-async'],
-          'admin-vendor': [
-            './components/admin/AdminDashboard',
-            './components/admin/AdminProducts',
-            './components/admin/AdminCarousel'
-          ]
+        manualChunks: (id) => {
+          // Vendor chunks for node_modules
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+              return 'react-vendor';
+            }
+            if (id.includes('react-hot-toast') || id.includes('react-helmet')) {
+              return 'ui-vendor';
+            }
+            // Other node_modules go into a separate chunk
+            return 'vendor';
+          }
         }
       }
     },
