@@ -84,6 +84,11 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
           src={images[currentImageIndex]}
           alt={productName}
           className="w-full rounded-lg"
+          loading={currentImageIndex === 0 ? 'eager' : 'lazy'}
+          fetchPriority={currentImageIndex === 0 ? 'high' : 'auto'}
+          decoding="async"
+          width="800"
+          height="800"
         />
         {showMagnifier && (
           <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center">
@@ -119,6 +124,10 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
                 src={image}
                 alt={`${productName} view ${index + 1}`}
                 className="w-full h-full object-cover"
+                loading="lazy"
+                decoding="async"
+                width="96"
+                height="96"
               />
             </button>
           ))}

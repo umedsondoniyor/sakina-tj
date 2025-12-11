@@ -19,6 +19,11 @@ const HeroSlide: React.FC<HeroSlideProps> = ({ slide, isActive }) => {
           src={slide.image_url}
           alt={slide.title}
           className="hero-image mx-auto"
+          loading={isActive ? 'eager' : 'lazy'}
+          fetchPriority={isActive ? 'high' : 'auto'}
+          decoding="async"
+          width="1920"
+          height="960"
         />
       </div>
     </div>

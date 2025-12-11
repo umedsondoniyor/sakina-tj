@@ -211,6 +211,8 @@ const RecommendedProducts: React.FC = () => {
                       loading="lazy"
                       className="w-full h-full object-cover"
                       decoding="async"
+                      width="320"
+                      height="320"
                     />
                   </div>
                   {product.sale_percentage && (

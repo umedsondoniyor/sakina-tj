@@ -21,6 +21,22 @@ const HeroCarousel: React.FC = () => {
     loadSlides();
   }, []);
 
+  // Preload first slide image for LCP optimization
+  useEffect(() => {
+    if (slides.length > 0 && slides[0]?.image_url) {
+      const link = document.createElement('link');
+      link.rel = 'preload';
+      link.as = 'image';
+      link.href = slides[0].image_url;
+      link.fetchPriority = 'high';
+      document.head.appendChild(link);
+      
+      return () => {
+        document.head.removeChild(link);
+      };
+    }
+  }, [slides]);
+
   const loadSlides = async () => {
     try {
       setLoading(true);
