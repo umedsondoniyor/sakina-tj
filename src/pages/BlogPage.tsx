@@ -4,6 +4,7 @@ import { Calendar, Clock, Tag, Search } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import { getBlogPosts, getBlogCategories, getBlogTags } from '../lib/blogApi';
 import type { BlogPost, BlogCategory, BlogTag } from '../lib/types';
+import { darkenColorForContrast } from '../lib/utils';
 
 /* ------------------ Main Component ------------------ */
 const BlogPage: React.FC = () => {
@@ -284,7 +285,7 @@ const BlogPage: React.FC = () => {
                       className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium mb-2"
                       style={{
                         backgroundColor: `${(post.category.color || '#14b8a6')}20`,
-                        color: post.category.color || '#0f766e',
+                        color: darkenColorForContrast(post.category.color || '#14b8a6'),
                       }}
                     >
                       {post.category.name}
@@ -299,7 +300,7 @@ const BlogPage: React.FC = () => {
                     <p className="text-gray-600 mb-4 line-clamp-3">{post.excerpt}</p>
                   )}
 
-                  <button className="text-teal-600 font-medium hover:text-teal-700 transition-colors">
+                  <button className="text-teal-700 font-medium hover:text-teal-800 transition-colors">
                     Читать далее →
                   </button>
                 </div>

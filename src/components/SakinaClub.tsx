@@ -210,26 +210,26 @@ const SakinaClub = () => {
             ) : (
               // Registration/Login Section
               <>
-                <h2 className="text-2xl md:text-3xl font-bold mb-2">Вступайте в Клуб Sakina!</h2>
-                <div className="inline-block bg-[#E8F5E9] px-3 py-1 rounded-full text-sm text-gray-700 mb-4">
-                  Получайте еще больше бонусов и преимуществ
-                </div>
-                
-                <ClubBenefits />
+            <h2 className="text-2xl md:text-3xl font-bold mb-2">Вступайте в Клуб Sakina!</h2>
+            <div className="inline-block bg-[#E8F5E9] px-3 py-1 rounded-full text-sm text-gray-700 mb-4">
+              Получайте еще больше бонусов и преимуществ
+            </div>
+            
+            <ClubBenefits />
 
                 <div className="flex flex-col sm:flex-row gap-3 mt-6">
                   <button
                     onClick={() => setIsRegistrationModalOpen(true)}
-                    className="flex-1 bg-brand-turquoise text-white px-6 py-2 rounded-lg hover:bg-brand-navy transition-colors"
+                    className="flex-1 bg-teal-600 text-white px-6 py-2 rounded-lg hover:bg-teal-700 transition-colors"
                   >
                     Зарегистрироваться
                   </button>
-                  <button
+            <button
                     onClick={() => setIsLoginModalOpen(true)}
-                    className="flex-1 bg-white border-2 border-brand-turquoise text-brand-turquoise px-6 py-2 rounded-lg hover:bg-brand-turquoise hover:text-white transition-colors"
-                  >
+                    className="flex-1 bg-white border-2 border-teal-600 text-teal-700 px-6 py-2 rounded-lg hover:bg-teal-600 hover:text-white transition-colors"
+            >
                     Войти
-                  </button>
+            </button>
                 </div>
               </>
             )}
