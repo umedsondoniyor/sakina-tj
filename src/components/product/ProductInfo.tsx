@@ -202,7 +202,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
       <div className="flex items-center space-x-4 mb-6">
         <button
           onClick={onAddToCart}
-          className="flex-1 bg-brand-turquoise text-white py-3 rounded-lg hover:bg-brand-navy transition-colors"
+          className="flex-1 bg-brand-turquoise text-white py-3 rounded-lg hover:bg-brand-navy transition-colors font-semibold"
         >
           В корзину
         </button>
