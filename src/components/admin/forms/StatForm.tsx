@@ -64,7 +64,7 @@ const StatForm: React.FC<{
       </div>
 
       <div className="pt-2 flex justify-end">
-        <button type="submit" className="px-4 py-2 rounded bg-brand-turquoise text-white hover:bg-brand-navy">
+        <button type="submit" className="px-4 py-2 rounded bg-brand-turquoise text-white hover:bg-brand-navy font-semibold">
           Сохранить
         </button>
       </div>

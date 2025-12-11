@@ -572,7 +572,7 @@ const CheckoutPage = () => {
               <button
                 onClick={createOrder}
                 disabled={loading}
-                className="w-full bg-brand-turquoise text-white py-4 rounded-lg hover:bg-brand-navy transition-colors disabled:bg-gray-400"
+                className="w-full bg-brand-turquoise text-white py-4 rounded-lg hover:bg-brand-navy transition-colors disabled:bg-gray-400 font-semibold"
               >
                 {loading ? 'Обработка заказа...' : 'Подтвердить заказ'}
               </button>
@@ -622,7 +622,7 @@ const CheckoutPage = () => {
                   <button
                     type="button"
                     onClick={handleNextStep}
-                    className="px-6 py-2 bg-brand-turquoise text-white rounded-lg hover:bg-brand-navy transition-colors"
+                    className="px-6 py-2 bg-brand-turquoise text-white rounded-lg hover:bg-brand-navy transition-colors font-semibold"
                   >
                     {currentStep === 3 ? 'К подтверждению' : 'Далее'}
                   </button>

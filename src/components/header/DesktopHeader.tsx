@@ -23,7 +23,7 @@ const DesktopHeader: React.FC<DesktopHeaderProps> = ({ isCatalogOpen, onToggleCa
             </a>
             <button
               onClick={onToggleCatalog}
-              className="catalog-button flex items-center bg-brand-turquoise text-white px-4 py-2 rounded-lg hover:bg-brand-navy transition-colors"
+              className="catalog-button flex items-center bg-brand-turquoise text-white px-4 py-2 rounded-lg hover:bg-brand-navy transition-colors font-semibold"
             >
               <div className={`pr-6 hamburger-icon ${isCatalogOpen ? 'active' : ''}`}>
                 <span></span>

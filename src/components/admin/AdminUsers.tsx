@@ -353,7 +353,7 @@ const AdminUsers = () => {
         </div>
         <button
           onClick={openCreateModal}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-brand-turquoise text-white rounded-lg hover:bg-brand-navy transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-brand-turquoise text-white rounded-lg hover:bg-brand-navy transition-colors font-semibold"
         >
           <Plus size={16} />
           Добавить пользователя
@@ -606,7 +606,7 @@ const AdminUsers = () => {
               <button
                 onClick={createUser}
                 disabled={creating || !newUser.email || !newUser.password}
-                className="px-4 py-2 bg-brand-turquoise text-white rounded-lg hover:bg-brand-navy transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-brand-turquoise text-white rounded-lg hover:bg-brand-navy transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
               >
                 {creating ? 'Создание...' : 'Создать пользователя'}
               </button>
@@ -745,7 +745,7 @@ const AdminUsers = () => {
                 <button
                   type="submit"
                   disabled={formLoading}
-                  className="px-4 py-2 rounded-lg bg-brand-turquoise text-white hover:bg-brand-navy transition-colors disabled:opacity-70"
+                  className="px-4 py-2 rounded-lg bg-brand-turquoise text-white hover:bg-brand-navy transition-colors disabled:opacity-70 font-semibold"
                 >
                   {formLoading ? 'Сохранение...' : activeUser ? 'Сохранить' : 'Создать'}
                 </button>

@@ -91,7 +91,7 @@ const RecommendedProducts: React.FC = () => {
           <p className="mt-1 text-sm text-gray-600">Проверьте позже для новых товаров.</p>
           <button
             onClick={() => location.reload()}
-            className="mt-4 px-4 py-2 bg-brand-turquoise text-white rounded hover:bg-brand-navy"
+            className="mt-4 px-4 py-2 bg-brand-turquoise text-white rounded hover:bg-brand-navy font-semibold"
           >
             Retry
           </button>
@@ -244,7 +244,7 @@ const RecommendedProducts: React.FC = () => {
                       </span>
                     )}
                   </div>
-                  <button className="w-full bg-brand-turquoise text-white py-2 rounded hover:bg-brand-navy transition-colors">
+                  <button className="w-full bg-brand-turquoise text-white py-2 rounded hover:bg-brand-navy transition-colors font-semibold">
                     Подробнее
                   </button>
                 </div>

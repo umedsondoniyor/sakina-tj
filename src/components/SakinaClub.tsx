@@ -220,7 +220,7 @@ const SakinaClub = () => {
                 <div className="flex flex-col sm:flex-row gap-3 mt-6">
                   <button
                     onClick={() => setIsRegistrationModalOpen(true)}
-                    className="flex-1 bg-brand-turquoise text-white px-6 py-2 rounded-lg hover:bg-brand-navy transition-colors"
+                    className="flex-1 bg-brand-turquoise text-white px-6 py-2 rounded-lg hover:bg-brand-navy transition-colors font-semibold"
                   >
                     Зарегистрироваться
                   </button>
