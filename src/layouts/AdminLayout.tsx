@@ -28,6 +28,7 @@ import { supabase } from "../lib/supabaseClient";
 import Logo from "../components/Logo";
 import { useUserRole, UserRole } from "../hooks/useUserRole";
 import { useCurrentUser } from "../hooks/useCurrentUser";
+import { getFirstAccessibleMenuPath } from "../utils/getFirstAccessibleMenuPath";
 
 interface NavItem {
   path: string;
@@ -81,7 +82,12 @@ const AdminLayout = () => {
 
   // Helper function to check if user has access to a menu item
   // Only uses database permissions - empty array means no access
+  // Special case: /admin (Dashboard) is always accessible to admin role only
   const hasAccess = useCallback((item: NavItem): boolean => {
+    // Special case: /admin is always accessible to admin role only
+    if (item.path === '/admin' && userRole === 'admin') {
+      return true;
+    }
     // If no requiredRoles or empty array, deny access (no permissions configured)
     if (!item.requiredRoles || item.requiredRoles.length === 0) {
       return false;
@@ -211,6 +217,24 @@ const AdminLayout = () => {
       supabase.removeChannel(subscription);
     };
   }, [userRole]);
+
+  // Redirect non-admin users away from /admin to their first accessible menu item
+  useEffect(() => {
+    const handleRedirect = async () => {
+      // Only redirect if we're on /admin and user is not an admin
+      if (location.pathname === '/admin' && userRole && userRole !== 'admin') {
+        const firstAccessiblePath = await getFirstAccessibleMenuPath(userRole);
+        
+        if (firstAccessiblePath && firstAccessiblePath !== '/admin') {
+          navigate(firstAccessiblePath, { replace: true });
+        }
+      }
+    };
+
+    if (userRole && menuPermissions && Object.keys(menuPermissions).length > 0) {
+      handleRedirect();
+    }
+  }, [location.pathname, userRole, menuPermissions, navigate]);
 
   // Fetch pending counts for badges
   useEffect(() => {
