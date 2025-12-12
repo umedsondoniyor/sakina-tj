@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard,
@@ -42,12 +42,14 @@ interface NavSection {
   items: NavItem[];
 }
 
+
 const AdminLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [pendingOrders, setPendingOrders] = useState(0);
   const [pendingPayments, setPendingPayments] = useState(0);
+  const [menuPermissions, setMenuPermissions] = useState<Record<string, UserRole[]>>({});
   const { role: userRole } = useUserRole();
   const { user: currentUser, loading: userLoading } = useCurrentUser();
 
@@ -78,14 +80,147 @@ const AdminLayout = () => {
   };
 
   // Helper function to check if user has access to a menu item
-  const hasAccess = (item: NavItem): boolean => {
-    // If no requiredRoles specified, allow all authenticated admin users
+  // Only uses database permissions - empty array means no access
+  const hasAccess = useCallback((item: NavItem): boolean => {
+    // If no requiredRoles or empty array, deny access (no permissions configured)
     if (!item.requiredRoles || item.requiredRoles.length === 0) {
-      return true;
+      return false;
     }
     // Check if user's role is in the required roles list
-    return userRole ? item.requiredRoles.includes(userRole) : false;
+    const hasAccessResult = userRole ? item.requiredRoles.includes(userRole) : false;
+    return hasAccessResult;
+  }, [userRole]);
+
+  // Initialize default permissions if database is empty (admin only)
+  const initializeDefaultPermissions = async () => {
+    // Only admins can initialize permissions
+    if (userRole !== 'admin') {
+      return false;
+    }
+
+    try {
+      const { count, error: countError } = await supabase
+        .from('menu_role_permissions')
+        .select('*', { count: 'exact', head: true });
+
+      if (countError && countError.code !== 'PGRST116') {
+        return false; // Table might not exist, skip initialization
+      }
+
+      if (count === 0) {
+        // Database is empty, initialize with defaults
+        const defaultPermissions = [
+          { path: '/admin', label: 'Панель управления', section: 'Главное', roles: [] },
+          { path: '/admin/carousel', label: 'Карусель', section: 'Контент', roles: ['admin', 'editor'] },
+          { path: '/admin/about', label: 'О компании', section: 'Контент', roles: ['admin', 'editor'] },
+          { path: '/admin/mattresses', label: 'Матрасы', section: 'Контент', roles: ['admin', 'editor'] },
+          { path: '/admin/services', label: 'Услуги', section: 'Контент', roles: ['admin', 'editor'] },
+          { path: '/admin/delivery-payment', label: 'Доставка и оплата', section: 'Контент', roles: ['admin', 'editor'] },
+          { path: '/admin/reviews', label: 'Отзывы', section: 'Контент', roles: ['admin', 'moderator', 'editor'] },
+          { path: '/admin/blog', label: 'Блог', section: 'Контент', roles: ['admin', 'editor'] },
+          { path: '/admin/navigation', label: 'Навигация', section: 'Контент', roles: ['admin'] },
+          { path: '/admin/products', label: 'Товары', section: 'Товары', roles: ['admin', 'editor'] },
+          { path: '/admin/variants', label: 'Варианты и склад', section: 'Товары', roles: ['admin'] },
+          { path: '/admin/related-products', label: 'Сопутствующие товары', section: 'Товары', roles: ['admin', 'editor'] },
+          { path: '/admin/one-click-orders', label: 'Заказы в 1 клик', section: 'Заказы и платежи', roles: ['admin', 'moderator'] },
+          { path: '/admin/payments', label: 'Платежи', section: 'Заказы и платежи', roles: ['admin','moderator'] },
+          { path: '/admin/users', label: 'Пользователи', section: 'Пользователи', roles: ['admin'] },
+          { path: '/admin/club-members', label: 'Участники клуба', section: 'Пользователи', roles: ['admin', 'moderator'] },
+          { path: '/admin/role-management', label: 'Управление ролями', section: 'Пользователи', roles: ['admin'] },
+          { path: '/admin/quiz', label: 'Опросник', section: 'Настройки', roles: ['admin', 'editor'] },
+          { path: '/admin/sms-templates', label: 'SMS Шаблоны', section: 'Настройки', roles: ['admin'] },
+          { path: '/admin/showrooms', label: 'Шоурумы', section: 'Настройки', roles: ['admin', 'editor'] },
+        ];
+
+        const { error: insertError } = await supabase
+          .from('menu_role_permissions')
+          .insert(defaultPermissions.map(p => ({
+            ...p,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })));
+
+        if (insertError) {
+          console.warn('Could not initialize default permissions:', insertError);
+          return false;
+        }
+
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.warn('Error initializing default permissions:', error);
+      return false;
+    }
   };
+
+  // Fetch menu permissions from database
+  useEffect(() => {
+    const fetchMenuPermissions = async () => {
+      try {
+        // Try to initialize defaults if database is empty (only for admins)
+        if (userRole === 'admin') {
+          await initializeDefaultPermissions();
+        }
+
+        const { data, error } = await supabase
+          .from('menu_role_permissions')
+          .select('path, roles')
+          .order('section', { ascending: true });
+
+        if (error) {
+          // If table doesn't exist or error occurs, use empty permissions
+          console.error('Could not load menu permissions from database:', error);
+          setMenuPermissions({});
+          return;
+        }
+
+        console.log('AdminLayout: Raw data from database:', data);
+
+        if (data && data.length > 0) {
+          // Convert array to object for easy lookup
+          const permissionsMap: Record<string, UserRole[]> = {};
+          data.forEach((item: any) => {
+            // Ensure roles is an array and properly typed
+            if (item.path && Array.isArray(item.roles)) {
+              permissionsMap[item.path] = item.roles as UserRole[];
+            } else if (item.path) {
+              console.warn(`AdminLayout: Invalid roles data for path ${item.path}:`, item.roles);
+              permissionsMap[item.path] = [];
+            }
+          });
+          console.log('AdminLayout: Loaded menu permissions from database:', permissionsMap);
+          console.log('AdminLayout: Current user role:', userRole);
+          setMenuPermissions(permissionsMap);
+        } else {
+          // No permissions in database
+          console.warn('AdminLayout: No permissions found in database');
+          setMenuPermissions({});
+        }
+      } catch (error) {
+        console.warn('Error fetching menu permissions, using defaults:', error);
+        setMenuPermissions({});
+      }
+    };
+
+    fetchMenuPermissions();
+
+    // Subscribe to changes in menu_role_permissions table
+    const subscription = supabase
+      .channel('menu_role_permissions_changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'menu_role_permissions' },
+        () => {
+          fetchMenuPermissions();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
+  }, [userRole]);
 
   // Fetch pending counts for badges
   useEffect(() => {
@@ -138,7 +273,8 @@ const AdminLayout = () => {
     navigate('/admin/login');
   };
 
-  const navSections: NavSection[] = [
+  // Base menu structure (no hardcoded roles - only structure)
+  const baseNavSections: NavSection[] = useMemo(() => [
     {
       title: 'Главное',
       items: [
@@ -148,22 +284,22 @@ const AdminLayout = () => {
     {
       title: 'Контент',
       items: [
-        { path: '/admin/carousel', label: 'Карусель', icon: Image, requiredRoles: ['admin', 'editor'] },
-        { path: '/admin/about', label: 'О компании', icon: Target, requiredRoles: ['admin', 'editor'] },
-        { path: '/admin/mattresses', label: 'Матрасы', icon: Package, requiredRoles: ['admin', 'editor'] },
-        { path: '/admin/services', label: 'Услуги', icon: Package, requiredRoles: ['admin', 'editor'] },
-        { path: '/admin/delivery-payment', label: 'Доставка и оплата', icon: CreditCard, requiredRoles: ['admin', 'editor'] },
-        { path: '/admin/reviews', label: 'Отзывы', icon: Star, requiredRoles: ['admin', 'moderator', 'editor'] },
-        { path: '/admin/blog', label: 'Блог', icon: FileText, requiredRoles: ['admin', 'editor'] },
-        { path: '/admin/navigation', label: 'Навигация', icon: Navigation, requiredRoles: ['admin'] },
+        { path: '/admin/carousel', label: 'Карусель', icon: Image },
+        { path: '/admin/about', label: 'О компании', icon: Target },
+        { path: '/admin/mattresses', label: 'Матрасы', icon: Package },
+        { path: '/admin/services', label: 'Услуги', icon: Package },
+        { path: '/admin/delivery-payment', label: 'Доставка и оплата', icon: CreditCard },
+        { path: '/admin/reviews', label: 'Отзывы', icon: Star },
+        { path: '/admin/blog', label: 'Блог', icon: FileText },
+        { path: '/admin/navigation', label: 'Навигация', icon: Navigation },
       ],
     },
     {
       title: 'Товары',
       items: [
-        { path: '/admin/products', label: 'Товары', icon: Package, requiredRoles: ['admin', 'editor'] },
-        { path: '/admin/variants', label: 'Варианты и склад', icon: Layers, requiredRoles: ['admin'] },
-        { path: '/admin/related-products', label: 'Сопутствующие товары', icon: Package, requiredRoles: ['admin', 'editor'] },
+        { path: '/admin/products', label: 'Товары', icon: Package },
+        { path: '/admin/variants', label: 'Варианты и склад', icon: Layers },
+        { path: '/admin/related-products', label: 'Сопутствующие товары', icon: Package },
       ],
     },
     {
@@ -174,34 +310,57 @@ const AdminLayout = () => {
           label: 'Заказы в 1 клик', 
           icon: MousePointer,
           badge: pendingOrders,
-          requiredRoles: ['admin', 'moderator'] 
         },
         { 
           path: '/admin/payments', 
           label: 'Платежи', 
           icon: CreditCard,
           badge: pendingPayments,
-          requiredRoles: ['admin'] 
         },
       ],
     },
     {
       title: 'Пользователи',
       items: [
-        { path: '/admin/users', label: 'Пользователи', icon: Users, requiredRoles: ['admin'] },
-        { path: '/admin/club-members', label: 'Участники клуба', icon: Users, requiredRoles: ['admin', 'moderator'] },
-        { path: '/admin/role-management', label: 'Управление ролями', icon: Shield, requiredRoles: ['admin'] },
+        { path: '/admin/users', label: 'Пользователи', icon: Users },
+        { path: '/admin/club-members', label: 'Участники клуба', icon: Users },
+        { path: '/admin/role-management', label: 'Управление ролями', icon: Shield },
       ],
     },
     {
       title: 'Настройки',
       items: [
-        { path: '/admin/quiz', label: 'Опросник', icon: HelpCircle, requiredRoles: ['admin', 'editor'] },
-        { path: '/admin/sms-templates', label: 'SMS Шаблоны', icon: MessageSquare, requiredRoles: ['admin'] },
-        { path: '/admin/showrooms', label: 'Шоурумы', icon: MapPin, requiredRoles: ['admin', 'editor'] },
+        { path: '/admin/quiz', label: 'Опросник', icon: HelpCircle },
+        { path: '/admin/sms-templates', label: 'SMS Шаблоны', icon: MessageSquare },
+        { path: '/admin/showrooms', label: 'Шоурумы', icon: MapPin },
       ],
     },
-  ];
+  ], [pendingOrders, pendingPayments]);
+
+  // Merge database permissions with base menu structure
+  // Only use database permissions - no fallback
+  // Special case: role-management always visible to admins (needed to configure permissions)
+  const navSections: NavSection[] = useMemo(() => {
+    return baseNavSections.map(section => ({
+      ...section,
+      items: section.items.map(item => {
+        // Special case: role-management always accessible to admins
+        if (item.path === '/admin/role-management' && userRole === 'admin') {
+          return {
+            ...item,
+            requiredRoles: ['admin']
+          };
+        }
+        // Only use database permissions - if not found, item won't be shown
+        const dbPermissions = menuPermissions[item.path];
+        const finalRoles = dbPermissions !== undefined ? dbPermissions : []; // Empty array = no access
+        return {
+          ...item,
+          requiredRoles: finalRoles
+        };
+      })
+    }));
+  }, [baseNavSections, menuPermissions, userRole]);
 
   // Filter menu sections and items based on user role
   const filteredNavSections = navSections.map(section => ({

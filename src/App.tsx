@@ -104,25 +104,26 @@ function App() {
               element={<AdminRoute><AdminLayout /></AdminRoute>}
             >
               <Route index element={<AdminDashboard />} /> {/* 👈 this renders inside layout */}
-              <Route path="carousel" element={<RoleProtectedRoute requiredRoles={['admin', 'editor']}><AdminCarousel /></RoleProtectedRoute>} />
-              <Route path="about" element={<RoleProtectedRoute requiredRoles={['admin', 'editor']}><AdminAbout /></RoleProtectedRoute>} />
-              <Route path="reviews" element={<RoleProtectedRoute requiredRoles={['admin', 'moderator', 'editor']}><AdminReviews /></RoleProtectedRoute>} />
-              <Route path="blog" element={<RoleProtectedRoute requiredRoles={['admin', 'editor']}><AdminBlog /></RoleProtectedRoute>} />
-              <Route path="products" element={<RoleProtectedRoute requiredRoles={['admin', 'editor']}><AdminProducts /></RoleProtectedRoute>} />
-              <Route path="variants" element={<RoleProtectedRoute requiredRoles={['admin']}><AdminProductVariants /></RoleProtectedRoute>} />
-              <Route path="related-products" element={<RoleProtectedRoute requiredRoles={['admin', 'editor']}><AdminRelatedProducts /></RoleProtectedRoute>} />
-              <Route path="quiz" element={<RoleProtectedRoute requiredRoles={['admin', 'editor']}><AdminQuiz /></RoleProtectedRoute>} />
-              <Route path="navigation" element={<RoleProtectedRoute requiredRoles={['admin']}><AdminNavigation /></RoleProtectedRoute>} />
-              <Route path="one-click-orders" element={<RoleProtectedRoute requiredRoles={['admin', 'moderator']}><AdminOneClickOrders /></RoleProtectedRoute>} />
-              <Route path="users" element={<RoleProtectedRoute requiredRoles={['admin']}><AdminUsers /></RoleProtectedRoute>} />
-              <Route path="role-management" element={<RoleProtectedRoute requiredRoles={['admin']}><AdminRoleManagement /></RoleProtectedRoute>} />
-              <Route path="sms-templates" element={<RoleProtectedRoute requiredRoles={['admin']}><AdminSmsTemplates /></RoleProtectedRoute>} />
-              <Route path="payments" element={<RoleProtectedRoute requiredRoles={['admin']}><AdminPayments /></RoleProtectedRoute>} />
-              <Route path="showrooms" element={<RoleProtectedRoute requiredRoles={['admin', 'editor']}><AdminShowrooms /></RoleProtectedRoute>} />
-              <Route path="services" element={<RoleProtectedRoute requiredRoles={['admin', 'editor']}><AdminServices /></RoleProtectedRoute>} />
-              <Route path="delivery-payment" element={<RoleProtectedRoute requiredRoles={['admin', 'editor']}><AdminDeliveryPayment /></RoleProtectedRoute>} />
-              <Route path="mattresses" element={<RoleProtectedRoute requiredRoles={['admin', 'editor']}><AdminMattresses /></RoleProtectedRoute>} />
-              <Route path="club-members" element={<RoleProtectedRoute requiredRoles={['admin', 'moderator']}><AdminClubMembers /></RoleProtectedRoute>} />
+              {/* All routes use database permissions only - no fallback roles */}
+              <Route path="carousel" element={<RoleProtectedRoute><AdminCarousel /></RoleProtectedRoute>} />
+              <Route path="about" element={<RoleProtectedRoute><AdminAbout /></RoleProtectedRoute>} />
+              <Route path="reviews" element={<RoleProtectedRoute><AdminReviews /></RoleProtectedRoute>} />
+              <Route path="blog" element={<RoleProtectedRoute><AdminBlog /></RoleProtectedRoute>} />
+              <Route path="products" element={<RoleProtectedRoute><AdminProducts /></RoleProtectedRoute>} />
+              <Route path="variants" element={<RoleProtectedRoute><AdminProductVariants /></RoleProtectedRoute>} />
+              <Route path="related-products" element={<RoleProtectedRoute><AdminRelatedProducts /></RoleProtectedRoute>} />
+              <Route path="quiz" element={<RoleProtectedRoute><AdminQuiz /></RoleProtectedRoute>} />
+              <Route path="navigation" element={<RoleProtectedRoute><AdminNavigation /></RoleProtectedRoute>} />
+              <Route path="one-click-orders" element={<RoleProtectedRoute><AdminOneClickOrders /></RoleProtectedRoute>} />
+              <Route path="users" element={<RoleProtectedRoute><AdminUsers /></RoleProtectedRoute>} />
+              <Route path="role-management" element={<RoleProtectedRoute><AdminRoleManagement /></RoleProtectedRoute>} />
+              <Route path="sms-templates" element={<RoleProtectedRoute><AdminSmsTemplates /></RoleProtectedRoute>} />
+              <Route path="payments" element={<RoleProtectedRoute><AdminPayments /></RoleProtectedRoute>} />
+              <Route path="showrooms" element={<RoleProtectedRoute><AdminShowrooms /></RoleProtectedRoute>} />
+              <Route path="services" element={<RoleProtectedRoute><AdminServices /></RoleProtectedRoute>} />
+              <Route path="delivery-payment" element={<RoleProtectedRoute><AdminDeliveryPayment /></RoleProtectedRoute>} />
+              <Route path="mattresses" element={<RoleProtectedRoute><AdminMattresses /></RoleProtectedRoute>} />
+              <Route path="club-members" element={<RoleProtectedRoute><AdminClubMembers /></RoleProtectedRoute>} />
             </Route>
 
             <Route path="*" element={<NotFound />} />
