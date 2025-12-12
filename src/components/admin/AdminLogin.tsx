@@ -4,6 +4,8 @@ import { supabase } from '../../lib/supabaseClient';
 import Logo from '../Logo';
 import toast from 'react-hot-toast';
 import { Loader2 } from 'lucide-react';
+import { getFirstAccessibleMenuPath } from '../../utils/getFirstAccessibleMenuPath';
+import type { UserRole } from '../../hooks/useUserRole';
 
 const AdminLogin = () => {
   const [email, setEmail] = useState('');
@@ -82,8 +84,11 @@ const AdminLogin = () => {
           throw new Error('Unauthorized access. Admin, editor, or moderator role required.');
         }
 
+        // Get the first accessible menu path based on user role
+        const firstAccessiblePath = await getFirstAccessibleMenuPath(profile.role as UserRole);
+
         toast.success('Успешный вход');
-        navigate('/admin/products');
+        navigate(firstAccessiblePath);
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Ошибка входа');
