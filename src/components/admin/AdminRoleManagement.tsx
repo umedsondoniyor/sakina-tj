@@ -11,13 +11,6 @@ interface MenuItem {
   requiredRoles: UserRole[];
 }
 
-interface MenuRoleConfig {
-  path: string;
-  label: string;
-  section: string;
-  roles: UserRole[];
-}
-
 const AdminRoleManagement = () => {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,10 +52,80 @@ const AdminRoleManagement = () => {
     }
   };
 
+  // Default menu items (matches AdminLayout structure)
+  const getDefaultMenuItems = (): MenuItem[] => [
+    { path: '/admin', label: 'Панель управления', section: 'Главное', requiredRoles: [] },
+    { path: '/admin/carousel', label: 'Карусель', section: 'Контент', requiredRoles: ['admin', 'editor'] },
+    { path: '/admin/about', label: 'О компании', section: 'Контент', requiredRoles: ['admin', 'editor'] },
+    { path: '/admin/mattresses', label: 'Матрасы', section: 'Контент', requiredRoles: ['admin', 'editor'] },
+    { path: '/admin/services', label: 'Услуги', section: 'Контент', requiredRoles: ['admin', 'editor'] },
+    { path: '/admin/delivery-payment', label: 'Доставка и оплата', section: 'Контент', requiredRoles: ['admin', 'editor'] },
+    { path: '/admin/reviews', label: 'Отзывы', section: 'Контент', requiredRoles: ['admin', 'moderator', 'editor'] },
+    { path: '/admin/blog', label: 'Блог', section: 'Контент', requiredRoles: ['admin', 'editor'] },
+    { path: '/admin/navigation', label: 'Навигация', section: 'Контент', requiredRoles: ['admin'] },
+    { path: '/admin/products', label: 'Товары', section: 'Товары', requiredRoles: ['admin', 'editor'] },
+    { path: '/admin/variants', label: 'Варианты и склад', section: 'Товары', requiredRoles: ['admin'] },
+    { path: '/admin/related-products', label: 'Сопутствующие товары', section: 'Товары', requiredRoles: ['admin', 'editor'] },
+    { path: '/admin/one-click-orders', label: 'Заказы в 1 клик', section: 'Заказы и платежи', requiredRoles: ['admin', 'moderator'] },
+    { path: '/admin/payments', label: 'Платежи', section: 'Заказы и платежи', requiredRoles: ['admin', 'moderator'] },
+    { path: '/admin/users', label: 'Пользователи', section: 'Пользователи', requiredRoles: ['admin'] },
+    { path: '/admin/club-members', label: 'Участники клуба', section: 'Пользователи', requiredRoles: ['admin', 'moderator'] },
+    { path: '/admin/role-management', label: 'Управление ролями', section: 'Пользователи', requiredRoles: ['admin'] },
+    { path: '/admin/quiz', label: 'Опросник', section: 'Настройки', requiredRoles: ['admin', 'editor'] },
+    { path: '/admin/sms-templates', label: 'SMS Шаблоны', section: 'Настройки', requiredRoles: ['admin'] },
+    { path: '/admin/showrooms', label: 'Шоурумы', section: 'Настройки', requiredRoles: ['admin', 'editor'] },
+  ];
+
+  // Initialize default permissions in database if none exist
+  const initializeDefaultPermissions = useCallback(async () => {
+    try {
+      const { count, error: countError } = await supabase
+        .from('menu_role_permissions')
+        .select('*', { count: 'exact', head: true });
+
+      if (countError && countError.code !== 'PGRST116') {
+        console.error('Error checking menu permissions:', countError);
+        return false;
+      }
+
+      // If database is empty, initialize with defaults
+      if (count === 0) {
+        const defaultItems = getDefaultMenuItems();
+        const permissionsToInsert = defaultItems.map(item => ({
+          path: item.path,
+          label: item.label,
+          section: item.section,
+          roles: item.requiredRoles,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }));
+
+        const { error: insertError } = await supabase
+          .from('menu_role_permissions')
+          .insert(permissionsToInsert);
+
+        if (insertError) {
+          console.error('Error initializing default permissions:', insertError);
+          return false;
+        }
+
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.error('Error initializing permissions:', error);
+      return false;
+    }
+  }, []);
+
   // Load menu items from database or use defaults
   const loadMenuItems = useCallback(async () => {
     try {
-      // Try to load from database first
+      // Try to initialize defaults if database is empty
+      await initializeDefaultPermissions();
+
+      // Try to load from database
       const { data: dbConfig, error } = await supabase
         .from('menu_role_permissions')
         .select('*')
@@ -83,28 +146,8 @@ const AdminRoleManagement = () => {
         }));
         setMenuItems(items);
       } else {
-        // Use default menu items (from AdminLayout)
-        const defaultItems: MenuItem[] = [
-          { path: '/admin', label: 'Панель управления', section: 'Главное', requiredRoles: [] },
-          { path: '/admin/carousel', label: 'Карусель', section: 'Контент', requiredRoles: ['admin', 'editor'] },
-          { path: '/admin/about', label: 'О компании', section: 'Контент', requiredRoles: ['admin', 'editor'] },
-          { path: '/admin/mattresses', label: 'Матрасы', section: 'Контент', requiredRoles: ['admin', 'editor'] },
-          { path: '/admin/services', label: 'Услуги', section: 'Контент', requiredRoles: ['admin', 'editor'] },
-          { path: '/admin/delivery-payment', label: 'Доставка и оплата', section: 'Контент', requiredRoles: ['admin', 'editor'] },
-          { path: '/admin/reviews', label: 'Отзывы', section: 'Контент', requiredRoles: ['admin', 'moderator', 'editor'] },
-          { path: '/admin/blog', label: 'Блог', section: 'Контент', requiredRoles: ['admin', 'editor'] },
-          { path: '/admin/navigation', label: 'Навигация', section: 'Контент', requiredRoles: ['admin'] },
-          { path: '/admin/products', label: 'Товары', section: 'Товары', requiredRoles: ['admin', 'editor'] },
-          { path: '/admin/variants', label: 'Варианты и склад', section: 'Товары', requiredRoles: ['admin'] },
-          { path: '/admin/related-products', label: 'Сопутствующие товары', section: 'Товары', requiredRoles: ['admin', 'editor'] },
-          { path: '/admin/one-click-orders', label: 'Заказы в 1 клик', section: 'Заказы и платежи', requiredRoles: ['admin', 'moderator'] },
-          { path: '/admin/payments', label: 'Платежи', section: 'Заказы и платежи', requiredRoles: ['admin'] },
-          { path: '/admin/users', label: 'Пользователи', section: 'Пользователи', requiredRoles: ['admin'] },
-          { path: '/admin/club-members', label: 'Участники клуба', section: 'Пользователи', requiredRoles: ['admin', 'moderator'] },
-          { path: '/admin/quiz', label: 'Опросник', section: 'Настройки', requiredRoles: ['admin', 'editor'] },
-          { path: '/admin/sms-templates', label: 'SMS Шаблоны', section: 'Настройки', requiredRoles: ['admin'] },
-          { path: '/admin/showrooms', label: 'Шоурумы', section: 'Настройки', requiredRoles: ['admin', 'editor'] },
-        ];
+        // Use default menu items as fallback (if database still empty after init attempt)
+        const defaultItems = getDefaultMenuItems();
         setMenuItems(defaultItems);
       }
     } catch (error) {
@@ -137,18 +180,8 @@ const AdminRoleManagement = () => {
   const savePermissions = async () => {
     setSaving(true);
     try {
-      // Delete all existing permissions
-      const { error: deleteError } = await supabase
-        .from('menu_role_permissions')
-        .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
-
-      if (deleteError) {
-        throw deleteError;
-      }
-
-      // Insert new permissions
-      const permissionsToInsert = menuItems.map(item => ({
+      // Use upsert to update existing or insert new permissions
+      const permissionsToUpsert = menuItems.map(item => ({
         path: item.path,
         label: item.label,
         section: item.section,
@@ -156,16 +189,55 @@ const AdminRoleManagement = () => {
         updated_at: new Date().toISOString(),
       }));
 
-      const { error: insertError } = await supabase
-        .from('menu_role_permissions')
-        .insert(permissionsToInsert);
+      console.log('Saving permissions:', permissionsToUpsert);
 
-      if (insertError) {
-        throw insertError;
+      const { data, error: upsertError } = await supabase
+        .from('menu_role_permissions')
+        .upsert(permissionsToUpsert, {
+          onConflict: 'path',
+          ignoreDuplicates: false
+        })
+        .select();
+
+      if (upsertError) {
+        console.error('Error upserting permissions:', upsertError);
+        throw upsertError;
+      }
+
+      console.log('Permissions saved successfully:', data);
+
+      // Also delete any permissions that are not in the current menu items
+      const currentPaths = menuItems.map(item => item.path);
+      if (currentPaths.length > 0) {
+        // Get all existing paths from database
+        const { data: allPaths } = await supabase
+          .from('menu_role_permissions')
+          .select('path');
+        
+        if (allPaths) {
+          const pathsToDelete = allPaths
+            .map(p => p.path)
+            .filter(path => !currentPaths.includes(path));
+          
+          if (pathsToDelete.length > 0) {
+            const { error: deleteError } = await supabase
+              .from('menu_role_permissions')
+              .delete()
+              .in('path', pathsToDelete);
+
+            if (deleteError) {
+              console.warn('Error cleaning up old permissions:', deleteError);
+              // Don't throw - this is just cleanup
+            }
+          }
+        }
       }
 
       toast.success('Настройки ролей успешно сохранены');
       setHasChanges(false);
+      
+      // Reload to ensure UI is in sync
+      await loadMenuItems();
     } catch (error: any) {
       console.error('Error saving permissions:', error);
       toast.error(error?.message || 'Не удалось сохранить настройки');
