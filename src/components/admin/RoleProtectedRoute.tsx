@@ -45,9 +45,8 @@ const RoleProtectedRoute: React.FC<RoleProtectedRouteProps> = ({
             });
           
           if (error) {
-            console.warn('Could not auto-create role-management entry:', error);
+            // Silent fail - role-management entry creation is optional
           } else {
-            console.log('Auto-created role-management entry in database');
             // Refetch permissions to update state
             const { data } = await supabase
               .from('menu_role_permissions')
@@ -59,7 +58,7 @@ const RoleProtectedRoute: React.FC<RoleProtectedRouteProps> = ({
             }
           }
         } catch (error) {
-          console.warn('Error auto-creating role-management entry:', error);
+          // Silent fail - role-management entry creation is optional
         }
       };
       
@@ -69,40 +68,34 @@ const RoleProtectedRoute: React.FC<RoleProtectedRouteProps> = ({
 
   // Fetch permissions from database for this route
   useEffect(() => {
-    const fetchRoutePermissions = async () => {
-      setPermissionsLoading(true);
-      try {
-        console.log('RoleProtectedRoute: Fetching permissions for path:', currentPath);
-        
-        const { data, error } = await supabase
-          .from('menu_role_permissions')
-          .select('roles')
-          .eq('path', currentPath)
-          .maybeSingle();
+      const fetchRoutePermissions = async () => {
+        setPermissionsLoading(true);
+        try {
+          const { data, error } = await supabase
+            .from('menu_role_permissions')
+            .select('roles')
+            .eq('path', currentPath)
+            .maybeSingle();
 
-        if (error && error.code !== 'PGRST116') {
-          console.warn('Error fetching route permissions:', error);
+          if (error && error.code !== 'PGRST116') {
+            setDbPermissions(null);
+            setPermissionsLoading(false);
+            return;
+          }
+
+          if (data && Array.isArray(data.roles)) {
+            // Database has permissions
+            setDbPermissions(data.roles as UserRole[]);
+          } else {
+            // No database permissions found - deny access (no fallback)
+            setDbPermissions([]); // Empty array means no access
+          }
+        } catch (error) {
           setDbPermissions(null);
+        } finally {
           setPermissionsLoading(false);
-          return;
         }
-
-        if (data && Array.isArray(data.roles)) {
-          // Database has permissions
-          console.log('RoleProtectedRoute: Found database permissions:', { path: currentPath, roles: data.roles });
-          setDbPermissions(data.roles as UserRole[]);
-        } else {
-          // No database permissions found - deny access (no fallback)
-          console.warn('RoleProtectedRoute: No database permissions found for path:', currentPath);
-          setDbPermissions([]); // Empty array means no access
-        }
-      } catch (error) {
-        console.warn('Error checking route permissions:', error);
-        setDbPermissions(null);
-      } finally {
-        setPermissionsLoading(false);
-      }
-    };
+      };
 
     fetchRoutePermissions();
 
@@ -117,7 +110,6 @@ const RoleProtectedRoute: React.FC<RoleProtectedRouteProps> = ({
           filter: `path=eq.${currentPath}`
         },
         () => {
-          console.log('RoleProtectedRoute: Permissions changed, refetching...');
           fetchRoutePermissions();
         }
       )
@@ -140,17 +132,8 @@ const RoleProtectedRoute: React.FC<RoleProtectedRouteProps> = ({
     );
   }
 
-  // Debug logging
-  console.log('RoleProtectedRoute: Access check', {
-    path: currentPath,
-    userRole: role,
-    dbPermissions: allowedRoles,
-    hasAccess: allowedRoles !== null && allowedRoles.length > 0 && role && allowedRoles.includes(role)
-  });
-
   // If no role, deny access
   if (!role) {
-    console.warn('RoleProtectedRoute: No user role found');
     toast.error('У вас нет доступа к этой странице');
     return <Navigate to={fallbackPath} replace />;
   }
@@ -167,36 +150,23 @@ const RoleProtectedRoute: React.FC<RoleProtectedRouteProps> = ({
   // Special case: Allow admins to access role-management even if not in database
   // This is needed because admins need this page to configure permissions
   if (allowedRoles.length === 0 && currentPath === '/admin/role-management' && role === 'admin') {
-    console.log('RoleProtectedRoute: Special case - allowing admin access to role-management');
     return <>{children}</>;
   }
 
   // If no permissions found in database, deny access
   if (allowedRoles.length === 0) {
-    console.warn('RoleProtectedRoute: No permissions configured in database for path:', currentPath);
     toast.error('Доступ к этой странице не настроен');
     return <Navigate to={fallbackPath} replace />;
   }
 
   // Check if user's role is in allowed roles
   const hasAccess = allowedRoles.includes(role);
-  console.log('RoleProtectedRoute: Access decision', {
-    userRole: role,
-    allowedRoles,
-    hasAccess
-  });
 
   if (!hasAccess) {
-    console.warn('RoleProtectedRoute: Access denied', {
-      userRole: role,
-      allowedRoles,
-      path: currentPath
-    });
     toast.error('У вас нет доступа к этой странице');
     return <Navigate to={fallbackPath} replace />;
   }
 
-  console.log('RoleProtectedRoute: Access granted');
   return <>{children}</>;
 };
 

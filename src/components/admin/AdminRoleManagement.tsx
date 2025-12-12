@@ -84,7 +84,6 @@ const AdminRoleManagement = () => {
         .select('*', { count: 'exact', head: true });
 
       if (countError && countError.code !== 'PGRST116') {
-        console.error('Error checking menu permissions:', countError);
         return false;
       }
 
