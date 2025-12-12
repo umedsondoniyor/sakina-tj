@@ -141,7 +141,6 @@ const AdminLayout = () => {
           })));
 
         if (insertError) {
-          console.warn('Could not initialize default permissions:', insertError);
           return false;
         }
 
@@ -150,7 +149,6 @@ const AdminLayout = () => {
 
       return false;
     } catch (error) {
-      console.warn('Error initializing default permissions:', error);
       return false;
     }
   };
@@ -171,12 +169,9 @@ const AdminLayout = () => {
 
         if (error) {
           // If table doesn't exist or error occurs, use empty permissions
-          console.error('Could not load menu permissions from database:', error);
           setMenuPermissions({});
           return;
         }
-
-        console.log('AdminLayout: Raw data from database:', data);
 
         if (data && data.length > 0) {
           // Convert array to object for easy lookup
@@ -186,20 +181,15 @@ const AdminLayout = () => {
             if (item.path && Array.isArray(item.roles)) {
               permissionsMap[item.path] = item.roles as UserRole[];
             } else if (item.path) {
-              console.warn(`AdminLayout: Invalid roles data for path ${item.path}:`, item.roles);
               permissionsMap[item.path] = [];
             }
           });
-          console.log('AdminLayout: Loaded menu permissions from database:', permissionsMap);
-          console.log('AdminLayout: Current user role:', userRole);
           setMenuPermissions(permissionsMap);
         } else {
           // No permissions in database
-          console.warn('AdminLayout: No permissions found in database');
           setMenuPermissions({});
         }
       } catch (error) {
-        console.warn('Error fetching menu permissions, using defaults:', error);
         setMenuPermissions({});
       }
     };
@@ -241,7 +231,7 @@ const AdminLayout = () => {
         setPendingOrders(ordersCount || 0);
         setPendingPayments(paymentsCount || 0);
       } catch (error) {
-        console.error('Error fetching pending counts:', error);
+        // Silent fail - pending counts are non-critical
       }
     };
 
