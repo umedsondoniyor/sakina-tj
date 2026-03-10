@@ -123,7 +123,7 @@ const Footer = () => {
       title: 'Каталог',
       links: categories.map(cat => ({
         label: cat.name,
-        href: cat.slug === 'mattresses' ? '/mattresses' : `/products?category=${cat.slug}`,
+        href: `/categories/${cat.slug}`,
       })),
     },
     company: {
@@ -149,7 +149,7 @@ const Footer = () => {
     info: {
       title: 'Информация',
       links: [
-        { label: 'Доставка и оплата', href: '/about#delivery' },
+        { label: 'Доставка и оплата', href: '/delivery-payment' },
         { label: 'Гарантия', href: '/about#warranty' },
         { label: 'Возврат товара', href: '/about#returns' },
       ],
@@ -157,7 +157,7 @@ const Footer = () => {
     contacts: {
       title: 'Контакты',
       links: [
-        { label: 'Контакты', href: '/about#contacts' },
+        { label: 'Контакты', href: '/contacts' },
         { label: 'Адреса магазинов', href: '/about#locations' },
       ],
     },

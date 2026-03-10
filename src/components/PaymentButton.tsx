@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { CreditCard, Loader as Loader2, CircleAlert as AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import toast from 'react-hot-toast';
+import { toGa4Item } from '../lib/analytics';
 
 interface PaymentButtonProps {
   amount: number;
@@ -146,6 +147,22 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
       // Save temporary data for callback
       sessionStorage.setItem('sakina_payment_id', data.payment_id);
       sessionStorage.setItem('sakina_order_id', data.order_id)
+      sessionStorage.setItem(
+        'sakina_pending_purchase',
+        JSON.stringify({
+          transaction_id: data.order_id || data.payment_id,
+          value: amount,
+          currency,
+          items: orderData.items.map((item) =>
+            toGa4Item({
+              item_id: item.id,
+              item_name: item.name,
+              price: Number(item.price) || 0,
+              quantity: item.quantity,
+            }),
+          ),
+        }),
+      );
 
       if (data.payment_url) {
         console.log('🔄 Redirecting to payment page...');

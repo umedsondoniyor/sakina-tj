@@ -1,7 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { supabase } from '../lib/supabaseClient';
+import { useLoaderData } from 'react-router-dom';
+import { getDeliveryPaymentSettings } from '../lib/api';
 import { Truck, CreditCard, MapPin, Clock, Shield, Phone } from 'lucide-react';
+import type { DeliveryPaymentLoaderData } from '../loaders/publicLoaders';
+import { useCart } from '../contexts/CartContext';
+import { toGa4Item, trackBeginCheckout } from '../lib/analytics';
 
 interface DeliveryPaymentSettings {
   id: string;
@@ -12,19 +16,36 @@ interface DeliveryPaymentSettings {
 }
 
 const DeliveryPaymentPage: React.FC = () => {
-  const [settings, setSettings] = useState<DeliveryPaymentSettings | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { items } = useCart();
+  const loaderData = useLoaderData() as DeliveryPaymentLoaderData | undefined;
+  const initialSettings = loaderData?.settings ?? null;
+  const [settings, setSettings] = useState<DeliveryPaymentSettings | null>(initialSettings);
+  const [loading, setLoading] = useState(!initialSettings);
 
   useEffect(() => {
+    if (!items.length) {
+      return;
+    }
+    trackBeginCheckout(
+      items.map((item) =>
+        toGa4Item({
+          item_id: item.id,
+          item_name: item.name,
+          price: Number(item.price) || 0,
+          quantity: item.quantity,
+        }),
+      ),
+    );
+  }, [items]);
+
+  useEffect(() => {
+    if (initialSettings) {
+      return;
+    }
+
     const fetchSettings = async () => {
       try {
-        const { data, error } = await supabase
-          .from('delivery_payment_settings')
-          .select('*')
-          .limit(1)
-          .maybeSingle();
-
-        if (error) throw error;
+        const data = await getDeliveryPaymentSettings();
         
         if (data) {
           setSettings(data);
@@ -53,7 +74,7 @@ const DeliveryPaymentPage: React.FC = () => {
     };
 
     fetchSettings();
-  }, []);
+  }, [initialSettings]);
 
   if (loading) {
     return (
@@ -68,6 +89,7 @@ const DeliveryPaymentPage: React.FC = () => {
       <Helmet>
         <title>{settings?.title || 'Доставка и оплата'} | Sakina.tj</title>
         <meta name="description" content={settings?.description || 'Информация о доставке и оплате'} />
+        <link rel="canonical" href="https://sakina.tj/delivery-payment" />
       </Helmet>
 
       <div className="min-h-screen bg-white">

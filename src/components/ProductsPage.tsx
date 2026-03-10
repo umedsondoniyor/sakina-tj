@@ -1,9 +1,13 @@
 // src/components/ProductsPage.tsx
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useLoaderData, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { PackageOpen } from 'lucide-react';
 import { getProducts } from '../lib/api';
 import type { Product } from '../lib/types';
+import type { ProductsPageLoaderData } from '../loaders/publicLoaders';
+import SEO from './SEO';
+import StructuredData from './StructuredData';
+import { toAbsoluteUrl } from '../lib/seo';
 
 import ProductGrid from './products/ProductGrid';
 import ProductFilters from './products/ProductFilters';
@@ -60,9 +64,15 @@ const ProductsPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const loaderData = useLoaderData() as ProductsPageLoaderData | undefined;
+  const loaderProducts = loaderData?.products ?? [];
+  const loaderSelectedCategories = loaderData?.selectedCategories ?? [];
+  const landingMeta = loaderData?.landingMeta;
 
   // Categories derived from URL or navigation state
   const urlSelectedCategories = useMemo<string[]>(() => {
+    if (loaderSelectedCategories.length) return loaderSelectedCategories;
+
     const st = location.state as any;
     if (st?.selectedCategories) return st.selectedCategories as string[];
 
@@ -72,8 +82,8 @@ const ProductsPage: React.FC = () => {
     return [];
   }, [location.key, searchParams.toString()]);
 
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [products, setProducts] = useState<Product[]>(loaderProducts);
+  const [loading, setLoading] = useState(!loaderProducts.length);
   const [error,   setError]   = useState<string | null>(null);
 
   const [activeQuickSize, setActiveQuickSize] = useState<string | null>(null);
@@ -84,6 +94,9 @@ const ProductsPage: React.FC = () => {
     if (state?.filters) {
       // Coming from quiz - show mattresses
       return ['mattresses'];
+    }
+    if (loaderSelectedCategories.length) {
+      return loaderSelectedCategories;
     }
     return urlSelectedCategories;
   });
@@ -132,6 +145,10 @@ const ProductsPage: React.FC = () => {
 
   // Fetch all products once
   useEffect(() => {
+    if (loaderProducts.length) {
+      return;
+    }
+
     (async () => {
       try {
         setLoading(true);
@@ -145,7 +162,7 @@ const ProductsPage: React.FC = () => {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [loaderProducts.length]);
 
   // Keep categories in sync with the URL (but don't override quiz selections)
   useEffect(() => {
@@ -398,13 +415,104 @@ const handleOpenMattressWizard = useCallback(() => {
   }
 
   const pageTitle =
-    selectedCategories.length === 1
+    landingMeta?.pageTitle
+      ? landingMeta.pageTitle
+      : selectedCategories.length === 1
       ? categoryDisplayNames[selectedCategories[0]] || 'Товары'
       : 'Все товары';
 
+  const seoTitle =
+    landingMeta?.seoTitle
+      ? landingMeta.seoTitle
+      : selectedCategories.length === 1
+      ? `${categoryDisplayNames[selectedCategories[0]] || selectedCategories[0]}: Ортопедические, размеры`
+      : 'Матрасы и товары для сна в Душанбе';
+
+  const seoDescription =
+    landingMeta?.seoDescription
+      ? landingMeta.seoDescription
+      : selectedCategories.length === 1
+      ? `Каталог категории "${categoryDisplayNames[selectedCategories[0]] || selectedCategories[0]}": ортопедические модели и размеры.`
+      : 'Каталог товаров для сна в Душанбе: матрасы, кровати и аксессуары.';
+
+  const seoCanonicalPath =
+    landingMeta?.canonicalPath
+      ? landingMeta.canonicalPath
+      : selectedCategories.length === 1
+      ? `/categories/${selectedCategories[0]}`
+      : '/products';
+  const categoryName = selectedCategories.length === 1
+    ? categoryDisplayNames[selectedCategories[0]] || selectedCategories[0]
+    : 'Каталог';
+  const categoryPath = selectedCategories.length === 1 ? `/categories/${selectedCategories[0]}` : '/products';
+
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: toAbsoluteUrl('/'),
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Catalog',
+        item: toAbsoluteUrl('/products'),
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: landingMeta?.filterValue || categoryName,
+        item: toAbsoluteUrl(seoCanonicalPath),
+      },
+    ],
+  };
+
+  const itemListSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    itemListOrder: 'https://schema.org/ItemListUnordered',
+    numberOfItems: filteredProducts.length,
+    itemListElement: filteredProducts.map((product, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      url: toAbsoluteUrl(`/products/${product.id}`),
+      name: product.name,
+      image: product.image_url || product.image_urls?.[0] || undefined,
+    })),
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
+      <SEO title={seoTitle} description={seoDescription} canonicalPath={seoCanonicalPath} />
+      {selectedCategories.length === 1 ? <StructuredData data={breadcrumbSchema} /> : null}
+      {selectedCategories.length === 1 ? <StructuredData data={itemListSchema} /> : null}
       <div className="max-w-7xl mx-auto px-4 py-8">
+        <nav aria-label="Хлебные крошки" className="mb-4">
+          <ol className="flex items-center space-x-2 text-sm text-gray-600">
+            <li><Link to="/" className="hover:text-teal-600">Главная</Link></li>
+            <li aria-hidden="true">/</li>
+            <li><Link to="/products" className="hover:text-teal-600">Каталог</Link></li>
+            {selectedCategories.length === 1 ? (
+              <>
+                <li aria-hidden="true">/</li>
+                <li>
+                  <Link to={categoryPath} className="hover:text-teal-600">{categoryName}</Link>
+                </li>
+              </>
+            ) : null}
+            {landingMeta?.filterValue ? (
+              <>
+                <li aria-hidden="true">/</li>
+                <li className="text-gray-900">{landingMeta.filterValue}</li>
+              </>
+            ) : null}
+          </ol>
+        </nav>
+
         {/* Header */}
         <header className="mb-6" aria-live="polite">
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">{pageTitle}</h1>

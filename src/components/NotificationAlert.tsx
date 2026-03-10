@@ -1,14 +1,18 @@
 import React, { useState } from 'react';
 import { Bell, X } from 'lucide-react';
 
+const isBrowser = typeof document !== 'undefined';
+
 // Cookie utility functions
 const setCookie = (name: string, value: string, days: number) => {
+  if (!isBrowser) return;
   const expires = new Date();
   expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
   document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
 };
 
 const getCookie = (name: string): string | null => {
+  if (!isBrowser) return null;
   const nameEQ = name + "=";
   const ca = document.cookie.split(';');
   for (let i = 0; i < ca.length; i++) {
@@ -38,7 +42,7 @@ const NotificationAlert = () => {
 
   const handleEnable = () => {
     // Here you would typically request browser notification permission
-    if ('Notification' in window) {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
       Notification.requestPermission().then((permission) => {
         if (permission === 'granted') {
           console.log('Notifications enabled');

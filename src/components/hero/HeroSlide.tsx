@@ -7,6 +7,11 @@ interface HeroSlideProps {
 }
 
 const HeroSlide: React.FC<HeroSlideProps> = ({ slide, isActive }) => {
+  const imagePriority = { fetchpriority: isActive ? 'high' : 'auto' } as Record<string, string>;
+  const slideAlt = slide.title?.trim()
+    ? `Баннер Sakina: ${slide.title}`
+    : 'Главный баннер Sakina';
+
   return (
     <div
       className={`relative float-left -mr-[100%] w-full transition-transform duration-[600ms] ease-in-out motion-reduce:transition-none ${
@@ -17,10 +22,10 @@ const HeroSlide: React.FC<HeroSlideProps> = ({ slide, isActive }) => {
       <div className="relative w-full mx-auto">
         <img
           src={slide.image_url}
-          alt={slide.title}
-          className="hero-image mx-auto"
+          alt={slideAlt}
+          className="hero-image mx-auto w-full h-auto object-cover block"
           loading={isActive ? 'eager' : 'lazy'}
-          fetchPriority={isActive ? 'high' : 'auto'}
+          {...imagePriority}
           decoding="async"
           width="1920"
           height="960"

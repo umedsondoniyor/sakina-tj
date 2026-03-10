@@ -19,7 +19,7 @@ const SlideIndicators: React.FC<SlideIndicatorsProps> = ({
   };
 
   return (
-    <div className="flex justify-center items-center space-x-2 py-3">
+    <div className="flex justify-center items-center space-x-2 px-3 py-1.5 rounded-full bg-black/20 backdrop-blur-sm">
       {Array.from({ length: totalSlides }).map((_, index) => (
         <button
           key={index}

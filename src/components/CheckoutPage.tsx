@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { formatCurrency } from '../lib/utils';
 import { supabase } from '../lib/supabaseClient';
+import { toGa4Item, trackBeginCheckout, trackPurchase } from '../lib/analytics';
 
 // Import subcomponents
 import CheckoutSteps from './checkout/CheckoutSteps';
@@ -48,6 +49,7 @@ const CheckoutPage = () => {
   const { items, total, clearCart } = useCart();
   const navigate = useNavigate();
   const hasNavigated = useRef(false);
+  const hasTrackedBeginCheckout = useRef(false);
   
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -80,6 +82,24 @@ const CheckoutPage = () => {
       toast.error('Корзина пуста');
     }
   }, [items, navigate]);
+
+  useEffect(() => {
+    if (hasTrackedBeginCheckout.current || items.length === 0) {
+      return;
+    }
+
+    trackBeginCheckout(
+      items.map((item) =>
+        toGa4Item({
+          item_id: item.id,
+          item_name: item.name,
+          price: Number(item.price) || 0,
+          quantity: item.quantity,
+        }),
+      ),
+    );
+    hasTrackedBeginCheckout.current = true;
+  }, [items]);
 
   // Check for club member when phone number is entered
   useEffect(() => {
@@ -360,6 +380,18 @@ const CheckoutPage = () => {
         }
 
         toast.success('Заказ оформлен! Вы можете забрать его в магазине.');
+        trackPurchase({
+          transaction_id: orderId,
+          value: calculateFinalTotal(),
+          items: items.map((item) =>
+            toGa4Item({
+              item_id: item.id,
+              item_name: item.name,
+              price: Number(item.price) || 0,
+              quantity: item.quantity,
+            }),
+          ),
+        });
         clearCart();
         localStorage.removeItem('sakina_checkout_form');
         navigate('/order-confirmation');
@@ -418,6 +450,18 @@ const CheckoutPage = () => {
       if (orderError) throw orderError;
 
       toast.success('Заказ успешно оформлен!');
+      trackPurchase({
+        transaction_id: orderId,
+        value: calculateFinalTotal(),
+        items: items.map((item) =>
+          toGa4Item({
+            item_id: item.id,
+            item_name: item.name,
+            price: Number(item.price) || 0,
+            quantity: item.quantity,
+          }),
+        ),
+      });
       clearCart();
       localStorage.removeItem('sakina_checkout_form');
       navigate('/order-confirmation');

@@ -6,6 +6,7 @@ import PaymentStatusChecker from './PaymentStatusChecker';
 import { useCart } from '../contexts/CartContext';
 import toast from 'react-hot-toast';
 import { Helmet } from 'react-helmet-async';
+import { trackPurchase } from '../lib/analytics';
 
 /** ---------- Helpers: robust param extraction (query, hash, storage) ---------- */
 function useResolvedParam(paramNames: string[], storageKeys: string[] = []) {
@@ -77,6 +78,7 @@ const PaymentSuccessPage: React.FC = () => {
   const [orderCleared, setOrderCleared] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<string>('pending');
   const [latestRow, setLatestRow] = useState<PaymentRow | null>(null);
+  const [purchaseTracked, setPurchaseTracked] = useState(false);
 
   useEffect(() => {
     if (orderId) {
@@ -108,6 +110,25 @@ const PaymentSuccessPage: React.FC = () => {
     if (status === 'completed' && !orderCleared) {
       clearCart();
       setOrderCleared(true);
+
+      if (!purchaseTracked && typeof window !== 'undefined') {
+        const rawPendingPurchase = sessionStorage.getItem('sakina_pending_purchase');
+        if (rawPendingPurchase) {
+          try {
+            const parsed = JSON.parse(rawPendingPurchase);
+            trackPurchase({
+              transaction_id: parsed.transaction_id,
+              value: parsed.value,
+              currency: parsed.currency,
+              items: parsed.items || [],
+            });
+            sessionStorage.removeItem('sakina_pending_purchase');
+            setPurchaseTracked(true);
+          } catch (err) {
+            console.error('Failed to parse pending purchase analytics payload:', err);
+          }
+        }
+      }
     } else if (status === 'failed' || status === 'cancelled') {
       toast.error('Платеж не был завершен');
     }

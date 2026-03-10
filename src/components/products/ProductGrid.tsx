@@ -6,6 +6,7 @@ import ProductConfirmationModal from './ProductConfirmationModal';
 import { useCart } from '../../contexts/CartContext';
 import { getProductVariants } from '../../lib/api';
 import { formatCurrency } from '../../lib/utils';
+import { toGa4Item, trackAddToCart } from '../../lib/analytics';
 
 interface ProductGridProps {
   products: Product[];
@@ -51,6 +52,14 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) =
         image_url: product.image_url
       };
       addItem(cartItem);
+      trackAddToCart(
+        toGa4Item({
+          item_id: product.id,
+          item_name: product.name,
+          price: Number(product.price) || 0,
+          quantity: 1,
+        }),
+      );
     }
   };
 
@@ -74,6 +83,14 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) =
           image_url: product.image_url
         };
         addItem(cartItem);
+        trackAddToCart(
+          toGa4Item({
+            item_id: product.id,
+            item_name: product.name,
+            price: Number(product.price) || 0,
+            quantity: 1,
+          }),
+        );
       }
     } catch (error) {
       console.error('Error loading product variants:', error);
@@ -86,6 +103,14 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) =
         image_url: product.image_url
       };
       addItem(cartItem);
+      trackAddToCart(
+        toGa4Item({
+          item_id: product.id,
+          item_name: product.name,
+          price: Number(product.price) || 0,
+          quantity: 1,
+        }),
+      );
     } finally {
       setLoadingVariants(false);
     }
@@ -118,6 +143,14 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) =
     };
     
     addItem(cartItem);
+    trackAddToCart(
+      toGa4Item({
+        item_id: `${selectedProduct.id}_${selectedVariant.id}`,
+        item_name: selectedProduct.name,
+        price: Number(selectedVariant.price) || 0,
+        quantity: 1,
+      }),
+    );
     setShowConfirmationModal(false);
     setSelectedProduct(null);
     setSelectedVariant(null);
@@ -137,7 +170,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) =
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {products.map((product) => (
+        {products.map((product, index) => (
           <div
             key={product.id}
             className="group cursor-pointer"
@@ -146,9 +179,9 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) =
             <div className="relative mb-4">
               <img
                 src={product.image_url}
-                alt={product.name}
-                className="w-full h-64 object-cover rounded-lg"
-                loading="lazy"
+                alt={`матрас ортопедический ${product.name}`}
+                className="w-full h-64 object-cover rounded-lg aspect-[25/16]"
+                loading={index < 3 ? 'eager' : 'lazy'}
                 decoding="async"
                 width="400"
                 height="256"
@@ -175,6 +208,14 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) =
               <h3 className="font-medium mb-2 group-hover:text-teal-600 line-clamp-2">
                 {product.name}
               </h3>
+              <div className="flex flex-wrap gap-2 mb-2">
+                <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
+                  Высота: {product.variants?.[0]?.height_cm ? `${product.variants[0].height_cm} см` : 'уточняется'}
+                </span>
+                <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
+                  Жесткость: {product.hardness || 'уточняется'}
+                </span>
+              </div>
               {product.weight_category && (
                 <p className="text-sm text-gray-600 mb-2">
                   Рекомендуемый вес: {product.weight_category}

@@ -1,7 +1,8 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronDown, MapPin } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
+import useIsomorphicLayoutEffect from '../hooks/useIsomorphicLayoutEffect';
 
 interface Showroom {
   id: string;
@@ -61,7 +62,7 @@ const TopHeader: React.FC = () => {
     });
   };
 
-  useLayoutEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     if (!open) return;
     measure();
     const onScroll = () => measure();

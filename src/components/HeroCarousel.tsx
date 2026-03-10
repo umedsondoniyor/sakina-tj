@@ -5,24 +5,34 @@ import type { CarouselSlide } from '../lib/types';
 import HeroSlide from './hero/HeroSlide';
 import SlideIndicators from './hero/SlideIndicators';
 
-const HeroCarousel: React.FC = () => {
-  const [slides, setSlides] = useState<CarouselSlide[]>([]);
+interface HeroCarouselProps {
+  initialSlides?: CarouselSlide[];
+}
+
+const HeroCarousel: React.FC<HeroCarouselProps> = ({ initialSlides = [] }) => {
+  const [slides, setSlides] = useState<CarouselSlide[]>(initialSlides);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(initialSlides.length === 0);
   const [error, setError] = useState<string | null>(null);
   const autoPlayRef = useRef<NodeJS.Timeout>();
 
   const minSwipeDistance = 50;
 
   useEffect(() => {
+    if (initialSlides.length > 0) {
+      return;
+    }
     loadSlides();
-  }, []);
+  }, [initialSlides.length]);
 
   // Preload first slide image for LCP optimization
   useEffect(() => {
+    if (typeof document === 'undefined') {
+      return;
+    }
     if (slides.length > 0 && slides[0]?.image_url) {
       const link = document.createElement('link');
       link.rel = 'preload';
@@ -145,9 +155,7 @@ const HeroCarousel: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col">
-      {/* group -> enables hover-reveal for arrows on desktop */}
-      <div className="relative w-full overflow-hidden group">
+    <div className="relative w-full overflow-hidden group">
         <div
           className="relative w-full overflow-hidden after:clear-both after:block after:content-['']"
           onTouchStart={handleTouchStart}
@@ -203,7 +211,7 @@ const HeroCarousel: React.FC = () => {
         </button>
 
         {/* Indicators pinned INSIDE the banner at bottom-center */}
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10">
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20">
           <SlideIndicators
             totalSlides={slides.length}
             currentSlide={currentSlide}
@@ -211,7 +219,6 @@ const HeroCarousel: React.FC = () => {
             onStartAutoPlay={startAutoPlay}
           />
         </div>
-      </div>
     </div>
   );
 };

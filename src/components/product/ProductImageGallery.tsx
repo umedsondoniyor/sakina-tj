@@ -18,6 +18,8 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
   const [showMagnifier, setShowMagnifier] = useState(false);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
+  const imagePriority = { fetchpriority: currentImageIndex === 0 ? 'high' : 'auto' } as Record<string, string>;
+  const mainImageAlt = `матрас ${productName} фото ${currentImageIndex + 1}`;
   const imageRef = useRef<HTMLDivElement>(null);
   const thumbnailsRef = useRef<HTMLDivElement>(null);
 
@@ -65,8 +67,8 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
 
   return (
     <div>
-      <div 
-        className="relative cursor-zoom-in"
+      <div
+        className="relative cursor-zoom-in aspect-square"
         ref={imageRef}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
@@ -82,10 +84,10 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
         </span>
         <img
           src={images[currentImageIndex]}
-          alt={productName}
-          className="w-full rounded-lg"
+          alt={mainImageAlt}
+          className="w-full h-full object-cover rounded-lg"
           loading={currentImageIndex === 0 ? 'eager' : 'lazy'}
-          fetchPriority={currentImageIndex === 0 ? 'high' : 'auto'}
+          {...imagePriority}
           decoding="async"
           width="800"
           height="800"
@@ -125,7 +127,7 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
             >
               <img
                 src={image}
-                alt={`${productName} view ${index + 1}`}
+                alt={`матрас ${productName} фото ${index + 1}`}
                 className="w-full h-full object-cover"
                 loading="lazy"
                 decoding="async"

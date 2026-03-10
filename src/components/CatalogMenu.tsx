@@ -250,7 +250,7 @@ useEffect(() => {
   }, [isOpen, selectedCategory]);
 
   const handleNavigate = (categoryId: string, filter?: { section: string; item: string }) => {
-    let url = `/products?category=${encodeURIComponent(categoryId)}`;
+    let url = `/categories/${encodeURIComponent(categoryId)}`;
     
     if (filter) {
       const state: any = { selectedCategories: [categoryId] };

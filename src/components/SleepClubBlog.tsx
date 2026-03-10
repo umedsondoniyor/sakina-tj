@@ -4,14 +4,21 @@ import type { BlogPost } from '../lib/types';
 import BlogMainPost from './blog/BlogMainPost';
 import BlogSidePost from './blog/BlogSidePost';
 
-const SleepClubBlog: React.FC = () => {
-  const [posts, setPosts] = useState<BlogPost[]>([]);
-  const [loading, setLoading] = useState(true);
+interface SleepClubBlogProps {
+  initialPosts?: BlogPost[];
+}
+
+const SleepClubBlog: React.FC<SleepClubBlogProps> = ({ initialPosts = [] }) => {
+  const [posts, setPosts] = useState<BlogPost[]>(initialPosts);
+  const [loading, setLoading] = useState(initialPosts.length === 0);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (initialPosts.length > 0) {
+      return;
+    }
     loadBlogPosts();
-  }, []);
+  }, [initialPosts.length]);
 
   const loadBlogPosts = async () => {
     try {

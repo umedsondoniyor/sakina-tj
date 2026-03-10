@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const supabaseFunctionsUrl = import.meta.env.VITE_SUPABASE_FUNCTIONS_URL;
+const isBrowser = typeof window !== 'undefined';
 
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables');
@@ -19,9 +20,9 @@ export const supabase = createClient(
       url: supabaseFunctionsUrl!,
     },
   auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true
+    persistSession: isBrowser,
+    autoRefreshToken: isBrowser,
+    detectSessionInUrl: isBrowser
   },
   global: {
     headers: { 'x-application-name': 'sakina' }
@@ -78,7 +79,9 @@ export async function checkSupabaseConnection(retries = 3, delay = 1000) {
       }
       
       console.error('All connection attempts failed:', error.message);
-      toast.error('Unable to connect to the database. Please check your internet connection.');
+      if (isBrowser) {
+        toast.error('Unable to connect to the database. Please check your internet connection.');
+      }
       return false;
     }
   }
@@ -87,26 +90,28 @@ export async function checkSupabaseConnection(retries = 3, delay = 1000) {
 }
 
 // Initialize connection check with exponential backoff
-(async () => {
-  let connected = false;
-  let retryCount = 0;
-  const maxRetries = 5;
-  let delay = 1000;
+if (isBrowser) {
+  (async () => {
+    let connected = false;
+    let retryCount = 0;
+    const maxRetries = 5;
+    let delay = 1000;
 
-  while (!connected && retryCount < maxRetries) {
-    connected = await checkSupabaseConnection();
-    if (!connected) {
-      retryCount++;
-      if (retryCount < maxRetries) {
-        console.log(`Retrying connection in ${delay}ms... (Attempt ${retryCount + 1}/${maxRetries})`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-        delay *= 2; // Exponential backoff
+    while (!connected && retryCount < maxRetries) {
+      connected = await checkSupabaseConnection();
+      if (!connected) {
+        retryCount++;
+        if (retryCount < maxRetries) {
+          console.log(`Retrying connection in ${delay}ms... (Attempt ${retryCount + 1}/${maxRetries})`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          delay *= 2; // Exponential backoff
+        }
       }
     }
-  }
 
-  if (!connected) {
-    console.error('Failed to establish connection to Supabase after multiple attempts');
-    toast.error('Database connection failed. Please refresh the page or try again later.');
-  }
-})();
+    if (!connected) {
+      console.error('Failed to establish connection to Supabase after multiple attempts');
+      toast.error('Database connection failed. Please refresh the page or try again later.');
+    }
+  })();
+}

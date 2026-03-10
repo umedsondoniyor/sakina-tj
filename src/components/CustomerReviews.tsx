@@ -6,20 +6,27 @@ import ReviewsHeader from './reviews/ReviewsHeader';
 import ReviewCard from './reviews/ReviewCard';
 import MediaModal from './reviews/MediaModal';
 
-const CustomerReviews = () => {
-  const [reviews, setReviews] = useState<CustomerReview[]>([]);
+interface CustomerReviewsProps {
+  initialReviews?: CustomerReview[];
+}
+
+const CustomerReviews = ({ initialReviews = [] }: CustomerReviewsProps) => {
+  const [reviews, setReviews] = useState<CustomerReview[]>(initialReviews);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [selectedReview, setSelectedReview] = useState<CustomerReview | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(initialReviews.length === 0);
   const [error, setError] = useState<string | null>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (initialReviews.length > 0) {
+      return;
+    }
     loadReviews();
-  }, []);
+  }, [initialReviews.length]);
 
   const loadReviews = async () => {
     try {

@@ -1,8 +1,13 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { useParams } from 'react-router-dom';
-import { getProducts } from '../lib/api';
+import { Link, useLoaderData, useParams } from 'react-router-dom';
+import { getProductById, getProductsByCategory } from '../lib/api';
 import { useCart } from '../contexts/CartContext';
 import type { Product, ProductVariant } from '../lib/types';
+import type { ProductPageLoaderData } from '../loaders/publicLoaders';
+import SEO from './SEO';
+import StructuredData from './StructuredData';
+import { toAbsoluteUrl } from '../lib/seo';
+import { toGa4Item, trackAddToCart, trackViewItem } from '../lib/analytics';
 
 // Subcomponents
 import ProductBreadcrumbs from './product/ProductBreadcrumbs';
@@ -15,12 +20,16 @@ import ProductCharacteristicsModal from './product/ProductCharacteristicsModal';
 const ProductPage: React.FC = () => {
   const { id } = useParams();
   const { addItem } = useCart();
+  const loaderData = useLoaderData() as ProductPageLoaderData | undefined;
+  const initialProduct = loaderData?.product ?? null;
+  const initialSimilarProducts = loaderData?.similarProducts ?? [];
 
-  const [product, setProduct] = useState<Product | null>(null);
+  const [product, setProduct] = useState<Product | null>(initialProduct);
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!initialProduct);
   const [showCharacteristicsModal, setShowCharacteristicsModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [similarProducts, setSimilarProducts] = useState<Product[]>(initialSimilarProducts);
 
   // 🧩 Universal safe value helper
   const safeValue = (value: any, suffix = ''): string | null => {
@@ -37,12 +46,19 @@ const ProductPage: React.FC = () => {
   };
 
   useEffect(() => {
+    if (initialProduct) {
+      return;
+    }
+
     const loadProduct = async () => {
       setLoading(true);
       setError(null);
       try {
-        const products = await getProducts();
-        const found = products.find(p => p.id === id);
+        if (!id) {
+          setProduct(null);
+          return;
+        }
+        const found = await getProductById(id);
         setProduct(found || null);
       } catch (err) {
         console.error('Error loading product:', err);
@@ -53,7 +69,46 @@ const ProductPage: React.FC = () => {
     };
 
     loadProduct();
-  }, [id]);
+  }, [id, initialProduct]);
+
+  useEffect(() => {
+    if (!product) {
+      return;
+    }
+    trackViewItem(
+      toGa4Item({
+        item_id: product.id,
+        item_name: product.name,
+        price: Number(product.price) || 0,
+      }),
+    );
+  }, [product?.id]);
+
+  useEffect(() => {
+    const loadSimilarProducts = async () => {
+      if (!product?.category) {
+        setSimilarProducts([]);
+        return;
+      }
+      if (initialSimilarProducts.length > 0) {
+        setSimilarProducts(initialSimilarProducts);
+        return;
+      }
+
+      try {
+        const sameCategory = await getProductsByCategory(product.category);
+        const filtered = sameCategory
+          .filter((item) => item.id !== product.id)
+          .slice(0, 4);
+        setSimilarProducts(filtered);
+      } catch (err) {
+        console.error('Error loading similar products:', err);
+        setSimilarProducts([]);
+      }
+    };
+
+    loadSimilarProducts();
+  }, [product?.id, product?.category, initialSimilarProducts.length]);
 
   const handleAddToCart = () => {
     if (!product) return;
@@ -76,6 +131,14 @@ const ProductPage: React.FC = () => {
     };
 
     addItem(cartItem);
+    trackAddToCart(
+      toGa4Item({
+        item_id: variant ? `${product.id}_${variant.id}` : product.id,
+        item_name: product.name,
+        price: Number(price) || 0,
+        quantity: 1,
+      }),
+    );
   };
 
   const productImages = useMemo(() => product?.image_urls || [], [product]);
@@ -83,6 +146,61 @@ const ProductPage: React.FC = () => {
   if (loading) return <ProductLoadingState />;
   if (error) return <div className="text-center py-16 text-red-600">{error}</div>;
   if (!product) return <ProductNotFound />;
+
+  const seoVariant = selectedVariant || product.variants?.[0] || null;
+  const seoSize =
+    seoVariant?.width_cm && seoVariant?.length_cm
+      ? `${seoVariant.width_cm}x${seoVariant.length_cm}`
+      : seoVariant?.size_name || '';
+  const seoTitle = `Матрас ${product.name}${seoSize ? ` ${seoSize}` : ''}`;
+  const seoDescriptionParts = [
+    product.mattress_type ? `тип: ${product.mattress_type}` : null,
+    product.hardness ? `жесткость: ${product.hardness}` : null,
+    product.spring_block_type ? `пружинный блок: ${product.spring_block_type}` : null,
+    product.warranty_years ? `гарантия: ${product.warranty_years} лет` : null,
+  ].filter(Boolean);
+  const seoDescription = `Матрас ${product.name}${seoSize ? ` ${seoSize}` : ''}. ${seoDescriptionParts.join(', ')}. Купить в Душанбе с доставкой.`;
+  const canonicalPath = `/products/${product.id}`;
+  const canonicalUrl = toAbsoluteUrl(canonicalPath);
+  const primaryImage = product.image_urls?.[0] || product.image_url || '';
+  const imageList = (product.image_urls?.length ? product.image_urls : [primaryImage]).filter(Boolean);
+  const variantsWithInventory = (product.variants || []).filter((variant: any) => variant.inventory);
+  const availability = variantsWithInventory.length > 0
+    ? variantsWithInventory.some((variant: any) => variant.inventory?.in_stock === true)
+      ? 'https://schema.org/InStock'
+      : 'https://schema.org/OutOfStock'
+    : 'https://schema.org/InStock';
+  const productSchema: Record<string, unknown> = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    image: imageList,
+    description: seoDescription,
+    offers: {
+      '@type': 'Offer',
+      price: Number(seoVariant?.price ?? product.price),
+      priceCurrency: 'TJS',
+      availability,
+      url: canonicalUrl,
+    },
+  };
+  if ((product as any).brand) {
+    productSchema.brand = {
+      '@type': 'Brand',
+      name: (product as any).brand,
+    };
+  }
+  if (Number(product.review_count) > 0 && Number(product.rating) > 0) {
+    productSchema.aggregateRating = {
+      '@type': 'AggregateRating',
+      ratingValue: Number(product.rating),
+      reviewCount: Number(product.review_count),
+    };
+  }
+
+  const maxWeightPerPerson = safeValue(product.weight_category);
+  const highlightedHeight = safeValue(seoVariant?.height_cm, ' см');
+  const highlightedMaterials = safeValue(product.filler_material || product.cover_material);
 
   // Simple reusable component for specs
   const SpecRow = ({
@@ -101,6 +219,8 @@ const ProductPage: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
+      <SEO title={seoTitle} description={seoDescription} canonicalPath={canonicalPath} />
+      <StructuredData data={productSchema} />
       {/* Breadcrumbs */}
       <ProductBreadcrumbs productName={product.name} category={product.category} />
 
@@ -122,6 +242,28 @@ const ProductPage: React.FC = () => {
 
       {/* Description and Characteristics */}
       <div className="mt-12 space-y-10">
+        <section>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Ключевые характеристики</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="rounded-lg border border-gray-200 bg-white p-4">
+              <div className="text-sm text-gray-500">Жесткость</div>
+              <div className="mt-1 text-base font-semibold text-gray-900">{safeValue(product.hardness) || 'Уточняется'}</div>
+            </div>
+            <div className="rounded-lg border border-gray-200 bg-white p-4">
+              <div className="text-sm text-gray-500">Высота</div>
+              <div className="mt-1 text-base font-semibold text-gray-900">{highlightedHeight || 'Уточняется'}</div>
+            </div>
+            <div className="rounded-lg border border-gray-200 bg-white p-4">
+              <div className="text-sm text-gray-500">Макс. вес на спальное место</div>
+              <div className="mt-1 text-base font-semibold text-gray-900">{maxWeightPerPerson || 'Уточняется'}</div>
+            </div>
+            <div className="rounded-lg border border-gray-200 bg-white p-4">
+              <div className="text-sm text-gray-500">Состав/Наполнители</div>
+              <div className="mt-1 text-base font-semibold text-gray-900">{highlightedMaterials || 'Уточняется'}</div>
+            </div>
+          </div>
+        </section>
+
         {/* Description */}
         <section>
           <h2 className="text-2xl font-bold text-gray-900 mb-6">О товаре</h2>
@@ -250,6 +392,39 @@ const ProductPage: React.FC = () => {
             ))}
           </ul>
         </section>
+
+        {similarProducts.length > 0 ? (
+          <section>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Похожие товары</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {similarProducts.map((item) => (
+                <Link
+                  key={item.id}
+                  to={`/products/${item.id}`}
+                  className="group bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow"
+                >
+                  <div className="aspect-[4/3]">
+                    <img
+                      src={item.image_url}
+                      alt={`матрас ортопедический ${item.name}`}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                      decoding="async"
+                      width="400"
+                      height="300"
+                    />
+                  </div>
+                  <div className="p-3">
+                    <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 group-hover:text-teal-600">
+                      {item.name}
+                    </h3>
+                    <p className="text-sm text-gray-600 mt-1">{item.price.toLocaleString('ru-RU')} c.</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        ) : null}
       </div>
 
       {/* Modal */}

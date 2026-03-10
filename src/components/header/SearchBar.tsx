@@ -230,7 +230,7 @@ const SearchBar: React.FC = () => {
     // If it's a category search, navigate to products page with category filter
     const detectedCategory = detectCategory(q);
     if (detectedCategory) {
-      navigate(`/products?category=${encodeURIComponent(detectedCategory)}`);
+      navigate(`/categories/${encodeURIComponent(detectedCategory)}`);
       setOpen(false);
       setSelectedIndex(-1);
       return;

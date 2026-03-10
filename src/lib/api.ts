@@ -76,6 +76,27 @@ export async function getProducts(): Promise<Product[]> {
   }, 3, 600, 'getProducts');
 }
 
+export async function getProductById(id: string): Promise<Product | null> {
+  return retryOperation(async () => {
+    const { data, error } = await supabase
+      .from('products')
+      .select(`
+        *,
+        product_variants:product_variants(*)
+      `)
+      .eq('id', id)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!data) return null;
+
+    return {
+      ...data,
+      variants: data.product_variants ?? data.variants ?? [],
+    } as Product;
+  }, 3, 600, `getProductById:${id}`);
+}
+
 export async function getProductVariants(productId: string): Promise<ProductVariant[]> {
   return retryOperation(async () => {
     // First get the variants
@@ -208,6 +229,32 @@ export async function getCategories(): Promise<Category[]> {
   }, 3, 600, 'getCategories');
 }
 
+export async function getAllCategorySlugs(): Promise<string[]> {
+  return retryOperation(async () => {
+    const { data: categories, error: categoriesError } = await supabase
+      .from('categories')
+      .select('slug');
+
+    if (categoriesError) throw categoriesError;
+
+    const { data: products, error: productsError } = await supabase
+      .from('products')
+      .select('category');
+
+    if (productsError) throw productsError;
+
+    const slugs = new Set<string>();
+    (categories ?? []).forEach((category: any) => {
+      if (category?.slug) slugs.add(category.slug);
+    });
+    (products ?? []).forEach((product: any) => {
+      if (product?.category) slugs.add(product.category);
+    });
+
+    return Array.from(slugs);
+  }, 3, 600, 'getAllCategorySlugs');
+}
+
 export async function getProductsByCategory(category: string): Promise<Product[]> {
   return retryOperation(async () => {
     const { data, error } = await supabase
@@ -225,6 +272,17 @@ export async function getProductsByCategory(category: string): Promise<Product[]
       variants: p.product_variants ?? p.variants ?? [],
     })) as Product[];
   }, 3, 600, `getProductsByCategory:${category}`);
+}
+
+export async function getAllProductIds(): Promise<string[]> {
+  return retryOperation(async () => {
+    const { data, error } = await supabase
+      .from('products')
+      .select('id');
+
+    if (error) throw error;
+    return (data ?? []).map((row: any) => row.id).filter(Boolean);
+  }, 3, 600, 'getAllProductIds');
 }
 
 /* ------------------- Reviews ------------------- */
@@ -383,4 +441,23 @@ export async function updateRelatedProductOrder(
 
     if (error) throw error;
   }, 3, 600, `updateRelatedProductOrder:${relationId}`);
+}
+
+export async function getDeliveryPaymentSettings(): Promise<{
+  id: string;
+  title: string;
+  description: string | null;
+  delivery_content: string | null;
+  payment_content: string | null;
+} | null> {
+  return retryOperation(async () => {
+    const { data, error } = await supabase
+      .from('delivery_payment_settings')
+      .select('*')
+      .limit(1)
+      .maybeSingle();
+
+    if (error) throw error;
+    return data ?? null;
+  }, 3, 600, 'getDeliveryPaymentSettings');
 }

@@ -5,12 +5,12 @@ import CategoryScrollControls from './category/CategoryScrollControls';
 import SwipeHint from './category/SwipeHint';
 
 const categories = [
-  { id: 1, name: 'Матрасы', image: 'https://ik.imagekit.io/3js0rb3pk/categ_matress.png', slug: 'mattresses' },
-  { id: 2, name: 'Кровати', image: 'https://ik.imagekit.io/3js0rb3pk/categ_bed.png', slug: 'beds', link: '/products?category=beds' },
+  { id: 1, name: 'Матрасы', image: 'https://ik.imagekit.io/3js0rb3pk/categ_matress.png', slug: 'mattresses', link: '/categories/mattresses' },
+  { id: 2, name: 'Кровати', image: 'https://ik.imagekit.io/3js0rb3pk/categ_bed.png', slug: 'beds', link: '/categories/beds' },
   { id: 3, name: 'Одеяло', image: 'https://ik.imagekit.io/3js0rb3pk/categ_blanket.png', slug: 'blankets' },
-  { id: 4, name: 'Массажное кресло', image: '/images/smart-chair-b.png', slug: 'smartchair' },
-  { id: 5, name: 'Подушки', image: 'https://ik.imagekit.io/3js0rb3pk/categ_pillow.png', slug: 'pillows', link: '/products?category=pillows' },
-  { id: 6, name: 'Деревянные 3D-карты', image: 'https://ik.imagekit.io/3js0rb3pk/categ_map.png', slug: 'world-maps', link: '/products?category=map' },
+  { id: 4, name: 'Массажное кресло', image: '/images/smart-chair-b.png', slug: 'smartchair', link: '/categories/smartchair' },
+  { id: 5, name: 'Подушки', image: 'https://ik.imagekit.io/3js0rb3pk/categ_pillow.png', slug: 'pillows', link: '/categories/pillows' },
+  { id: 6, name: 'Деревянные 3D-карты', image: 'https://ik.imagekit.io/3js0rb3pk/categ_map.png', slug: 'world-maps', link: '/categories/map' },
 ];
 
 const CategoryGrid: React.FC = () => {
@@ -70,15 +70,10 @@ const CategoryGrid: React.FC = () => {
     e.preventDefault();
     window.history.replaceState(null, '', window.location.pathname + window.location.search);
 
-    if (category.slug === 'mattresses') {
-      navigate('/mattresses');
-    } else if (category.link) {
+    if (category.link) {
       navigate(category.link);
     } else {
-      navigate(`/products?category=${category.slug}`, {
-        replace: true,
-        state: { selectedCategories: [category.slug], immediate: true },
-      });
+      navigate(`/categories/${category.slug}`);
     }
   };
 
@@ -124,9 +119,9 @@ const CategoryGrid: React.FC = () => {
               py-1
             "
           >
-            {categories.map((category) => (
+            {categories.map((category, index) => (
               <div key={category.id} className="snap-start">
-                <CategoryItem category={category} onCategoryClick={handleCategoryClick} />
+                <CategoryItem category={category} onCategoryClick={handleCategoryClick} index={index} />
               </div>
             ))}
           </div>
@@ -142,12 +137,13 @@ const CategoryGrid: React.FC = () => {
 
       {/* DESKTOP/TABLET: full-width wrapping grid (no scroller wrapper) */}
       <div className="hidden md:block">
-        <div className="grid gap-6 md:gap-8 grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
-          {categories.map((category) => (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          {categories.map((category, index) => (
             <CategoryItem
               key={category.id}
               category={category}
               onCategoryClick={handleCategoryClick}
+              index={index}
             />
           ))}
         </div>
