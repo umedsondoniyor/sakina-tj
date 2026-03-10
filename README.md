@@ -1,6 +1,6 @@
 # 📦 Sakina TJ – E-Commerce Platform
 
-![Logo]([public/images/logo.png](https://github.com/umedsondoniyor/sakina-tj/blob/main/public/favicon/favicon.svg))
+![Logo](https://github.com/umedsondoniyor/sakina-tj/blob/main/public/favicon/favicon.svg)
 
 A modern, full-stack **e-commerce web application** built with **React, TypeScript, TailwindCSS, and Supabase**. The platform is optimized for **mattresses, beds, and home comfort products**, featuring a fast responsive UI, secure payments, comprehensive admin panel with role-based access control, and a smooth shopping experience.
 
