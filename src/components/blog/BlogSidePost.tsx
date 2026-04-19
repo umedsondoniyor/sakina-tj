@@ -16,15 +16,15 @@ const BlogSidePost: React.FC<BlogSidePostProps> = ({ post }) => {
   };
 
   return (
-    <div className="flex space-x-4 group cursor-pointer" onClick={handleClick}>
-      <div className="w-32 h-56 md:w-36 md:h-64 flex-shrink-0">
+    <div className="flex space-x-4 group cursor-pointer min-w-0" onClick={handleClick}>
+      <div className="w-32 h-56 md:w-36 md:h-64 shrink-0">
         <img
           src={post.featured_image || 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=300&q=80'}
           alt={post.title}
           className="w-full h-full object-cover rounded-lg group-hover:scale-105 transition-transform duration-300"
         />
       </div>
-      <div>
+      <div className="min-w-0 flex-1">
         {/* Post Meta */}
         <div className="flex items-center space-x-2 text-xs text-gray-500 mb-1">
           {post.category && (

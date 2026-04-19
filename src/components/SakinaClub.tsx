@@ -228,7 +228,7 @@ const SakinaClub = () => {
                     onClick={() => setIsLoginModalOpen(true)}
                     className="flex-1 bg-white border-2 border-teal-600 text-teal-700 px-6 py-2 rounded-lg hover:bg-brand-turquoise hover:text-white transition-colors"
             >
-                    Войти
+                    Вступить в Сообщество
             </button>
                 </div>
               </>

@@ -106,7 +106,23 @@ const SleepClubBlog: React.FC<SleepClubBlogProps> = ({ initialPosts = [] }) => {
               <div className="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
               <div className="h-4 bg-gray-200 rounded w-full"></div>
             </div>
-            <div className="space-y-6">
+            <div className="md:hidden -mx-4 overflow-x-hidden px-4">
+              <div className="flex gap-4">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="shrink-0 w-[calc(100vw-2rem)] max-w-md">
+                    <div className="flex space-x-4">
+                      <div className="w-32 h-56 bg-gray-200 rounded-lg shrink-0" />
+                      <div className="flex-1 min-w-0 space-y-2 pt-1">
+                        <div className="h-3 bg-gray-200 rounded w-2/3" />
+                        <div className="h-4 bg-gray-200 rounded w-full" />
+                        <div className="h-3 bg-gray-200 rounded w-full" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="hidden md:block space-y-6">
               {[...Array(3)].map((_, i) => (
                 <div key={i} className="flex space-x-4">
                   <div className="w-24 h-24 bg-gray-200 rounded-lg"></div>
@@ -164,11 +180,30 @@ const SleepClubBlog: React.FC<SleepClubBlogProps> = ({ initialPosts = [] }) => {
           {featuredPost && <BlogMainPost post={featuredPost} />}
         </div>
 
-        {/* Side Posts */}
-        <div className="space-y-6">
-          {sidePosts.map(post => (
-            <BlogSidePost key={post.id} post={post} />
-          ))}
+        {/* Side posts: horizontal swipe on mobile, column on md+ */}
+        <div>
+          <div
+            className="md:hidden -mx-4 overflow-x-auto overflow-y-hidden scrollbar-hide snap-x snap-mandatory px-4 pb-1"
+            role="region"
+            aria-roledescription="carousel"
+            aria-label="Статьи блога"
+          >
+            <div className="flex gap-4">
+              {sidePosts.map((post) => (
+                <div
+                  key={post.id}
+                  className="snap-start shrink-0 w-[calc(100vw-2rem)] max-w-md"
+                >
+                  <BlogSidePost post={post} />
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="hidden md:block space-y-6">
+            {sidePosts.map((post) => (
+              <BlogSidePost key={post.id} post={post} />
+            ))}
+          </div>
         </div>
       </div>
 
