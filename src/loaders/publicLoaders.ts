@@ -9,6 +9,8 @@ import {
   getFaqItems,
   getHomeFeatureBlocks,
   getHomeBenefitBlocks,
+  getHomeManufacturingSettings,
+  getHomeManufacturingSteps,
   getPrivacyPolicySettings,
   getProductBySlugOrId,
   getProducts,
@@ -26,6 +28,8 @@ import type {
   Product,
   HomeFeatureBlock,
   HomeBenefitBlock,
+  HomeManufacturingSettings,
+  HomeManufacturingStep,
   SeoExtraMetaTag,
 } from '../lib/types';
 
@@ -36,6 +40,8 @@ export interface HomePageLoaderData {
   seo: { title: string; description: string; extraMeta: SeoExtraMetaTag[] };
   featureBlocks: HomeFeatureBlock[];
   benefitBlocks: HomeBenefitBlock[];
+  manufacturingSettings: HomeManufacturingSettings | null;
+  manufacturingSteps: HomeManufacturingStep[];
 }
 
 export interface ProductsPageLoaderData {
@@ -77,18 +83,30 @@ const defaultDeliveryPaymentSettings = {
 };
 
 export async function homePageLoader(): Promise<HomePageLoaderData> {
-  const [slides, reviews, blogPosts, seoRows, featureBlocks, benefitBlocks] = await Promise.all([
-    getCarouselSlides().catch(() => []),
-    getCustomerReviews().catch(() => []),
-    getBlogPosts({ status: 'published', limit: 4 }).catch(() => []),
-    getSeoPageSettings().catch(() => []),
-    getHomeFeatureBlocks().catch(() => []),
-    getHomeBenefitBlocks().catch(() => []),
-  ]);
+  const [slides, reviews, blogPosts, seoRows, featureBlocks, benefitBlocks, manufacturingSettings, manufacturingSteps] =
+    await Promise.all([
+      getCarouselSlides().catch(() => []),
+      getCustomerReviews().catch(() => []),
+      getBlogPosts({ status: 'published', limit: 4 }).catch(() => []),
+      getSeoPageSettings().catch(() => []),
+      getHomeFeatureBlocks().catch(() => []),
+      getHomeBenefitBlocks().catch(() => []),
+      getHomeManufacturingSettings().catch(() => null),
+      getHomeManufacturingSteps().catch(() => []),
+    ]);
 
   const seo = resolveHomeSeo(seoRows);
 
-  return { slides, reviews, blogPosts, seo, featureBlocks, benefitBlocks };
+  return {
+    slides,
+    reviews,
+    blogPosts,
+    seo,
+    featureBlocks,
+    benefitBlocks,
+    manufacturingSettings,
+    manufacturingSteps,
+  };
 }
 
 export async function productsPageLoader({ request }: LoaderFunctionArgs): Promise<ProductsPageLoaderData> {

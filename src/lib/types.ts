@@ -267,6 +267,27 @@ export interface HomeBenefitBlock {
   updated_at: string;
 }
 
+/** Singleton hero for home «Процесс производства» (`home_manufacturing_settings`). */
+export interface HomeManufacturingSettings {
+  id: string;
+  youtube_url: string;
+  hero_title: string;
+  hero_subtitle: string;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Repeatable image + caption steps under the video (`home_manufacturing_steps`). */
+export interface HomeManufacturingStep {
+  id: string;
+  image_url: string;
+  caption: string;
+  order_index: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 /** Extra `<meta>` rows (Open Graph, Twitter, verification, etc.). */
 export interface SeoExtraMetaTag {
   /** Use `name` for standard meta, e.g. `twitter:card` */

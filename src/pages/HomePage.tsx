@@ -33,7 +33,10 @@ const HomePage: React.FC = () => {
       <Benefits initialBlocks={loaderData?.benefitBlocks} />
       <SleepClubBlog initialPosts={loaderData?.blogPosts} />
       <AskonaClub />
-      <ManufacturingProcess />
+      <ManufacturingProcess
+        initialSettings={loaderData?.manufacturingSettings}
+        initialSteps={loaderData?.manufacturingSteps}
+      />
       <ContactSection />
     </>
   );

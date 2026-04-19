@@ -14,6 +14,8 @@ import type {
   FaqItem,
   HomeFeatureBlock,
   HomeBenefitBlock,
+  HomeManufacturingSettings,
+  HomeManufacturingStep,
   SeoPageSetting,
   PrivacyPolicySettings,
   FooterPayload,
@@ -453,6 +455,34 @@ export async function getHomeBenefitBlocks(): Promise<HomeBenefitBlock[]> {
     if (error) throw error;
     return (data ?? []) as HomeBenefitBlock[];
   }, 3, 600, 'getHomeBenefitBlocks');
+}
+
+/** Hero video + titles for home «Процесс производства» (single row). */
+export async function getHomeManufacturingSettings(): Promise<HomeManufacturingSettings | null> {
+  return retryOperation(async () => {
+    const { data, error } = await supabase
+      .from('home_manufacturing_settings')
+      .select('*')
+      .eq('id', 'default')
+      .maybeSingle();
+
+    if (error) throw error;
+    return data as HomeManufacturingSettings | null;
+  }, 3, 600, 'getHomeManufacturingSettings');
+}
+
+/** Active steps under the manufacturing video on the home page. */
+export async function getHomeManufacturingSteps(): Promise<HomeManufacturingStep[]> {
+  return retryOperation(async () => {
+    const { data, error } = await supabase
+      .from('home_manufacturing_steps')
+      .select('*')
+      .eq('is_active', true)
+      .order('order_index', { ascending: true });
+
+    if (error) throw error;
+    return (data ?? []) as HomeManufacturingStep[];
+  }, 3, 600, 'getHomeManufacturingSteps');
 }
 
 /** Public SEO rows for `default` + `home` (see `resolveHomeSeo` in `lib/seo.ts`). */

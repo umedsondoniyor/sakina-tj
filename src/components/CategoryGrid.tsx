@@ -118,7 +118,7 @@ const CategoryGrid: React.FC = () => {
   const scrollBy = (left: number) => scrollRef.current?.scrollBy({ left, behavior: 'smooth' });
 
   return (
-    <section aria-label="Категории" className="relative max-w-7xl mx-auto px-4 py-4">
+    <section aria-label="Категории" className="relative max-w-7xl mx-auto px-4 sm:px-5 py-4">
       {/* MOBILE: two-row horizontal rail with controls and progress */}
       <div className="md:hidden relative">
         <CategoryScrollControls
@@ -131,9 +131,10 @@ const CategoryGrid: React.FC = () => {
         <div
           ref={scrollRef}
           className="
-            relative flex justify-center
-            overflow-x-auto scrollbar-hide
-            -mx-4 px-4  /* edge-to-edge on mobile only */
+            relative flex justify-start
+            overflow-x-auto overflow-y-hidden scrollbar-hide
+            overscroll-x-contain touch-pan-x
+            scroll-px-4 snap-x snap-mandatory
           "
           onMouseDown={(e) => startDrag(e.pageX)}
           onMouseMove={(e) => doDrag(e.pageX)}
@@ -148,21 +149,35 @@ const CategoryGrid: React.FC = () => {
         >
           <SwipeHint showSwipeHint={showSwipeHint} />
 
-          <div
-            className="
-              grid grid-rows-2 grid-flow-col justify-items-center
-              gap-x-10 sm:gap-x-12 gap-y-4
-              auto-cols-[minmax(120px,140px)] sm:auto-cols-[minmax(130px,150px)]
-              w-max max-w-none mx-auto
-              snap-x snap-mandatory
-              py-1
-            "
-          >
-            {categories.map((category, index) => (
-              <div key={category.id} className="snap-start w-full max-w-[150px]">
-                <CategoryItem category={category} onCategoryClick={handleCategoryClick} index={index} />
-              </div>
-            ))}
+          {/* Two tiles per column; flex row so each column snaps as a unit (avoids clipped / mis-centered grid) */}
+          <div className="flex flex-row gap-x-5 sm:gap-x-6 w-max shrink-0 py-1">
+            {Array.from({ length: Math.ceil(categories.length / 2) }, (_, colIdx) => {
+              const top = categories[colIdx * 2];
+              const bottom = categories[colIdx * 2 + 1];
+              return (
+                <div
+                  key={top.id}
+                  className="snap-center flex flex-col gap-y-3 sm:gap-y-4 items-center w-[104px] sm:w-[118px] shrink-0"
+                >
+                  <div className="w-full min-w-0">
+                    <CategoryItem
+                      category={top}
+                      onCategoryClick={handleCategoryClick}
+                      index={colIdx * 2}
+                    />
+                  </div>
+                  {bottom ? (
+                    <div className="w-full min-w-0">
+                      <CategoryItem
+                        category={bottom}
+                        onCategoryClick={handleCategoryClick}
+                        index={colIdx * 2 + 1}
+                      />
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })}
           </div>
         </div>
 
