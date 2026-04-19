@@ -37,6 +37,7 @@ export async function getFirstAccessibleMenuPath(userRole: UserRole | null): Pro
         { path: '/admin/footer' },
         { path: '/admin/seo' },
         { path: '/admin/features' },
+        { path: '/admin/mattresses' },
       ],
     },
     {
