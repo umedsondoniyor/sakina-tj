@@ -55,6 +55,7 @@ import AdminPrivacyPolicy from '../components/admin/AdminPrivacyPolicy';
 import AdminFooter from '../components/admin/AdminFooter';
 import AdminSeo from '../components/admin/AdminSeo';
 import AdminFeatures from '../components/admin/AdminFeatures';
+import AdminHomeBenefits from '../components/admin/AdminHomeBenefits';
 import AdminClubMembers from '../components/admin/AdminClubMembers';
 import {
   categoryProductsLoader,
@@ -149,6 +150,7 @@ export const appRoutes = createRoutesFromElements(
       <Route path="footer" element={<RoleProtectedRoute><AdminFooter /></RoleProtectedRoute>} />
       <Route path="seo" element={<RoleProtectedRoute><AdminSeo /></RoleProtectedRoute>} />
       <Route path="features" element={<RoleProtectedRoute><AdminFeatures /></RoleProtectedRoute>} />
+      <Route path="home-benefits" element={<RoleProtectedRoute><AdminHomeBenefits /></RoleProtectedRoute>} />
       <Route path="one-click-orders" element={<RoleProtectedRoute><AdminOneClickOrders /></RoleProtectedRoute>} />
       <Route path="users" element={<RoleProtectedRoute><AdminUsers /></RoleProtectedRoute>} />
       <Route path="role-management" element={<RoleProtectedRoute><AdminRoleManagement /></RoleProtectedRoute>} />

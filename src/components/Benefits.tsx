@@ -1,53 +1,78 @@
 // src/components/Benefits.tsx
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import BenefitCard from './benefits/BenefitCard';
+import type { HomeBenefitBlock } from '../lib/types';
 
-interface Benefit {
-  id: number;
-  icon: string;
-  title: string;
-  subtitle: string;
-  description: string;
-}
-
-const benefits: Benefit[] = [
+/** Matches previous hardcoded cards when API returns nothing or fails. */
+const STATIC_FALLBACK: HomeBenefitBlock[] = [
   {
-    id: 1,
-    icon: '/images/review.png',
+    id: 'fallback-0',
+    image_url: '/images/review.png',
     title: 'Более 1000+',
     subtitle: 'положительных отзывов',
-    description:
+    body:
       'Тысячи счастливых историй — тысячи спокойных ночей. Люди доверяют Sakina свой сон — и остаются влюблены в комфорт.',
+    link_url: null,
+    order_index: 0,
+    is_active: true,
+    created_at: '',
+    updated_at: '',
   },
   {
-    id: 2,
-    icon: '/images/waranty.png',
+    id: 'fallback-1',
+    image_url: '/images/waranty.png',
     title: 'Гарантия - 8 лет,',
     subtitle: 'но прослужить более 20 лет',
-    description:
+    body:
       'Матрас, который заботится о вас долгие годы. Мы уверены в своём качестве и готовы отвечать за него.',
+    link_url: null,
+    order_index: 1,
+    is_active: true,
+    created_at: '',
+    updated_at: '',
   },
   {
-    id: 3,
-    icon: '/images/delivery.png',
+    id: 'fallback-2',
+    image_url: '/images/delivery.png',
     title: 'Быстрая доставка',
     subtitle: 'в день заказа',
-    description:
+    body:
       'Комфорт не должен ждать. Вы выбираете — мы доставляем уже сегодня, чтобы этой ночью вы спали лучше.',
+    link_url: null,
+    order_index: 2,
+    is_active: true,
+    created_at: '',
+    updated_at: '',
   },
   {
-    id: 4,
-    icon: '/images/labratory.png',
+    id: 'fallback-3',
+    image_url: '/images/labratory.png',
     title: 'Мировые стандарты производства',
     subtitle: 'для контроля качества',
-    description:
+    body:
       'Наши матрасы производятся в самых инновационных и технологичных фабриках',
+    link_url: null,
+    order_index: 3,
+    is_active: true,
+    created_at: '',
+    updated_at: '',
   },
 ];
 
-const Benefits: React.FC = () => {
-  const [hoveredId, setHoveredId] = useState<number | null>(null);
+interface BenefitsProps {
+  initialBlocks?: HomeBenefitBlock[];
+}
+
+const Benefits: React.FC<BenefitsProps> = ({ initialBlocks }) => {
+  const blocks = useMemo(() => {
+    if (initialBlocks && initialBlocks.length > 0) {
+      return [...initialBlocks].sort((a, b) => a.order_index - b.order_index);
+    }
+    return STATIC_FALLBACK;
+  }, [initialBlocks]);
+
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [scrollProgress, setScrollProgress] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -66,13 +91,13 @@ const Benefits: React.FC = () => {
     container.addEventListener('scroll', updateScrollProgress, { passive: true });
     updateScrollProgress();
     return () => container.removeEventListener('scroll', updateScrollProgress);
-  }, []);
+  }, [blocks]);
 
   return (
     <section aria-label="Преимущества" className="max-w-7xl mx-auto px-4 py-10 sm:py-12 md:py-16">
       {/* Tablet & desktop: grid + hover bubbles */}
       <div className="hidden md:grid gap-6 md:gap-8 md:grid-cols-2 lg:grid-cols-4">
-        {benefits.map((benefit) => (
+        {blocks.map((benefit) => (
           <div
             key={benefit.id}
             className="
@@ -103,7 +128,7 @@ const Benefits: React.FC = () => {
             pl-[max(1rem,calc(50%-150px))] pr-[max(1rem,calc(50%-150px))]
           "
         >
-          {benefits.map((benefit) => (
+          {blocks.map((benefit) => (
             <div key={benefit.id} className="flex-none w-[300px] snap-center snap-always">
               <BenefitCard benefit={benefit} isHovered={false} staticLayout />
             </div>

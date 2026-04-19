@@ -13,6 +13,7 @@ import type {
   RelatedProduct,
   FaqItem,
   HomeFeatureBlock,
+  HomeBenefitBlock,
   SeoPageSetting,
   PrivacyPolicySettings,
   FooterPayload,
@@ -438,6 +439,20 @@ export async function getHomeFeatureBlocks(): Promise<HomeFeatureBlock[]> {
     if (error) throw error;
     return (data ?? []) as HomeFeatureBlock[];
   }, 3, 600, 'getHomeFeatureBlocks');
+}
+
+/** Active image cards for the home page Benefits section (below Features). */
+export async function getHomeBenefitBlocks(): Promise<HomeBenefitBlock[]> {
+  return retryOperation(async () => {
+    const { data, error } = await supabase
+      .from('home_benefit_blocks')
+      .select('*')
+      .eq('is_active', true)
+      .order('order_index', { ascending: true });
+
+    if (error) throw error;
+    return (data ?? []) as HomeBenefitBlock[];
+  }, 3, 600, 'getHomeBenefitBlocks');
 }
 
 /** Public SEO rows for `default` + `home` (see `resolveHomeSeo` in `lib/seo.ts`). */

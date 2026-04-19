@@ -8,6 +8,7 @@ import {
   getDeliveryPaymentSettings,
   getFaqItems,
   getHomeFeatureBlocks,
+  getHomeBenefitBlocks,
   getPrivacyPolicySettings,
   getProductBySlugOrId,
   getProducts,
@@ -24,6 +25,7 @@ import type {
   PrivacyPolicySettings,
   Product,
   HomeFeatureBlock,
+  HomeBenefitBlock,
   SeoExtraMetaTag,
 } from '../lib/types';
 
@@ -33,6 +35,7 @@ export interface HomePageLoaderData {
   blogPosts: BlogPost[];
   seo: { title: string; description: string; extraMeta: SeoExtraMetaTag[] };
   featureBlocks: HomeFeatureBlock[];
+  benefitBlocks: HomeBenefitBlock[];
 }
 
 export interface ProductsPageLoaderData {
@@ -74,17 +77,18 @@ const defaultDeliveryPaymentSettings = {
 };
 
 export async function homePageLoader(): Promise<HomePageLoaderData> {
-  const [slides, reviews, blogPosts, seoRows, featureBlocks] = await Promise.all([
+  const [slides, reviews, blogPosts, seoRows, featureBlocks, benefitBlocks] = await Promise.all([
     getCarouselSlides().catch(() => []),
     getCustomerReviews().catch(() => []),
     getBlogPosts({ status: 'published', limit: 4 }).catch(() => []),
     getSeoPageSettings().catch(() => []),
     getHomeFeatureBlocks().catch(() => []),
+    getHomeBenefitBlocks().catch(() => []),
   ]);
 
   const seo = resolveHomeSeo(seoRows);
 
-  return { slides, reviews, blogPosts, seo, featureBlocks };
+  return { slides, reviews, blogPosts, seo, featureBlocks, benefitBlocks };
 }
 
 export async function productsPageLoader({ request }: LoaderFunctionArgs): Promise<ProductsPageLoaderData> {

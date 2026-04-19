@@ -30,7 +30,7 @@ const HomePage: React.FC = () => {
       <ProductPickers />
       <CustomerReviews initialReviews={loaderData?.reviews} />
       <Features initialBlocks={loaderData?.featureBlocks} />
-      <Benefits />
+      <Benefits initialBlocks={loaderData?.benefitBlocks} />
       <SleepClubBlog initialPosts={loaderData?.blogPosts} />
       <AskonaClub />
       <ManufacturingProcess />

@@ -1,13 +1,8 @@
 import React from 'react';
+import type { HomeBenefitBlock } from '../../lib/types';
 
 interface BenefitCardProps {
-  benefit: {
-    id: number;
-    icon: string;
-    title: string;
-    subtitle: string;
-    description: string;
-  };
+  benefit: HomeBenefitBlock;
   isHovered: boolean;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
@@ -22,11 +17,13 @@ const BenefitCard: React.FC<BenefitCardProps> = ({
   onMouseLeave,
   staticLayout = false,
 }) => {
+  const moreHref = benefit.link_url?.trim() || '';
+
   if (staticLayout) {
     return (
       <article className="bg-white rounded-xl border border-gray-200/90 shadow-md shadow-gray-200/50 p-5 flex flex-col items-center text-center gap-3 h-full min-h-[280px]">
         <img
-          src={benefit.icon}
+          src={benefit.image_url}
           alt=""
           className="w-24 h-24 object-contain shrink-0"
         />
@@ -34,15 +31,15 @@ const BenefitCard: React.FC<BenefitCardProps> = ({
           <span className="block">{benefit.title}</span>
           <span className="block text-sm font-medium text-gray-700 mt-1">{benefit.subtitle}</span>
         </h3>
-        <p className="text-sm text-gray-700 leading-snug flex-1">{benefit.description}</p>
-        {(benefit.id === 1 || benefit.id === 3) && (
+        <p className="text-sm text-gray-700 leading-snug flex-1">{benefit.body}</p>
+        {moreHref ? (
           <a
-            href="#"
+            href={moreHref}
             className="inline-block text-sm text-brand-turquoise hover:text-brand-navy underline mt-auto shrink-0"
           >
             Подробнее
           </a>
-        )}
+        ) : null}
       </article>
     );
   }
@@ -51,7 +48,7 @@ const BenefitCard: React.FC<BenefitCardProps> = ({
     <div className="relative" onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
       <div className="flex flex-row items-center bg-white rounded-lg transition-all hover:cursor-pointer duration-300 hover:text-brand-turquoise">
         <img
-          src={benefit.icon}
+          src={benefit.image_url}
           alt={benefit.title}
           className="w-32 h-32 flex-shrink-0 p-4 object-contain"
           style={{ aspectRatio: 'auto' }}
@@ -78,15 +75,15 @@ const BenefitCard: React.FC<BenefitCardProps> = ({
 
         {/* Message Content */}
         <div className="bg-yellow-100 rounded-lg p-4 relative">
-          <p className="text-sm text-gray-800">{benefit.description}</p>
-          {(benefit.id === 1 || benefit.id === 3) && (
+          <p className="text-sm text-gray-800">{benefit.body}</p>
+          {moreHref ? (
             <a
-              href="#"
+              href={moreHref}
               className="inline-block mt-2 text-sm text-brand-turquoise hover:text-brand-navy underline"
             >
               Подробнее
             </a>
-          )}
+          ) : null}
         </div>
       </div>
     </div>

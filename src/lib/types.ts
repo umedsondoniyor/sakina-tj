@@ -253,6 +253,20 @@ export interface HomeFeatureBlock {
   updated_at: string;
 }
 
+/** Home page image benefit cards (`home_benefit_blocks`) — section below icon «Преимущества». */
+export interface HomeBenefitBlock {
+  id: string;
+  image_url: string;
+  title: string;
+  subtitle: string;
+  body: string;
+  link_url: string | null;
+  order_index: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 /** Extra `<meta>` rows (Open Graph, Twitter, verification, etc.). */
 export interface SeoExtraMetaTag {
   /** Use `name` for standard meta, e.g. `twitter:card` */
