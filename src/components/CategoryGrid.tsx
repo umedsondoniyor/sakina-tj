@@ -1,54 +1,115 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CategoryItem from './category/CategoryItem';
 import CategoryScrollControls from './category/CategoryScrollControls';
 import SwipeHint from './category/SwipeHint';
+import {
+  FALLBACK_CATEGORIES,
+  mapHomeGridRows,
+  chunkCategoryColumns,
+  type CategoryTile,
+} from './category/categoryGridData';
+import { useCategoryGridMobileRail, CATEGORY_SCROLL_NUDGE_PX } from './category/useCategoryGridMobileRail';
 import { getHomeCategoryGridItems } from '../lib/api';
-import type { NavigationItem } from '../lib/types';
 
-type CategoryTile = {
-  id: string | number;
-  name: string;
-  image: string;
-  slug: string;
-  link?: string;
-};
+const MOBILE_SCROLL_RAIL_CLASS =
+  'relative flex justify-start overflow-x-auto overflow-y-hidden scrollbar-hide overscroll-x-contain touch-pan-x scroll-px-4 snap-x snap-mandatory';
 
-const FALLBACK_CATEGORIES: CategoryTile[] = [
-  { id: 1, name: 'Матрасы', image: 'https://ik.imagekit.io/3js0rb3pk/categ_matress.png', slug: 'mattresses', link: '/categories/mattresses' },
-  { id: 2, name: 'Кровати', image: 'https://ik.imagekit.io/3js0rb3pk/categ_bed.png', slug: 'beds', link: '/categories/beds' },
-  { id: 3, name: 'Одеяло', image: 'https://ik.imagekit.io/3js0rb3pk/categ_blanket.png', slug: 'blankets' },
-  { id: 4, name: 'Массажное кресло', image: '/images/smart-chair-b.png', slug: 'smartchair', link: '/categories/smartchair' },
-  { id: 5, name: 'Подушки', image: 'https://ik.imagekit.io/3js0rb3pk/categ_pillow.png', slug: 'pillows', link: '/categories/pillows' },
-  { id: 6, name: 'Деревянные 3D-карты', image: 'https://ik.imagekit.io/3js0rb3pk/categ_map.png', slug: 'world-maps', link: '/categories/map' },
-];
+const MOBILE_COLUMN_CLASS =
+  'snap-center flex flex-col gap-y-3 sm:gap-y-4 items-center w-[104px] sm:w-[118px] shrink-0';
 
-function mapHomeGridRows(rows: NavigationItem[]): CategoryTile[] {
-  return rows.map((row) => ({
-    id: row.id,
-    name: row.title,
-    image: row.icon_image_url || '',
-    slug: row.category_slug,
-    link: row.link_url || undefined,
-  }));
+type ClickHandler = (category: CategoryTile, e: React.MouseEvent) => void;
+
+function CategoryGridDesktop({
+  categories,
+  onCategoryClick,
+}: {
+  categories: CategoryTile[];
+  onCategoryClick: ClickHandler;
+}) {
+  return (
+    <div className="hidden md:flex md:flex-wrap md:justify-center md:items-start md:gap-x-6 md:gap-y-6 lg:gap-x-8 lg:gap-y-6">
+      {categories.map((category, index) => (
+        <div key={category.id} className="shrink-0 w-[140px] md:w-[145px] lg:w-[150px]">
+          <CategoryItem category={category} onCategoryClick={onCategoryClick} index={index} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function CategoryGridMobile({
+  categories,
+  onCategoryClick,
+}: {
+  categories: CategoryTile[];
+  onCategoryClick: ClickHandler;
+}) {
+  const columns = chunkCategoryColumns(categories);
+  const rail = useCategoryGridMobileRail(categories.length);
+
+  return (
+    <div className="md:hidden relative">
+      <CategoryScrollControls
+        canScrollLeft={rail.canScrollLeft}
+        canScrollRight={rail.canScrollRight}
+        onScrollLeft={() => rail.scrollBy(-CATEGORY_SCROLL_NUDGE_PX)}
+        onScrollRight={() => rail.scrollBy(CATEGORY_SCROLL_NUDGE_PX)}
+      />
+
+      <div
+        ref={rail.scrollRef}
+        className={MOBILE_SCROLL_RAIL_CLASS}
+        onMouseDown={(e) => rail.startDrag(e.pageX)}
+        onMouseMove={(e) => rail.doDrag(e.pageX)}
+        onMouseUp={rail.endDrag}
+        onMouseLeave={rail.endDrag}
+        onTouchStart={(e) => {
+          rail.dismissSwipeHint();
+          rail.startDrag(e.touches[0].pageX);
+        }}
+        onTouchMove={(e) => rail.doDrag(e.touches[0].pageX)}
+        onTouchEnd={rail.endDrag}
+      >
+        <SwipeHint showSwipeHint={rail.showSwipeHint} />
+
+        <div className="flex flex-row gap-x-5 sm:gap-x-6 w-max shrink-0 py-1">
+          {columns.map((col, colIdx) => (
+            <div key={col.top.id} className={MOBILE_COLUMN_CLASS}>
+              <div className="w-full min-w-0">
+                <CategoryItem
+                  category={col.top}
+                  onCategoryClick={onCategoryClick}
+                  index={colIdx * 2}
+                />
+              </div>
+              {col.bottom ? (
+                <div className="w-full min-w-0">
+                  <CategoryItem
+                    category={col.bottom}
+                    onCategoryClick={onCategoryClick}
+                    index={colIdx * 2 + 1}
+                  />
+                </div>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="h-0.5 bg-gray-100 mt-4 rounded-full overflow-hidden">
+        <div
+          className="h-full bg-brand-turquoise transition-all duration-300 ease-out"
+          style={{ width: `${rail.scrollProgress}%` }}
+        />
+      </div>
+    </div>
+  );
 }
 
 const CategoryGrid: React.FC = () => {
   const navigate = useNavigate();
   const [categories, setCategories] = useState<CategoryTile[]>(FALLBACK_CATEGORIES);
-
-  // MOBILE rail refs/state
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [showSwipeHint, setShowSwipeHint] = useState(true);
-  const [scrollProgress, setScrollProgress] = useState(0);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(true);
-
-  useEffect(() => {
-    if (!showSwipeHint) return;
-    const t = setTimeout(() => setShowSwipeHint(false), 3000);
-    return () => clearTimeout(t);
-  }, [showSwipeHint]);
 
   useEffect(() => {
     let cancelled = false;
@@ -67,47 +128,9 @@ const CategoryGrid: React.FC = () => {
     };
   }, []);
 
-  const updateScroll = () => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const { scrollLeft, scrollWidth, clientWidth } = el;
-    const max = Math.max(0, scrollWidth - clientWidth);
-    setScrollProgress(max ? (scrollLeft / max) * 100 : 0);
-    setCanScrollLeft(scrollLeft > 0);
-    setCanScrollRight(scrollLeft < max - 1);
-  };
-
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    el.addEventListener('scroll', updateScroll, { passive: true });
-    updateScroll();
-    return () => el.removeEventListener('scroll', updateScroll);
-  }, [categories]);
-
-  // drag scrolling (mobile)
-  const [dragging, setDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-
-  const startDrag = (clientX: number) => {
-    setDragging(true);
-    const left = scrollRef.current?.getBoundingClientRect().left ?? 0;
-    setStartX(clientX - left);
-  };
-  const doDrag = (clientX: number) => {
-    if (!dragging || !scrollRef.current) return;
-    const left = scrollRef.current.getBoundingClientRect().left;
-    const x = clientX - left;
-    const walk = (x - startX) * 2;
-    scrollRef.current.scrollLeft -= walk;
-    setStartX(x);
-  };
-  const endDrag = () => setDragging(false);
-
   const handleCategoryClick = (category: CategoryTile, e: React.MouseEvent) => {
     e.preventDefault();
     window.history.replaceState(null, '', window.location.pathname + window.location.search);
-
     if (category.link) {
       navigate(category.link);
     } else {
@@ -115,95 +138,10 @@ const CategoryGrid: React.FC = () => {
     }
   };
 
-  const scrollBy = (left: number) => scrollRef.current?.scrollBy({ left, behavior: 'smooth' });
-
   return (
     <section aria-label="Категории" className="relative max-w-7xl mx-auto px-4 sm:px-5 py-4">
-      {/* MOBILE: two-row horizontal rail with controls and progress */}
-      <div className="md:hidden relative">
-        <CategoryScrollControls
-          canScrollLeft={canScrollLeft}
-          canScrollRight={canScrollRight}
-          onScrollLeft={() => scrollBy(-220)}
-          onScrollRight={() => scrollBy(220)}
-        />
-
-        <div
-          ref={scrollRef}
-          className="
-            relative flex justify-start
-            overflow-x-auto overflow-y-hidden scrollbar-hide
-            overscroll-x-contain touch-pan-x
-            scroll-px-4 snap-x snap-mandatory
-          "
-          onMouseDown={(e) => startDrag(e.pageX)}
-          onMouseMove={(e) => doDrag(e.pageX)}
-          onMouseUp={endDrag}
-          onMouseLeave={endDrag}
-          onTouchStart={(e) => {
-            setShowSwipeHint(false);
-            startDrag(e.touches[0].pageX);
-          }}
-          onTouchMove={(e) => doDrag(e.touches[0].pageX)}
-          onTouchEnd={endDrag}
-        >
-          <SwipeHint showSwipeHint={showSwipeHint} />
-
-          {/* Two tiles per column; flex row so each column snaps as a unit (avoids clipped / mis-centered grid) */}
-          <div className="flex flex-row gap-x-5 sm:gap-x-6 w-max shrink-0 py-1">
-            {Array.from({ length: Math.ceil(categories.length / 2) }, (_, colIdx) => {
-              const top = categories[colIdx * 2];
-              const bottom = categories[colIdx * 2 + 1];
-              return (
-                <div
-                  key={top.id}
-                  className="snap-center flex flex-col gap-y-3 sm:gap-y-4 items-center w-[104px] sm:w-[118px] shrink-0"
-                >
-                  <div className="w-full min-w-0">
-                    <CategoryItem
-                      category={top}
-                      onCategoryClick={handleCategoryClick}
-                      index={colIdx * 2}
-                    />
-                  </div>
-                  {bottom ? (
-                    <div className="w-full min-w-0">
-                      <CategoryItem
-                        category={bottom}
-                        onCategoryClick={handleCategoryClick}
-                        index={colIdx * 2 + 1}
-                      />
-                    </div>
-                  ) : null}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="h-0.5 bg-gray-100 mt-4 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-brand-turquoise transition-all duration-300 ease-out"
-            style={{ width: `${scrollProgress}%` }}
-          />
-        </div>
-      </div>
-
-      {/* DESKTOP/TABLET: centered wrapping row(s); works for any number of tiles */}
-      <div className="hidden md:flex md:flex-wrap md:justify-center md:items-start md:gap-x-6 md:gap-y-6 lg:gap-x-8 lg:gap-y-6">
-        {categories.map((category, index) => (
-          <div
-            key={category.id}
-            className="shrink-0 w-[140px] md:w-[145px] lg:w-[150px]"
-          >
-            <CategoryItem
-              category={category}
-              onCategoryClick={handleCategoryClick}
-              index={index}
-            />
-          </div>
-        ))}
-      </div>
+      <CategoryGridMobile categories={categories} onCategoryClick={handleCategoryClick} />
+      <CategoryGridDesktop categories={categories} onCategoryClick={handleCategoryClick} />
     </section>
   );
 };
