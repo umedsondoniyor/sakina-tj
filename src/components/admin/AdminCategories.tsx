@@ -26,7 +26,7 @@ const AdminCategories: React.FC = () => {
         .from('categories')
         .select('*')
         .order('order_index', { ascending: true })
-        .order('name', { ascending: true });
+        .order('id', { ascending: true });
       if (error) throw error;
       setRows((data ?? []) as Category[]);
     } catch (e) {
@@ -157,24 +157,25 @@ const AdminCategories: React.FC = () => {
     const j = direction === 'up' ? idx - 1 : idx + 1;
     if (j < 0 || j >= rows.length) return;
 
-    const a = rows[idx];
-    const b = rows[j];
-    const orderA = a.order_index ?? idx;
-    const orderB = b.order_index ?? j;
+    const reordered = [...rows];
+    [reordered[idx], reordered[j]] = [reordered[j], reordered[idx]];
 
+    const now = new Date().toISOString();
     try {
-      await Promise.all([
-        supabase.from('categories').update({ order_index: orderB, updated_at: new Date().toISOString() }).eq('id', a.id),
-        supabase.from('categories').update({ order_index: orderA, updated_at: new Date().toISOString() }).eq('id', b.id),
-      ]);
+      const results = await Promise.all(
+        reordered.map((row, i) =>
+          supabase.from('categories').update({ order_index: i, updated_at: now }).eq('id', row.id),
+        ),
+      );
+      const firstErr = results.find((r) => r.error)?.error;
+      if (firstErr) throw firstErr;
 
-      const next = [...rows];
-      [next[idx], next[j]] = [next[j], next[idx]];
-      setRows(next);
+      setRows(reordered.map((row, i) => ({ ...row, order_index: i })));
       toast.success('Порядок обновлён');
     } catch (e) {
       console.error(e);
       toast.error('Не удалось изменить порядок');
+      await load();
     }
   };
 

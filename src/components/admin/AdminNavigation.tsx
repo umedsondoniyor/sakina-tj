@@ -184,24 +184,25 @@ const AdminNavigation = () => {
     const newIndex = direction === 'up' ? itemIndex - 1 : itemIndex + 1;
     if (newIndex < 0 || newIndex >= list.length) return;
 
+    const reordered = [...list];
+    [reordered[itemIndex], reordered[newIndex]] = [reordered[newIndex], reordered[itemIndex]];
+
     try {
-      const item1 = list[itemIndex];
-      const item2 = list[newIndex];
+      const results = await Promise.all(
+        reordered.map((item, i) => supabase.from(table).update({ order_index: i }).eq('id', item.id)),
+      );
+      const firstErr = results.find((r) => r.error)?.error;
+      if (firstErr) throw firstErr;
 
-      await Promise.all([
-        supabase.from(table).update({ order_index: item2.order_index }).eq('id', item1.id),
-        supabase.from(table).update({ order_index: item1.order_index }).eq('id', item2.id),
-      ]);
-
-      const next = [...list];
-      [next[itemIndex], next[newIndex]] = [next[newIndex], next[itemIndex]];
-      if (table === 'navigation_items') setNavItems(next);
-      else setCatalogItems(next);
+      const patched = reordered.map((item, i) => ({ ...item, order_index: i }));
+      if (table === 'navigation_items') setNavItems(patched);
+      else setCatalogItems(patched);
 
       toast.success('Порядок обновлён');
     } catch (error) {
       console.error(error);
       toast.error('Не удалось изменить порядок');
+      await fetchAll();
     }
   };
 

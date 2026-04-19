@@ -229,7 +229,7 @@ export async function getCategories(): Promise<Category[]> {
       .from('categories')
       .select('*')
       .order('order_index', { ascending: true })
-      .order('name', { ascending: true });
+      .order('id', { ascending: true });
 
     if (error) throw error;
     return (data ?? []) as Category[];
