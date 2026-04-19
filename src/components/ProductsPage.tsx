@@ -1,8 +1,16 @@
 // src/components/ProductsPage.tsx
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, useLoaderData, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import {
+  Link,
+  useLoaderData,
+  useLocation,
+  useNavigate,
+  useNavigation,
+  useSearchParams,
+} from 'react-router-dom';
 import { PackageOpen } from 'lucide-react';
 import { getProducts } from '../lib/api';
+import { getMattressQuickSizesFromProducts } from '../lib/mattressQuickSizes';
 import type { Product } from '../lib/types';
 import type { ProductsPageLoaderData } from '../loaders/publicLoaders';
 import SEO from './SEO';
@@ -64,6 +72,7 @@ const hasAny = (arr?: any[]) => Array.isArray(arr) && arr.length > 0;
 const ProductsPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const navigation = useNavigation();
   const [searchParams] = useSearchParams();
   const loaderData = useLoaderData() as ProductsPageLoaderData | undefined;
   const loaderProducts = loaderData?.products ?? [];
@@ -81,7 +90,12 @@ const ProductsPage: React.FC = () => {
     if (categoryParam) return [categoryParam];
 
     return [];
-  }, [location.key, searchParams.toString()]);
+  }, [
+    location.key,
+    searchParams.toString(),
+    loaderSelectedCategories.join(','),
+    loaderData?.source,
+  ]);
 
   const [products, setProducts] = useState<Product[]>(loaderProducts);
   const [loading, setLoading] = useState(!loaderProducts.length);
@@ -170,22 +184,36 @@ const ProductsPage: React.FC = () => {
     })();
   }, [loaderProducts.length]);
 
+  // Keep client-side `products` in sync with the route loader (e.g. after clearing ?category=…
+  // the loader returns the full catalog, but React state would otherwise keep the old subset).
+  useEffect(() => {
+    if (navigation.state !== 'idle') return;
+    if (!loaderData) return;
+    setProducts(loaderData.products ?? []);
+  }, [loaderData, navigation.state]);
+
   // Keep categories in sync with the URL (but don't override quiz selections)
   useEffect(() => {
+    if (navigation.state === 'loading') return;
     const state = location.state as any;
     // Don't sync if we came from the quiz (quiz sets its own categories)
     if (state?.filters) return;
 
     setSelectedCategories(urlSelectedCategories);
     setFilters(prev => ({ ...prev, productType: urlSelectedCategories }));
-  }, [urlSelectedCategories, location.state]);
+  }, [urlSelectedCategories, location.state, navigation.state]);
 
   // Real “clear categories”: also clear URL & navigation state
   const clearCategories = useCallback(() => {
-    // Remove ?category=… from the URL and clear state
-    navigate('/products', { replace: true, state: {} });
     setSelectedCategories([]);
-    setFilters(prev => ({ ...prev, productType: [] }));
+    setActiveQuickSize(null);
+    setFilters((prev) => ({
+      ...prev,
+      productType: [],
+      width: [],
+      length: [],
+    }));
+    navigate({ pathname: '/products', search: '' }, { replace: true, state: {} });
   }, [navigate]);
 
   // “Clear filters” should NOT touch categories
@@ -334,6 +362,11 @@ const ProductsPage: React.FC = () => {
 
     return list;
   }, [products, selectedCategories, filters, sortBy]);
+
+  const mattressQuickSizes = useMemo(
+    () => getMattressQuickSizesFromProducts(products),
+    [products],
+  );
 
   const handleQuickSizeSelect = useCallback(
   ({ label, width, length }: { label: string; width: number; length: number }) => {
@@ -538,6 +571,7 @@ const ProductsPage: React.FC = () => {
         {/* Quick Filters */}
         <QuickFilters
           selectedCategories={selectedCategories}
+          mattressSizes={mattressQuickSizes}
           activeSize={activeQuickSize}
           onSelectSize={handleQuickSizeSelect}
           onOpenMattressWizard={handleOpenMattressWizard}

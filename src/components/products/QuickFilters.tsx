@@ -1,21 +1,19 @@
 import React from "react";
+import type { MattressQuickSize } from "../../lib/mattressQuickSizes";
+import { formatMattressQuickSizeLabel } from "../../lib/mattressQuickSizes";
 
 interface QuickFiltersProps {
   selectedCategories: string[];
+  /** Unique sizes from mattress variants (e.g. from products). */
+  mattressSizes: MattressQuickSize[];
   activeSize: string | null;
   onSelectSize: (payload: { label: string; width: number; length: number }) => void;
   onOpenMattressWizard?: () => void;
 }
 
-const QUICK_SIZES = [
-  { label: "Матрас 160×200", width: 160, length: 200 },
-  { label: "Матрас 180×200", width: 180, length: 200 },
-  { label: "Матрас 140×200", width: 140, length: 200 },
-  { label: "Матрас 90×200",  width: 90,  length: 200 },
-];
-
 const QuickFilters: React.FC<QuickFiltersProps> = ({
   selectedCategories,
+  mattressSizes,
   activeSize,
   onSelectSize,
   onOpenMattressWizard,
@@ -38,14 +36,15 @@ const QuickFilters: React.FC<QuickFiltersProps> = ({
             Онлайн-подбор матраса
           </button>
 
-          {/* Size quick filters */}
-          {QUICK_SIZES.map((size) => {
-            const isActive = activeSize === size.label;
+          {/* Size quick filters — sizes come from product variants */}
+          {mattressSizes.map(({ width, length }) => {
+            const label = formatMattressQuickSizeLabel(width, length);
+            const isActive = activeSize === label;
             return (
               <button
-                key={size.label}
+                key={`${width}-${length}`}
                 type="button"
-                onClick={() => onSelectSize(size)}
+                onClick={() => onSelectSize({ label, width, length })}
                 className={[
                   "flex-none px-4 py-2 rounded-full text-sm whitespace-nowrap transition-colors",
                   isActive
@@ -53,7 +52,7 @@ const QuickFilters: React.FC<QuickFiltersProps> = ({
                     : "bg-gray-100 text-gray-900 hover:bg-gray-200",
                 ].join(" ")}
               >
-                {size.label}
+                {label}
               </button>
             );
           })}
