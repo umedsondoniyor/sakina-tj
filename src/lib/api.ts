@@ -12,6 +12,7 @@ import type {
   NavigationItem,
   RelatedProduct,
   FaqItem,
+  HomeFeatureBlock,
   SeoPageSetting,
   PrivacyPolicySettings,
   FooterPayload,
@@ -423,6 +424,20 @@ export async function getFaqItems(): Promise<FaqItem[]> {
     if (error) throw error;
     return (data ?? []) as FaqItem[];
   }, 3, 600, 'getFaqItems');
+}
+
+/** Active blocks for the home page Features section. */
+export async function getHomeFeatureBlocks(): Promise<HomeFeatureBlock[]> {
+  return retryOperation(async () => {
+    const { data, error } = await supabase
+      .from('home_feature_blocks')
+      .select('*')
+      .eq('is_active', true)
+      .order('order_index', { ascending: true });
+
+    if (error) throw error;
+    return (data ?? []) as HomeFeatureBlock[];
+  }, 3, 600, 'getHomeFeatureBlocks');
 }
 
 /** Public SEO rows for `default` + `home` (see `resolveHomeSeo` in `lib/seo.ts`). */

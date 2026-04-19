@@ -27,6 +27,7 @@ import {
   PanelBottom,
   Tags,
   Search,
+  Sparkles,
 } from 'lucide-react';
 import { supabase } from "../lib/supabaseClient";
 import Logo from "../components/Logo";
@@ -133,6 +134,7 @@ const AdminLayout = () => {
           { path: '/admin/privacy', label: 'Политика конфиденциальности', section: 'Контент', roles: ['admin', 'editor'] },
           { path: '/admin/footer', label: 'Подвал сайта', section: 'Контент', roles: ['admin', 'editor'] },
           { path: '/admin/seo', label: 'SEO (главная и по умолчанию)', section: 'Контент', roles: ['admin', 'editor'] },
+          { path: '/admin/features', label: 'Преимущества (главная)', section: 'Контент', roles: ['admin', 'editor'] },
           { path: '/admin/categories', label: 'Категории каталога', section: 'Товары', roles: ['admin', 'editor'] },
           { path: '/admin/products', label: 'Товары', section: 'Товары', roles: ['admin', 'editor'] },
           { path: '/admin/variants', label: 'Варианты и склад', section: 'Товары', roles: ['admin'] },
@@ -309,7 +311,6 @@ const AdminLayout = () => {
       items: [
         { path: '/admin/carousel', label: 'Карусель', icon: Image },
         { path: '/admin/about', label: 'О компании', icon: Target },
-        { path: '/admin/mattresses', label: 'Матрасы', icon: Package },
         { path: '/admin/services', label: 'Услуги', icon: Package },
         { path: '/admin/delivery-payment', label: 'Доставка и оплата', icon: CreditCard },
         { path: '/admin/reviews', label: 'Отзывы', icon: Star },
@@ -319,6 +320,7 @@ const AdminLayout = () => {
         { path: '/admin/privacy', label: 'Политика конфиденциальности', icon: Shield },
         { path: '/admin/footer', label: 'Подвал сайта', icon: PanelBottom },
         { path: '/admin/seo', label: 'SEO', icon: Search },
+        { path: '/admin/features', label: 'Преимущества', icon: Sparkles },
       ],
     },
     {

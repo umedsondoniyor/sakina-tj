@@ -241,6 +241,18 @@ export interface FaqItem {
   updated_at: string;
 }
 
+/** Home page «Преимущества» blocks (`home_feature_blocks`). */
+export interface HomeFeatureBlock {
+  id: string;
+  icon_name: string;
+  title: string;
+  description: string;
+  order_index: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 /** Extra `<meta>` rows (Open Graph, Twitter, verification, etc.). */
 export interface SeoExtraMetaTag {
   /** Use `name` for standard meta, e.g. `twitter:card` */

@@ -29,7 +29,7 @@ const HomePage: React.FC = () => {
       <CategoryGrid />
       <ProductPickers />
       <CustomerReviews initialReviews={loaderData?.reviews} />
-      <Features />
+      <Features initialBlocks={loaderData?.featureBlocks} />
       <Benefits />
       <SleepClubBlog initialPosts={loaderData?.blogPosts} />
       <AskonaClub />

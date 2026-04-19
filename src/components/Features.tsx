@@ -1,18 +1,69 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { UserSearch, Award, Store, Truck, FlaskRound as Flask } from 'lucide-react';
+import React, { useRef, useState, useEffect, useMemo } from 'react';
+import { getLucideIconByName } from '../lib/navigationIcons';
+import type { HomeFeatureBlock } from '../lib/types';
 
-const features = [
-  { icon: UserSearch, title: 'Индивидуальный', description: 'Персональный Подбор Матрас' },
-  { icon: Award, title: 'Гарантия', description: 'Качества И Долговечности' },
-  { icon: Store, title: 'Шоурум', description: 'В Центре Города' },
-  { icon: Truck, title: 'Доставка', description: 'По Всему Таджикистану' },
-  { icon: Flask, title: 'Экологически', description: 'Чистые И Гипоаллергенные Материалы' },
-] as const;
+/** Matches previous hardcoded `Features` when API returns nothing or fails. */
+const STATIC_FALLBACK: HomeFeatureBlock[] = [
+  {
+    id: 'fallback-0',
+    icon_name: 'UserSearch',
+    title: 'Индивидуальный',
+    description: 'Персональный Подбор Матрас',
+    order_index: 0,
+    is_active: true,
+    created_at: '',
+    updated_at: '',
+  },
+  {
+    id: 'fallback-1',
+    icon_name: 'Award',
+    title: 'Гарантия',
+    description: 'Качества И Долговечности',
+    order_index: 1,
+    is_active: true,
+    created_at: '',
+    updated_at: '',
+  },
+  {
+    id: 'fallback-2',
+    icon_name: 'Store',
+    title: 'Шоурум',
+    description: 'В Центре Города',
+    order_index: 2,
+    is_active: true,
+    created_at: '',
+    updated_at: '',
+  },
+  {
+    id: 'fallback-3',
+    icon_name: 'Truck',
+    title: 'Доставка',
+    description: 'По Всему Таджикистану',
+    order_index: 3,
+    is_active: true,
+    created_at: '',
+    updated_at: '',
+  },
+  {
+    id: 'fallback-4',
+    icon_name: 'FlaskRound',
+    title: 'Экологически',
+    description: 'Чистые И Гипоаллергенные Материалы',
+    order_index: 4,
+    is_active: true,
+    created_at: '',
+    updated_at: '',
+  },
+];
 
-type FeatureDef = (typeof features)[number];
-
-function FeatureBlock({ f, className }: { f: FeatureDef; className?: string }) {
-  const Icon = f.icon;
+function FeatureBlock({
+  block,
+  className,
+}: {
+  block: HomeFeatureBlock;
+  className?: string;
+}) {
+  const Icon = getLucideIconByName(block.icon_name);
   return (
     <div className={className}>
       <div
@@ -27,14 +78,25 @@ function FeatureBlock({ f, className }: { f: FeatureDef; className?: string }) {
       </div>
 
       <div className="flex-1 min-w-0">
-        <h3 className="font-semibold text-base lg:text-lg text-brand-navy">{f.title}</h3>
-        <p className="mt-1 text-sm text-gray-600 leading-snug">{f.description}</p>
+        <h3 className="font-semibold text-base lg:text-lg text-brand-navy">{block.title}</h3>
+        <p className="mt-1 text-sm text-gray-600 leading-snug">{block.description}</p>
       </div>
     </div>
   );
 }
 
-const Features: React.FC = () => {
+interface FeaturesProps {
+  initialBlocks?: HomeFeatureBlock[];
+}
+
+const Features: React.FC<FeaturesProps> = ({ initialBlocks }) => {
+  const blocks = useMemo(() => {
+    if (initialBlocks && initialBlocks.length > 0) {
+      return [...initialBlocks].sort((a, b) => a.order_index - b.order_index);
+    }
+    return STATIC_FALLBACK;
+  }, [initialBlocks]);
+
   const [scrollProgress, setScrollProgress] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -53,7 +115,7 @@ const Features: React.FC = () => {
     container.addEventListener('scroll', updateScrollProgress, { passive: true });
     updateScrollProgress();
     return () => container.removeEventListener('scroll', updateScrollProgress);
-  }, []);
+  }, [blocks]);
 
   return (
     <section aria-labelledby="features-heading" className="max-w-7xl mx-auto px-4 py-10 sm:py-12 md:py-16">
@@ -66,10 +128,10 @@ const Features: React.FC = () => {
 
       {/* Desktop & tablet: grid */}
       <div className="hidden md:grid gap-6 sm:gap-8 md:grid-cols-3 lg:grid-cols-5">
-        {features.map((f, i) => (
+        {blocks.map((block) => (
           <FeatureBlock
-            key={i}
-            f={f}
+            key={block.id}
+            block={block}
             className="
               h-full
               flex flex-col items-center text-center
@@ -91,11 +153,11 @@ const Features: React.FC = () => {
             pl-[max(1rem,calc(50%-140px))] pr-[max(1rem,calc(50%-140px))]
           "
         >
-          {features.map((f, i) => {
-            const Icon = f.icon;
+          {blocks.map((block) => {
+            const Icon = getLucideIconByName(block.icon_name);
             return (
               <div
-                key={i}
+                key={block.id}
                 className="
                   flex-none w-[280px] snap-center snap-always
                   rounded-2xl border border-gray-200/90 bg-white shadow-md shadow-gray-200/50
@@ -114,8 +176,8 @@ const Features: React.FC = () => {
                   <Icon size={24} className="text-brand-turquoise" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-base text-brand-navy leading-tight">{f.title}</h3>
-                  <p className="mt-2 text-sm text-gray-600 leading-snug">{f.description}</p>
+                  <h3 className="font-semibold text-base text-brand-navy leading-tight">{block.title}</h3>
+                  <p className="mt-2 text-sm text-gray-600 leading-snug">{block.description}</p>
                 </div>
               </div>
             );

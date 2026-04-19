@@ -19,6 +19,10 @@ import {
   Headphones,
   Shield,
   Clock,
+  UserSearch,
+  Award,
+  Store,
+  FlaskRound,
 } from 'lucide-react';
 import type { NavigationItem } from './types';
 
@@ -43,6 +47,10 @@ export const LUCIDE_ICON_MAP: Record<string, LucideIcon> = {
   Headphones,
   Shield,
   Clock,
+  UserSearch,
+  Award,
+  Store,
+  FlaskRound,
 };
 
 export function getLucideIconByName(iconName?: string | null): LucideIcon {

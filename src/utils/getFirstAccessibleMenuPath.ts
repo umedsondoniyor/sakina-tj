@@ -27,7 +27,6 @@ export async function getFirstAccessibleMenuPath(userRole: UserRole | null): Pro
       items: [
         { path: '/admin/carousel' },
         { path: '/admin/about' },
-        { path: '/admin/mattresses' },
         { path: '/admin/services' },
         { path: '/admin/delivery-payment' },
         { path: '/admin/reviews' },
@@ -37,6 +36,7 @@ export async function getFirstAccessibleMenuPath(userRole: UserRole | null): Pro
         { path: '/admin/privacy' },
         { path: '/admin/footer' },
         { path: '/admin/seo' },
+        { path: '/admin/features' },
       ],
     },
     {

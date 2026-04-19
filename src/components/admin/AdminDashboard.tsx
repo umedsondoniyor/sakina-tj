@@ -19,6 +19,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { formatCurrency } from '../../lib/utils';
 import toast from 'react-hot-toast';
+import { useUserRole, type UserRole } from '../../hooks/useUserRole';
 
 interface DashboardStats {
   totalRevenue: number;
@@ -46,6 +47,9 @@ interface DashboardStats {
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
+  const { role: userRole, loading: roleLoading } = useUserRole();
+  const [mattressesPermLoading, setMattressesPermLoading] = useState(true);
+  const [canOpenMattressesPage, setCanOpenMattressesPage] = useState(false);
   const [stats, setStats] = useState<DashboardStats>({
     totalRevenue: 0,
     todayRevenue: 0,
@@ -69,6 +73,38 @@ const AdminDashboard: React.FC = () => {
     totalClubPurchases: 0,
   });
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (roleLoading) return;
+    if (!userRole) {
+      setCanOpenMattressesPage(false);
+      setMattressesPermLoading(false);
+      return;
+    }
+    setMattressesPermLoading(true);
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from('menu_role_permissions')
+          .select('roles')
+          .eq('path', '/admin/mattresses')
+          .maybeSingle();
+        if (cancelled) return;
+        if (error) {
+          setCanOpenMattressesPage(false);
+          return;
+        }
+        const allowed = (data?.roles as UserRole[] | undefined) ?? [];
+        setCanOpenMattressesPage(allowed.length > 0 && allowed.includes(userRole));
+      } finally {
+        if (!cancelled) setMattressesPermLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [roleLoading, userRole]);
 
   useEffect(() => {
     fetchDashboardStats();
@@ -538,6 +574,30 @@ const AdminDashboard: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {!roleLoading && !mattressesPermLoading && canOpenMattressesPage ? (
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-start gap-4 min-w-0">
+            <div className="p-3 rounded-lg bg-teal-50 text-teal-700 shrink-0">
+              <Package size={28} strokeWidth={1.75} />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">Управление страницей матрасов</h2>
+              <p className="text-sm text-gray-600 mt-1">
+                Типы матрасов, хиты продаж, блоки и настройки публичной страницы «Матрасы».
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => navigate('/admin/mattresses')}
+            className="shrink-0 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-brand-turquoise text-white font-medium hover:bg-brand-navy transition-colors"
+          >
+            Открыть
+            <ArrowRight size={18} />
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 };
