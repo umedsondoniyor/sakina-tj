@@ -25,6 +25,7 @@ import BlogGuideMattressFirmnessPage from '../pages/BlogGuideMattressFirmnessPag
 import ServicesPage from '../pages/ServicesPage';
 import DeliveryPaymentPage from '../pages/DeliveryPaymentPage';
 import ContactsPage from '../pages/ContactsPage';
+import FaqPage from '../pages/FaqPage';
 import CustomMattressesPage from '../pages/CustomMattressesPage';
 import NotFoundPage from '../pages/NotFoundPage';
 import AdminLogin from '../components/admin/AdminLogin';
@@ -97,6 +98,7 @@ export const appRoutes = createRoutesFromElements(
       <Route path="/services" element={<ServicesPage />} />
       <Route path="/delivery-payment" element={<DeliveryPaymentPage />} loader={deliveryPaymentLoader} />
       <Route path="/contacts" element={<ContactsPage />} loader={contactsLoader} />
+      <Route path="/faq" element={<FaqPage />} />
       <Route path="/blog" element={<BlogPage />} />
       <Route path="/blog/kak-vybrat-matras" element={<BlogGuideMattressSelectionPage />} />
       <Route path="/blog/matras-dlya-boli-v-spine" element={<BlogGuideBackPainMattressPage />} />

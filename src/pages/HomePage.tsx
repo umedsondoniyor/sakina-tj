@@ -27,10 +27,10 @@ const HomePage: React.FC = () => {
       {/* ✅ Page content */}
       <HeroCarousel initialSlides={loaderData?.slides} />
       <CategoryGrid />
-      <Features />
       <ProductPickers />
-      <Benefits />
       <CustomerReviews initialReviews={loaderData?.reviews} />
+      <Features />
+      <Benefits />
       <SleepClubBlog initialPosts={loaderData?.blogPosts} />
       <AskonaClub />
       <ManufacturingProcess />
