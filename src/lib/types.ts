@@ -217,6 +217,20 @@ export interface QuizStepOption {
   updated_at: string;
 }
 
+/** Home page quiz promo cards (`quiz_picker_visibility` + copy columns). */
+export interface QuizPickerHomeEntry {
+  visible: boolean;
+  title: string;
+  subtitle: string;
+  image_url: string;
+  cta_label: string;
+}
+
+export interface QuizPickerHomeConfig {
+  mattress: QuizPickerHomeEntry;
+  bed: QuizPickerHomeEntry;
+}
+
 export interface NavigationItem {
   id: string;
   title: string;

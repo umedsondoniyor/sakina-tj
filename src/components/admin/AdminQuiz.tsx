@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabaseClient';
-import { Pencil, Trash2, Plus, PackageOpen, ChevronUp, ChevronDown, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { Pencil, Trash2, Plus, PackageOpen, ChevronUp, ChevronDown, AlertCircle, Eye, EyeOff, Save } from 'lucide-react';
 import toast from 'react-hot-toast';
 import QuizStepModal from './QuizStepModal';
 import type { QuizStep } from '../../lib/types';
@@ -13,6 +13,20 @@ const AdminQuiz = () => {
   const [productType, setProductType] = useState<'mattress' | 'bed'>('mattress');
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [pickerVisibility, setPickerVisibility] = useState({ mattress: true, bed: true });
+  const [promoMattress, setPromoMattress] = useState({
+    title: '',
+    subtitle: '',
+    image_url: '',
+    cta_label: '',
+  });
+  const [promoBed, setPromoBed] = useState({
+    title: '',
+    subtitle: '',
+    image_url: '',
+    cta_label: '',
+  });
+  const [promoMetaLoading, setPromoMetaLoading] = useState(true);
+  const [savingPromo, setSavingPromo] = useState<'mattress' | 'bed' | null>(null);
 
   useEffect(() => {
     fetchSteps();
@@ -21,16 +35,76 @@ const AdminQuiz = () => {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data, error } = await supabase.from('quiz_picker_visibility').select('product_type, is_visible');
-      if (cancelled || error) return;
-      const mattress = data?.find((r) => r.product_type === 'mattress')?.is_visible ?? true;
-      const bed = data?.find((r) => r.product_type === 'bed')?.is_visible ?? true;
-      setPickerVisibility({ mattress, bed });
+      setPromoMetaLoading(true);
+      const { data, error } = await supabase.from('quiz_picker_visibility').select('*');
+      if (cancelled) return;
+      if (error) {
+        console.error(error);
+        toast.error('Не удалось загрузить карточки подборщиков');
+        setPromoMetaLoading(false);
+        return;
+      }
+      const m = data?.find((r) => r.product_type === 'mattress');
+      const b = data?.find((r) => r.product_type === 'bed');
+      setPickerVisibility({
+        mattress: m?.is_visible ?? true,
+        bed: b?.is_visible ?? true,
+      });
+      if (m) {
+        setPromoMattress({
+          title: (m as { title?: string }).title ?? '',
+          subtitle: (m as { subtitle?: string }).subtitle ?? '',
+          image_url: (m as { image_url?: string }).image_url ?? '',
+          cta_label: (m as { cta_label?: string }).cta_label ?? '',
+        });
+      }
+      if (b) {
+        setPromoBed({
+          title: (b as { title?: string }).title ?? '',
+          subtitle: (b as { subtitle?: string }).subtitle ?? '',
+          image_url: (b as { image_url?: string }).image_url ?? '',
+          cta_label: (b as { cta_label?: string }).cta_label ?? '',
+        });
+      }
+      setPromoMetaLoading(false);
     })();
     return () => {
       cancelled = true;
     };
   }, []);
+
+  const savePickerPromo = async (type: 'mattress' | 'bed') => {
+    const payload = type === 'mattress' ? promoMattress : promoBed;
+    const title = payload.title.trim();
+    const subtitle = payload.subtitle.trim();
+    const image_url = payload.image_url.trim();
+    const cta_label = payload.cta_label.trim();
+    if (!title || !subtitle || !image_url || !cta_label) {
+      toast.error('Заполните заголовок, текст, URL изображения и подпись кнопки');
+      return;
+    }
+    setSavingPromo(type);
+    try {
+      const { error } = await supabase
+        .from('quiz_picker_visibility')
+        .update({
+          title,
+          subtitle,
+          image_url,
+          cta_label,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('product_type', type);
+
+      if (error) throw error;
+      toast.success('Карточка сохранена');
+    } catch (e) {
+      console.error(e);
+      toast.error('Не удалось сохранить');
+    } finally {
+      setSavingPromo(null);
+    }
+  };
 
   const togglePickerOnSite = async (type: 'mattress' | 'bed') => {
     const next = !pickerVisibility[type];
@@ -184,6 +258,101 @@ const AdminQuiz = () => {
 
   return (
     <div className="p-6">
+      <div className="mb-8 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+        <h2 className="text-lg font-semibold text-gray-900">Карточки на главной</h2>
+        <p className="text-sm text-gray-600 mt-1 mb-6">
+          Заголовок, описание, изображение и текст кнопки для блоков подборщика на главной странице.
+        </p>
+        {promoMetaLoading ? (
+          <p className="text-sm text-gray-500">Загрузка…</p>
+        ) : (
+          <div className="grid gap-8 lg:grid-cols-2">
+            <div className="space-y-3">
+              <h3 className="font-medium text-brand-navy">Матрасы</h3>
+              <label className="block text-xs font-medium text-gray-600">Заголовок</label>
+              <input
+                type="text"
+                value={promoMattress.title}
+                onChange={(e) => setPromoMattress((p) => ({ ...p, title: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              />
+              <label className="block text-xs font-medium text-gray-600">Подзаголовок</label>
+              <textarea
+                value={promoMattress.subtitle}
+                onChange={(e) => setPromoMattress((p) => ({ ...p, subtitle: e.target.value }))}
+                rows={2}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              />
+              <label className="block text-xs font-medium text-gray-600">URL изображения</label>
+              <input
+                type="text"
+                value={promoMattress.image_url}
+                onChange={(e) => setPromoMattress((p) => ({ ...p, image_url: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono"
+                placeholder="/images/… или https://…"
+              />
+              <label className="block text-xs font-medium text-gray-600">Текст кнопки</label>
+              <input
+                type="text"
+                value={promoMattress.cta_label}
+                onChange={(e) => setPromoMattress((p) => ({ ...p, cta_label: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              />
+              <button
+                type="button"
+                onClick={() => savePickerPromo('mattress')}
+                disabled={savingPromo === 'mattress'}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-brand-turquoise text-white rounded-lg hover:bg-brand-navy disabled:opacity-50 text-sm font-medium"
+              >
+                <Save className="w-4 h-4" />
+                {savingPromo === 'mattress' ? 'Сохранение…' : 'Сохранить'}
+              </button>
+            </div>
+            <div className="space-y-3">
+              <h3 className="font-medium text-brand-navy">Кровати</h3>
+              <label className="block text-xs font-medium text-gray-600">Заголовок</label>
+              <input
+                type="text"
+                value={promoBed.title}
+                onChange={(e) => setPromoBed((p) => ({ ...p, title: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              />
+              <label className="block text-xs font-medium text-gray-600">Подзаголовок</label>
+              <textarea
+                value={promoBed.subtitle}
+                onChange={(e) => setPromoBed((p) => ({ ...p, subtitle: e.target.value }))}
+                rows={2}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              />
+              <label className="block text-xs font-medium text-gray-600">URL изображения</label>
+              <input
+                type="text"
+                value={promoBed.image_url}
+                onChange={(e) => setPromoBed((p) => ({ ...p, image_url: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono"
+                placeholder="/images/… или https://…"
+              />
+              <label className="block text-xs font-medium text-gray-600">Текст кнопки</label>
+              <input
+                type="text"
+                value={promoBed.cta_label}
+                onChange={(e) => setPromoBed((p) => ({ ...p, cta_label: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              />
+              <button
+                type="button"
+                onClick={() => savePickerPromo('bed')}
+                disabled={savingPromo === 'bed'}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-brand-turquoise text-white rounded-lg hover:bg-brand-navy disabled:opacity-50 text-sm font-medium"
+              >
+                <Save className="w-4 h-4" />
+                {savingPromo === 'bed' ? 'Сохранение…' : 'Сохранить'}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Управление шагами квиза</h1>
         <button

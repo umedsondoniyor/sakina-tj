@@ -16,7 +16,8 @@ import {
   getProducts,
   getProductsByCategory,
   getSeoPageSettings,
-  getQuizPickerVisibility,
+  getQuizPickerHomeConfig,
+  QUIZ_PICKER_HOME_DEFAULT,
 } from '../lib/api';
 import { resolveHomeSeo } from '../lib/seo';
 import { PRODUCT_ID_UUID_RE } from '../lib/productUrl';
@@ -31,6 +32,7 @@ import type {
   HomeBenefitBlock,
   HomeManufacturingSettings,
   HomeManufacturingStep,
+  QuizPickerHomeConfig,
   SeoExtraMetaTag,
 } from '../lib/types';
 
@@ -43,8 +45,8 @@ export interface HomePageLoaderData {
   benefitBlocks: HomeBenefitBlock[];
   manufacturingSettings: HomeManufacturingSettings | null;
   manufacturingSteps: HomeManufacturingStep[];
-  /** Avoid flash: pickers read visibility on the server with the rest of home data. */
-  quizPickerVisibility: { mattress: boolean; bed: boolean };
+  /** Quiz promo cards: visibility + copy + images (no client flash). */
+  quizPickerHome: QuizPickerHomeConfig;
 }
 
 export interface ProductsPageLoaderData {
@@ -85,8 +87,6 @@ const defaultDeliveryPaymentSettings = {
   payment_content: 'Принимаем оплату наличными при получении или онлайн через Alif Bank.',
 };
 
-const DEFAULT_QUIZ_PICKER_VISIBILITY = { mattress: true, bed: true };
-
 export async function homePageLoader(): Promise<HomePageLoaderData> {
   const [
     slides,
@@ -97,7 +97,7 @@ export async function homePageLoader(): Promise<HomePageLoaderData> {
     benefitBlocks,
     manufacturingSettings,
     manufacturingSteps,
-    quizPickerVisibility,
+    quizPickerHome,
   ] = await Promise.all([
     getCarouselSlides().catch(() => []),
     getCustomerReviews().catch(() => []),
@@ -107,7 +107,7 @@ export async function homePageLoader(): Promise<HomePageLoaderData> {
     getHomeBenefitBlocks().catch(() => []),
     getHomeManufacturingSettings().catch(() => null),
     getHomeManufacturingSteps().catch(() => []),
-    getQuizPickerVisibility().catch(() => DEFAULT_QUIZ_PICKER_VISIBILITY),
+    getQuizPickerHomeConfig().catch(() => QUIZ_PICKER_HOME_DEFAULT),
   ]);
 
   const seo = resolveHomeSeo(seoRows);
@@ -121,7 +121,7 @@ export async function homePageLoader(): Promise<HomePageLoaderData> {
     benefitBlocks,
     manufacturingSettings,
     manufacturingSteps,
-    quizPickerVisibility,
+    quizPickerHome,
   };
 }
 

@@ -27,7 +27,7 @@ const HomePage: React.FC = () => {
       {/* ✅ Page content */}
       <HeroCarousel initialSlides={loaderData?.slides} />
       <CategoryGrid />
-      <ProductPickers initialVisibility={loaderData?.quizPickerVisibility} />
+      <ProductPickers initialConfig={loaderData?.quizPickerHome} />
       <CustomerReviews initialReviews={loaderData?.reviews} />
       <Features initialBlocks={loaderData?.featureBlocks} />
       <Benefits initialBlocks={loaderData?.benefitBlocks} />

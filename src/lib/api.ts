@@ -16,6 +16,8 @@ import type {
   HomeBenefitBlock,
   HomeManufacturingSettings,
   HomeManufacturingStep,
+  type QuizPickerHomeConfig,
+  type QuizPickerHomeEntry,
   SeoPageSetting,
   PrivacyPolicySettings,
   FooterPayload,
@@ -387,20 +389,55 @@ export async function getQuizSteps(productType: 'mattress' | 'bed' = 'mattress')
   }, 3, 600, 'getQuizSteps');
 }
 
-export async function getQuizPickerVisibility(): Promise<{ mattress: boolean; bed: boolean }> {
+const QUIZ_PICKER_FALLBACK: Record<'mattress' | 'bed', Omit<QuizPickerHomeEntry, 'visible'>> = {
+  mattress: {
+    title: 'Подборщик матрасов',
+    subtitle: 'создайте идеальное место для сна',
+    image_url: '/images/picker/mattress_picker.png',
+    cta_label: 'Подобрать',
+  },
+  bed: {
+    title: 'Подборщик кроватей',
+    subtitle: 'более 100 моделей для детей и взрослых',
+    image_url: 'https://ik.imagekit.io/3js0rb3pk/bed.png',
+    cta_label: 'Подобрать',
+  },
+};
+
+/** Used when the home loader cannot fetch quiz picker rows. */
+export const QUIZ_PICKER_HOME_DEFAULT: QuizPickerHomeConfig = {
+  mattress: { visible: true, ...QUIZ_PICKER_FALLBACK.mattress },
+  bed: { visible: true, ...QUIZ_PICKER_FALLBACK.bed },
+};
+
+function mapQuizPickerRow(
+  rows: { product_type: string; is_visible: boolean; title?: string | null; subtitle?: string | null; image_url?: string | null; cta_label?: string | null }[] | null,
+  type: 'mattress' | 'bed',
+): QuizPickerHomeEntry {
+  const row = rows?.find((r) => r.product_type === type);
+  const fb = QUIZ_PICKER_FALLBACK[type];
+  const vis = row?.is_visible ?? true;
+  return {
+    visible: vis,
+    title: (row?.title && row.title.trim()) || fb.title,
+    subtitle: (row?.subtitle && row.subtitle.trim()) || fb.subtitle,
+    image_url: (row?.image_url && row.image_url.trim()) || fb.image_url,
+    cta_label: (row?.cta_label && row.cta_label.trim()) || fb.cta_label,
+  };
+}
+
+/** Home quiz promo cards: visibility + copy + image + CTA per product type. */
+export async function getQuizPickerHomeConfig(): Promise<QuizPickerHomeConfig> {
   return retryOperation(async () => {
-    const { data, error } = await supabase
-      .from('quiz_picker_visibility')
-      .select('product_type, is_visible');
+    const { data, error } = await supabase.from('quiz_picker_visibility').select('*');
 
     if (error) throw error;
 
-    const mattress =
-      data?.find((r) => r.product_type === 'mattress')?.is_visible ?? true;
-    const bed = data?.find((r) => r.product_type === 'bed')?.is_visible ?? true;
-
-    return { mattress, bed };
-  }, 3, 600, 'getQuizPickerVisibility');
+    return {
+      mattress: mapQuizPickerRow(data, 'mattress'),
+      bed: mapQuizPickerRow(data, 'bed'),
+    };
+  }, 3, 600, 'getQuizPickerHomeConfig');
 }
 
 export async function getPrivacyPolicySettings(): Promise<PrivacyPolicySettings | null> {
