@@ -39,6 +39,18 @@ export const getVariantLabel = (
   return variant.size_name;
 };
 
+/**
+ * Cart line `id` is normally a product UUID. With variants, some flows use
+ * `${product.id}_${variant.id}` (see ProductPage, ProductGrid). API calls such as
+ * `related_products.product_id` must use the product UUID only — the first UUID in the string.
+ */
+export function getProductIdFromCartLineId(cartLineId: string): string {
+  const matches = cartLineId.match(
+    /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi,
+  );
+  return matches?.[0] ?? cartLineId;
+}
+
 export const buildDeliveryAddress = (formData: {
   deliveryType: 'home' | 'pickup';
   address: string;

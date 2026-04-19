@@ -2,6 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+  /**
+   * Full-width primary CTA (cart, checkout, modals).
+   * ~48px min touch height, consistent padding.
+   */
+  .btn-primary-full {
+    @apply inline-flex w-full min-h-[48px] shrink-0 items-center justify-center gap-2 rounded-lg px-4 py-3.5 font-semibold
+      bg-brand-turquoise text-white transition-colors hover:bg-brand-navy;
+  }
+}
+
 @keyframes swipe {
   0% {
     transform: translateX(-100%);

@@ -64,10 +64,7 @@ const OrderConfirmationPage = () => {
         </div>
 
         <div className="space-y-3">
-          <button
-            onClick={() => navigate('/products')}
-            className="w-full bg-brand-turquoise text-white hover:bg-brand-navy transition-colors"
-          >
+          <button type="button" onClick={() => navigate('/products')} className="btn-primary-full">
             Продолжить покупки
           </button>
           

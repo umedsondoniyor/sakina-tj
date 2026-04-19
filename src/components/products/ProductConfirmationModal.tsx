@@ -349,7 +349,7 @@ const ProductConfirmationModal: React.FC<ProductConfirmationModalProps> = ({
               <button
                 type="submit"
                 disabled={loading || !phoneNumber || !isInStock}
-                className="w-full bg-brand-turquoise text-white hover:bg-brand-navy transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-teal-500/30"
+                className="btn-primary-full disabled:bg-gray-400 disabled:cursor-not-allowed shadow-lg shadow-teal-500/30"
               >
                 {loading ? (
                   <>
@@ -380,9 +380,10 @@ const ProductConfirmationModal: React.FC<ProductConfirmationModalProps> = ({
               </div>
 
               <button
+                type="button"
                 onClick={handleAddToCart}
                 disabled={!isInStock}
-                className="w-full bg-brand-turquoise text-white hover:bg-brand-navy transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-teal-500/30"
+                className="btn-primary-full disabled:bg-gray-400 disabled:cursor-not-allowed shadow-lg shadow-teal-500/30"
               >
                 <ShoppingBag size={20} />
                 <span>Добавить в корзину</span>

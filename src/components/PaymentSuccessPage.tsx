@@ -318,10 +318,7 @@ const PaymentSuccessPage: React.FC = () => {
 
             {/* Action Buttons */}
             <div className="space-y-3">
-              <button
-                onClick={() => navigate('/products')}
-                className="w-full bg-brand-turquoise text-white hover:bg-brand-navy transition-colors flex items-center justify-center"
-              >
+              <button type="button" onClick={() => navigate('/products')} className="btn-primary-full">
                 Продолжить покупки
                 <ArrowRight size={20} className="ml-2" />
               </button>

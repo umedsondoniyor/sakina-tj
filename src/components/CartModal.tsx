@@ -3,6 +3,7 @@ import { X, Minus, Plus } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { useNavigate } from 'react-router-dom';
 import { formatCurrency } from '../lib/utils';
+import CartRelatedProducts from './cart/CartRelatedProducts';
 
 const CartModal: React.FC = () => {
   const { items, isOpen, setIsOpen, removeItem, updateQuantity, total } = useCart();
@@ -27,9 +28,12 @@ const CartModal: React.FC = () => {
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
           {items.map((item) => (
-            <div key={item.id} className="flex gap-4 pb-4 border-b">
+            <div
+              key={`${item.id}-${item.variant_id ?? ''}-${item.size ?? ''}`}
+              className="flex gap-4 pb-4 border-b"
+            >
               <img
                 src={item.image_url}
                 alt={item.name}
@@ -88,6 +92,7 @@ const CartModal: React.FC = () => {
               </div>
             </div>
           ))}
+          {items.length > 0 ? <CartRelatedProducts cartItems={items} /> : null}
         </div>
 
         <div className="border-t p-4 space-y-4">
@@ -96,10 +101,7 @@ const CartModal: React.FC = () => {
             <span>{formatCurrency(total)}</span>
           </div>
           
-          <button 
-            onClick={handleCheckout}
-            className="w-full bg-brand-turquoise text-white hover:bg-brand-navy transition-colors"
-          >
+          <button type="button" onClick={handleCheckout} className="btn-primary-full">
             Оформить заказ
           </button>
         </div>

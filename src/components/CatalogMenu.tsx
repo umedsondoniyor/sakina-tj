@@ -462,10 +462,7 @@ const CatalogMenu: React.FC<CatalogMenuProps> = ({ isOpen, onClose }) => {
             </div>
 
             <div className="sticky bottom-0 p-4 bg-white border-t">
-              <button
-                onClick={() => handleNavigate(selectedCategory)}
-                className="w-full bg-brand-turquoise text-white hover:bg-brand-navy transition-colors"
-              >
+              <button type="button" onClick={() => handleNavigate(selectedCategory)} className="btn-primary-full">
                 {selectedCategory === 'about' ? 'О компании' : 'Посмотреть все товары'}
               </button>
             </div>
