@@ -41,6 +41,7 @@ export async function getFirstAccessibleMenuPath(userRole: UserRole | null): Pro
     {
       section: 'Товары',
       items: [
+        { path: '/admin/categories' },
         { path: '/admin/products' },
         { path: '/admin/variants' },
         { path: '/admin/related-products' },

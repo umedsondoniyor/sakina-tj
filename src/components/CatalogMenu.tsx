@@ -1,8 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ChevronRight, Bed, BedDouble, Sofa, Box, Baby, Pill as Pillow, X, Phone } from 'lucide-react';
+import { ChevronRight, X, Phone } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { useSiteContact } from '../contexts/SiteContactContext';
+import { getCategories, getCatalogMenuItems } from '../lib/api';
+import { getCatalogIconForSlug, getIconForNavigationItem } from '../lib/navigationIcons';
+import type { Category, NavigationItem } from '../lib/types';
 import Logo from './Logo';
 import CategoryMenuItem from './catalog/CategoryMenuItem';
 import CategoryContent from './catalog/CategoryContent';
@@ -11,31 +14,10 @@ type MenuItem = {
   id: string;
   name: string;
   icon: React.ElementType;
+  icon_image_url?: string | null;
 };
 
-type RightPanelSection = {
-  title: string;
-  items: string[];
-};
-
-interface CatalogMenuProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
-
-const ICON_BY_CATEGORY: Record<string, React.ElementType> = {
-  mattresses: Bed,
-  beds: BedDouble,
-  sofas: Sofa,
-  pillows: Pillow,
-  blankets: Box,
-  covers: Box,
-  kids: Baby,
-  furniture: Box,
-  smartchair: Sofa,
-  map: Box,
-};
-
+/** Fallback labels when navigation_items is empty — keyed by category slug */
 const RU_NAME: Record<string, string> = {
   mattresses: 'Матрасы',
   beds: 'Кровати',
@@ -48,6 +30,16 @@ const RU_NAME: Record<string, string> = {
   smartchair: 'Массажные кресла',
   map: 'Карты',
 };
+
+type RightPanelSection = {
+  title: string;
+  items: string[];
+};
+
+interface CatalogMenuProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
 
 // Helper to generate dynamic price ranges based on min/max prices
 const generatePriceRanges = (minPrice: number, maxPrice: number): string[] => {
@@ -99,62 +91,105 @@ const CatalogMenu: React.FC<CatalogMenuProps> = ({ isOpen, onClose }) => {
   const [loading, setLoading] = useState(false);
   const hoverTimerRef = useRef<NodeJS.Timeout>();
 
-  // Load categories
-useEffect(() => {
-  if (!isOpen) return;
+  // Left column: same source & order as Admin → Категории каталога (`categories` + order_index)
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const mapDbCategoriesToMenu = (rows: Category[]): MenuItem[] =>
+      rows.map((c) => ({
+        id: c.slug,
+        name: c.name,
+        icon: getCatalogIconForSlug(c.slug),
+        icon_image_url: c.image_url ?? null,
+      }));
+
+    const mapNavToMenu = (rows: NavigationItem[]): MenuItem[] =>
+      rows.map((n) => ({
+        id: n.category_slug,
+        name: n.title,
+        icon: getIconForNavigationItem(n),
+        icon_image_url: n.icon_image_url,
+      }));
+
+    const loadCategoriesFromProducts = async (): Promise<MenuItem[]> => {
+      const { data: products } = await supabase.from('products').select('category');
+      const categoryCounts = new Map<string, number>();
+      (products || []).forEach((p: any) => {
+        const cat = p.category;
+        if (cat) categoryCounts.set(cat, (categoryCounts.get(cat) || 0) + 1);
+      });
+
+      const { data: categories } = await supabase
+        .from('categories')
+        .select('*')
+        .order('order_index', { ascending: true })
+        .order('name', { ascending: true });
+
+      let items: MenuItem[] = [];
+
+      if (categories && categories.length > 0) {
+        items = categories
+          .map((c: any) => {
+            const id = c.slug || c.name?.toLowerCase() || '';
+            if (!id || !categoryCounts.has(id)) return null;
+            return {
+              id,
+              name: c.name || RU_NAME[id] || id,
+              icon: getCatalogIconForSlug(id),
+              icon_image_url: c.image_url ?? null,
+            };
+          })
+          .filter(Boolean) as MenuItem[];
+      } else {
+        items = Array.from(categoryCounts.keys())
+          .map((id) => ({
+            id,
+            name: RU_NAME[id] || id,
+            icon: getCatalogIconForSlug(id),
+          }))
+          .sort((a, b) => a.name.localeCompare(b.name, 'ru'));
+      }
+      return items;
+    };
 
     const loadCategories = async () => {
       try {
-        // Get all products to count categories
-        const { data: products } = await supabase.from('products').select('category');
-        const categoryCounts = new Map<string, number>();
-        (products || []).forEach((p: any) => {
-          const cat = p.category;
-          if (cat) categoryCounts.set(cat, (categoryCounts.get(cat) || 0) + 1);
-        });
-
-        // Try categories table first
-        const { data: categories } = await supabase
-          .from('categories')
-          .select('*')
-          .order('name');
-
+        const dbCategories = await getCategories();
         let items: MenuItem[] = [];
 
-        if (categories && categories.length > 0) {
-          items = categories
-            .map((c: any) => {
-              const id = c.slug || c.name?.toLowerCase() || '';
-              if (!id || !categoryCounts.has(id)) return null;
-      return {
-        id,
-                name: c.name || RU_NAME[id] || id,
-        icon: ICON_BY_CATEGORY[id] || Box,
-              };
-        })
-        .filter(Boolean) as MenuItem[];
-    } else {
-          // Fallback: use product categories
-          items = Array.from(categoryCounts.keys())
-            .map((id) => ({
-              id,
-              name: RU_NAME[id] || id,
-              icon: ICON_BY_CATEGORY[id] || Box,
-            }))
-            .sort((a, b) => a.name.localeCompare(b.name, 'ru'));
+        if (dbCategories.length > 0) {
+          items = mapDbCategoriesToMenu(dbCategories);
+        } else {
+          const navItems = await getCatalogMenuItems();
+          if (navItems.length > 0) {
+            items = mapNavToMenu(navItems);
+          } else {
+            items = await loadCategoriesFromProducts();
+          }
         }
 
-    setMenuItems(items);
-        if (items.length > 0 && !selectedCategory) {
-          setSelectedCategory(items[0].id);
-        }
+        setMenuItems(items);
+        setSelectedCategory((prev) => {
+          if (items.length === 0) return '';
+          if (prev && items.some((i) => i.id === prev)) return prev;
+          return items[0].id;
+        });
       } catch (error) {
-        console.error('Error loading categories:', error);
+        console.error('Error loading catalog menu:', error);
+        try {
+          const items = await loadCategoriesFromProducts();
+          setMenuItems(items);
+          if (items.length > 0) {
+            setSelectedCategory((prev) => (prev && items.some((i) => i.id === prev) ? prev : items[0].id));
+          }
+        } catch (e2) {
+          console.error('Fallback catalog load failed:', e2);
+        }
       }
     };
 
     loadCategories();
-  }, [isOpen, selectedCategory]);
+  }, [isOpen]);
 
   // Debounced hover
   useEffect(() => {
@@ -177,6 +212,11 @@ useEffect(() => {
     const loadContent = async () => {
       setLoading(true);
       try {
+        if (selectedCategory === 'about') {
+          setRightContent([]);
+          return;
+        }
+
         // Get all products in category with prices
         const { data: products } = await supabase
         .from('products')
@@ -252,8 +292,14 @@ useEffect(() => {
   }, [isOpen, selectedCategory]);
 
   const handleNavigate = (categoryId: string, filter?: { section: string; item: string }) => {
+    if (categoryId === 'about') {
+      navigate('/about');
+      onClose();
+      return;
+    }
+
     let url = `/categories/${encodeURIComponent(categoryId)}`;
-    
+
     if (filter) {
       const state: any = { selectedCategories: [categoryId] };
       
@@ -343,8 +389,12 @@ useEffect(() => {
                     className="flex items-center justify-between w-full p-4 text-left hover:text-teal-600 hover:bg-gray-50 transition-colors"
                 >
                   <div className="flex items-center space-x-3">
-                    <item.icon size={24} className="text-gray-400" />
-                      <span className="font-medium">{item.name}</span>
+                    {item.icon_image_url ? (
+                      <img src={item.icon_image_url} alt="" className="w-6 h-6 object-contain shrink-0" />
+                    ) : (
+                      <item.icon size={24} className="text-gray-400" />
+                    )}
+                    <span className="font-medium">{item.name}</span>
                   </div>
                   <ChevronRight size={20} className="text-gray-400" />
                 </button>
@@ -362,7 +412,7 @@ useEffect(() => {
                 <ChevronRight className="rotate-180" size={24} />
               </button>
               <h2 className="text-lg font-semibold">
-                {RU_NAME[selectedCategory] || 'Каталог'}
+                {menuItems.find((m) => m.id === selectedCategory)?.name ?? 'Каталог'}
               </h2>
               <button onClick={onClose} className="text-gray-600">
                 <X size={24} />
@@ -370,7 +420,18 @@ useEffect(() => {
             </div>
 
             <div className="divide-y pb-20">
-              {loading ? (
+              {selectedCategory === 'about' ? (
+                <div className="p-6 text-center text-gray-600">
+                  <p className="mb-4">Страница о компании без фильтров по товарам.</p>
+                  <button
+                    type="button"
+                    onClick={() => handleNavigate('about')}
+                    className="text-teal-600 font-medium hover:underline"
+                  >
+                    Перейти к разделу «О компании»
+                  </button>
+                </div>
+              ) : loading ? (
                 <div className="p-8 text-center">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500 mx-auto mb-4"></div>
                   <p className="text-gray-500">Загрузка…</p>
@@ -405,7 +466,7 @@ useEffect(() => {
                 onClick={() => handleNavigate(selectedCategory)}
                 className="w-full bg-brand-turquoise text-white hover:bg-brand-navy transition-colors"
               >
-                Посмотреть все товары
+                {selectedCategory === 'about' ? 'О компании' : 'Посмотреть все товары'}
               </button>
             </div>
           </>
@@ -459,19 +520,32 @@ useEffect(() => {
             </div>
 
             {/* Right Panel */}
-            <CategoryContent
-              content={{
-                title: RU_NAME[selectedCategory] || 'Каталог',
-                categories: loading
-                  ? [{ title: 'Загрузка…', items: [] }]
-                  : rightContent,
-                promos: [],
-              }}
-              onItemClick={(sectionTitle, item) =>
-                handleNavigate(selectedCategory, { section: sectionTitle, item })
-              }
-              onSeeAll={() => handleNavigate(selectedCategory)}
-            />
+            {selectedCategory === 'about' ? (
+              <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-gray-600">
+                <p className="mb-4">Раздел без товарных фильтров — откройте страницу о компании.</p>
+                <button
+                  type="button"
+                  onClick={() => handleNavigate('about')}
+                  className="bg-brand-turquoise text-white px-6 py-2 rounded-lg hover:bg-brand-navy transition-colors"
+                >
+                  О компании
+                </button>
+              </div>
+            ) : (
+              <CategoryContent
+                content={{
+                  title: menuItems.find((m) => m.id === selectedCategory)?.name ?? 'Каталог',
+                  categories: loading
+                    ? [{ title: 'Загрузка…', items: [] }]
+                    : rightContent,
+                  promos: [],
+                }}
+                onItemClick={(sectionTitle, item) =>
+                  handleNavigate(selectedCategory, { section: sectionTitle, item })
+                }
+                onSeeAll={() => handleNavigate(selectedCategory)}
+              />
+            )}
           </div>
         </div>
       </div>

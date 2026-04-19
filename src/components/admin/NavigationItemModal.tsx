@@ -4,31 +4,41 @@ import { supabase } from '../../lib/supabaseClient';
 import toast from 'react-hot-toast';
 import type { NavigationItem } from '../../lib/types';
 
+export type NavigationItemTable = 'navigation_items' | 'catalog_menu_items';
+
 interface NavigationItemModalProps {
   isOpen: boolean;
   onClose: () => void;
   item?: NavigationItem;
   onSuccess: () => void;
+  /** Which list is being edited (default: верхнее меню). */
+  table?: NavigationItemTable;
 }
 
 const availableIcons = [
+  'Bed',
   'BedDouble',
-  'Sofa', 
+  'Sofa',
+  'Pillow',
+  'Box',
+  'Baby',
   'RockingChair',
   'Earth',
   'Users',
+  'Map',
   'Package',
   'Home',
   'ShoppingCart',
   'Heart',
-  'Star'
+  'Star',
 ];
 
-const NavigationItemModal: React.FC<NavigationItemModalProps> = ({ 
-  isOpen, 
-  onClose, 
-  item, 
-  onSuccess 
+const NavigationItemModal: React.FC<NavigationItemModalProps> = ({
+  isOpen,
+  onClose,
+  item,
+  onSuccess,
+  table = 'navigation_items',
 }) => {
   const [formData, setFormData] = useState({
     title: '',
@@ -81,20 +91,18 @@ const NavigationItemModal: React.FC<NavigationItemModalProps> = ({
       let error;
 
       if (item?.id) {
-        // Update existing item
         const { error: updateError } = await supabase
-          .from('navigation_items')
+          .from(table)
           .update(dataToSend)
           .eq('id', item.id);
         error = updateError;
       } else {
-        // Create new item
-        const { error: insertError } = await supabase
-          .from('navigation_items')
-          .insert([{
+        const { error: insertError } = await supabase.from(table).insert([
+          {
             ...dataToSend,
-            created_at: new Date().toISOString()
-          }]);
+            created_at: new Date().toISOString(),
+          },
+        ]);
         error = insertError;
       }
 
@@ -119,7 +127,13 @@ const NavigationItemModal: React.FC<NavigationItemModalProps> = ({
       <div className="bg-white rounded-lg w-full max-w-2xl">
         <div className="flex items-center justify-between p-6 border-b">
           <h2 className="text-xl font-semibold">
-            {item ? 'Edit Navigation Item' : 'Add New Navigation Item'}
+            {table === 'catalog_menu_items'
+              ? item
+                ? 'Редактировать пункт каталога'
+                : 'Новый пункт каталога'
+              : item
+                ? 'Редактировать пункт меню'
+                : 'Новый пункт верхнего меню'}
           </h2>
           <button
             onClick={onClose}

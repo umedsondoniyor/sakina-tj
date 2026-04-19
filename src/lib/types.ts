@@ -83,6 +83,8 @@ export interface Category {
   name: string;
   slug: string;
   image_url?: string;
+  /** Sort order in admin and in getCategories() (lower = first). */
+  order_index?: number;
   created_at: string;
   updated_at: string;
 }

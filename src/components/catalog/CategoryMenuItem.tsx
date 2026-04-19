@@ -6,6 +6,7 @@ interface CategoryMenuItemProps {
     id: string;
     name: string;
     icon: React.ElementType;
+    icon_image_url?: string | null;
   };
   isSelected: boolean;
   onCategoryClick: (categoryId: string) => void;
@@ -30,7 +31,11 @@ const CategoryMenuItem: React.FC<CategoryMenuItemProps> = ({
       }`}
     >
       <div className="flex items-center space-x-3">
-        <item.icon size={20} className="text-gray-400" />
+        {item.icon_image_url ? (
+          <img src={item.icon_image_url} alt="" className="w-5 h-5 object-contain shrink-0" />
+        ) : (
+          <item.icon size={20} className="text-gray-400" />
+        )}
         <span>{item.name}</span>
       </div>
       <ChevronRight size={20} />

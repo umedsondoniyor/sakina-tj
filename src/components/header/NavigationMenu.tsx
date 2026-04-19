@@ -1,23 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  BedDouble,
-  Sofa,
-  RockingChair,
-  Earth,
-  Users,
-} from 'lucide-react';
+import { BedDouble } from 'lucide-react';
 import { getNavigationItems } from '../../lib/api';
+import { getLucideIconByName } from '../../lib/navigationIcons';
 import type { NavigationItem } from '../../lib/types';
-
-// Icon mapping for Lucide icons
-const iconMap = {
-  BedDouble,
-  Sofa,
-  RockingChair,
-  Earth,
-  Users,
-};
 
 const NavigationMenu = () => {
   const navigate = useNavigate();
@@ -117,8 +103,8 @@ const NavigationMenu = () => {
           className="w-8 h-8 text-brand-turquoise"
         />
       );
-    } else if (item.icon_name && iconMap[item.icon_name as keyof typeof iconMap]) {
-      const IconComponent = iconMap[item.icon_name as keyof typeof iconMap];
+    } else if (item.icon_name) {
+      const IconComponent = getLucideIconByName(item.icon_name);
       return <IconComponent size={32} className="text-brand-turquoise mr-2" />;
     } else {
       // Fallback icon

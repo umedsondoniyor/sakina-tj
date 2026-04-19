@@ -228,10 +228,11 @@ export async function getCategories(): Promise<Category[]> {
     const { data, error } = await supabase
       .from('categories')
       .select('*')
+      .order('order_index', { ascending: true })
       .order('name', { ascending: true });
 
     if (error) throw error;
-    return data ?? [];
+    return (data ?? []) as Category[];
   }, 3, 600, 'getCategories');
 }
 
@@ -403,6 +404,20 @@ export async function getNavigationItems(): Promise<NavigationItem[]> {
     if (error) throw error;
     return data ?? [];
   }, 3, 600, 'getNavigationItems');
+}
+
+/** Left column of the «Каталог» mega-menu (`catalog_menu_items`). */
+export async function getCatalogMenuItems(): Promise<NavigationItem[]> {
+  return retryOperation(async () => {
+    const { data, error } = await supabase
+      .from('catalog_menu_items')
+      .select('*')
+      .eq('is_active', true)
+      .order('order_index', { ascending: true });
+
+    if (error) throw error;
+    return (data ?? []) as NavigationItem[];
+  }, 3, 600, 'getCatalogMenuItems');
 }
 
 /* ------------------- Related Products ------------------- */

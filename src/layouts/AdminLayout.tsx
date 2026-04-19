@@ -25,6 +25,7 @@ import {
   Shield,
   ScrollText,
   PanelBottom,
+  Tags,
 } from 'lucide-react';
 import { supabase } from "../lib/supabaseClient";
 import Logo from "../components/Logo";
@@ -130,6 +131,7 @@ const AdminLayout = () => {
           { path: '/admin/faq', label: 'Частые вопросы (FAQ)', section: 'Контент', roles: ['admin', 'editor'] },
           { path: '/admin/privacy', label: 'Политика конфиденциальности', section: 'Контент', roles: ['admin', 'editor'] },
           { path: '/admin/footer', label: 'Подвал сайта', section: 'Контент', roles: ['admin', 'editor'] },
+          { path: '/admin/categories', label: 'Категории каталога', section: 'Товары', roles: ['admin', 'editor'] },
           { path: '/admin/products', label: 'Товары', section: 'Товары', roles: ['admin', 'editor'] },
           { path: '/admin/variants', label: 'Варианты и склад', section: 'Товары', roles: ['admin'] },
           { path: '/admin/related-products', label: 'Сопутствующие товары', section: 'Товары', roles: ['admin', 'editor'] },
@@ -319,6 +321,7 @@ const AdminLayout = () => {
     {
       title: 'Товары',
       items: [
+        { path: '/admin/categories', label: 'Категории каталога', icon: Tags },
         { path: '/admin/products', label: 'Товары', icon: Package },
         { path: '/admin/variants', label: 'Варианты и склад', icon: Layers },
         { path: '/admin/related-products', label: 'Сопутствующие товары', icon: Package },

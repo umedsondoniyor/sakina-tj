@@ -33,6 +33,7 @@ import NotFoundPage from '../pages/NotFoundPage';
 import AdminLogin from '../components/admin/AdminLogin';
 import AdminDashboard from '../components/admin/AdminDashboard';
 import AdminProducts from '../components/admin/AdminProducts';
+import AdminCategories from '../components/admin/AdminCategories';
 import AdminReviews from '../components/admin/AdminReviews';
 import AdminBlog from '../components/admin/AdminBlog';
 import AdminCarousel from '../components/admin/AdminCarousel';
@@ -135,6 +136,7 @@ export const appRoutes = createRoutesFromElements(
       <Route path="about" element={<RoleProtectedRoute><AdminAbout /></RoleProtectedRoute>} />
       <Route path="reviews" element={<RoleProtectedRoute><AdminReviews /></RoleProtectedRoute>} />
       <Route path="blog" element={<RoleProtectedRoute><AdminBlog /></RoleProtectedRoute>} />
+      <Route path="categories" element={<RoleProtectedRoute><AdminCategories /></RoleProtectedRoute>} />
       <Route path="products" element={<RoleProtectedRoute><AdminProducts /></RoleProtectedRoute>} />
       <Route path="variants" element={<RoleProtectedRoute><AdminProductVariants /></RoleProtectedRoute>} />
       <Route path="related-products" element={<RoleProtectedRoute><AdminRelatedProducts /></RoleProtectedRoute>} />
