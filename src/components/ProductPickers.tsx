@@ -2,24 +2,41 @@ import { useState, useEffect } from 'react';
 import QuizModal from './QuizModal';
 import { getQuizPickerVisibility } from '../lib/api';
 
-const ProductPickers = () => {
+export type QuizPickerVisibility = { mattress: boolean; bed: boolean };
+
+interface ProductPickersProps {
+  /** From `homePageLoader` so the first paint matches admin settings (no flash of hidden pickers). */
+  initialVisibility?: QuizPickerVisibility;
+}
+
+const ProductPickers = ({ initialVisibility }: ProductPickersProps) => {
   const [isMattressQuizOpen, setIsMattressQuizOpen] = useState(false);
   const [isBedQuizOpen, setIsBedQuizOpen] = useState(false);
-  const [visibility, setVisibility] = useState({ mattress: true, bed: true });
+  const [visibility, setVisibility] = useState<QuizPickerVisibility | null>(() =>
+    initialVisibility ?? null,
+  );
 
   useEffect(() => {
+    if (initialVisibility !== undefined) {
+      setVisibility(initialVisibility);
+      return;
+    }
     let cancelled = false;
     getQuizPickerVisibility()
       .then((v) => {
         if (!cancelled) setVisibility(v);
       })
       .catch(() => {
-        /* keep defaults */
+        if (!cancelled) setVisibility({ mattress: true, bed: true });
       });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [initialVisibility]);
+
+  if (visibility === null) {
+    return null;
+  }
 
   if (!visibility.mattress && !visibility.bed) {
     return null;
