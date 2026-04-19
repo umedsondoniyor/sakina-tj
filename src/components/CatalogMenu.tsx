@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { ChevronRight, Bed, BedDouble, Sofa, Box, Baby, Pill as Pillow, X, Phone } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
+import { useSiteContact } from '../contexts/SiteContactContext';
 import Logo from './Logo';
 import CategoryMenuItem from './catalog/CategoryMenuItem';
 import CategoryContent from './catalog/CategoryContent';
@@ -88,6 +89,7 @@ const generatePriceRanges = (minPrice: number, maxPrice: number): string[] => {
 };
 
 const CatalogMenu: React.FC<CatalogMenuProps> = ({ isOpen, onClose }) => {
+  const { phone_href } = useSiteContact();
   const navigate = useNavigate();
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
@@ -321,7 +323,7 @@ useEffect(() => {
               <div className="absolute left-1/2 -translate-x-1/2">
                 <Logo variant="horizontal" className="-my-2" />
               </div>
-              <a href="tel:+992905339595" className="text-gray-600">
+              <a href={phone_href} className="text-gray-600">
                 <Phone size={24} />
               </a>
             </div>

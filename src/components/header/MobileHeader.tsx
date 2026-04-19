@@ -2,6 +2,7 @@ import React from 'react';
 import { Phone, ShoppingCart } from 'lucide-react';
 import Logo from '../Logo';
 import { useCart } from '../../contexts/CartContext';
+import { useSiteContact } from '../../contexts/SiteContactContext';
 
 interface MobileHeaderProps {
   isCatalogOpen: boolean;
@@ -9,6 +10,7 @@ interface MobileHeaderProps {
 }
 
 const MobileHeader: React.FC<MobileHeaderProps> = ({ isCatalogOpen, onToggleCatalog }) => {
+  const { phone_href } = useSiteContact();
   const { items, setIsOpen } = useCart();
 
   return (
@@ -34,7 +36,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({ isCatalogOpen, onToggleCata
       {/* Actions: phone + cart */}
       <div className="flex items-center space-x-4">
         <a
-          href="tel:+992905339595"
+          href={phone_href}
           className="text-gray-600 hover:text-brand-turquoise"
           aria-label="Позвонить нам"
         >

@@ -7,6 +7,7 @@ import { useCart } from '../contexts/CartContext';
 import toast from 'react-hot-toast';
 import { Helmet } from 'react-helmet-async';
 import { trackPurchase } from '../lib/analytics';
+import { useSiteContact } from '../contexts/SiteContactContext';
 
 /** ---------- Helpers: robust param extraction (query, hash, storage) ---------- */
 function useResolvedParam(paramNames: string[], storageKeys: string[] = []) {
@@ -69,6 +70,7 @@ type PaymentRow = {
 };
 
 const PaymentSuccessPage: React.FC = () => {
+  const { phone_display, phone_href, email, email_href } = useSiteContact();
   const navigate = useNavigate();
   const { clearCart } = useCart();
 
@@ -299,8 +301,18 @@ const PaymentSuccessPage: React.FC = () => {
             <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-xl font-semibold mb-4">Нужна помощь?</h2>
               <div className="space-y-3">
-                <Contact icon={<Package size={20} className="text-teal-600" />} title="Служба поддержки" text="+992 90 533 9595" />
-                <Contact icon={<Home size={20} className="text-teal-600" />} title="Email поддержка" text="support@sakina.tj" />
+                <Contact
+                  icon={<Package size={20} className="text-teal-600" />}
+                  title="Служба поддержки"
+                  text={phone_display}
+                  href={phone_href}
+                />
+                <Contact
+                  icon={<Home size={20} className="text-teal-600" />}
+                  title="Email поддержка"
+                  text={email}
+                  href={email_href}
+                />
               </div>
             </div>
 
@@ -340,12 +352,30 @@ const Step = ({ n, title, text }: { n: number; title: string; text: string }) =>
   </div>
 );
 
-const Contact = ({ icon, title, text }: { icon: React.ReactNode; title: string; text: string }) => (
+const Contact = ({
+  icon,
+  title,
+  text,
+  href,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  text: string;
+  href?: string;
+}) => (
   <div className="flex items-center space-x-3">
     <div className="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center">{icon}</div>
     <div>
       <h3 className="font-medium">{title}</h3>
-      <p className="text-sm text-gray-600">{text}</p>
+      <p className="text-sm text-gray-600">
+        {href ? (
+          <a href={href} className="text-teal-600 hover:underline">
+            {text}
+          </a>
+        ) : (
+          text
+        )}
+      </p>
     </div>
   </div>
 );

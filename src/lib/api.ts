@@ -523,7 +523,8 @@ const FOOTER_RU_CATEGORY_NAMES: Record<string, string> = {
   map: 'Карты',
 };
 
-const DEFAULT_FOOTER_SITE_SETTINGS: FooterSiteSettings = {
+/** Default contact/footer row — used before DB load and as merge base */
+export const FOOTER_SITE_SETTINGS_DEFAULTS: FooterSiteSettings = {
   id: 'default',
   phone_display: '+992 90 533 95 95',
   phone_href: 'tel:+992905339595',
@@ -603,101 +604,118 @@ async function buildFooterBlogColumnLinks(): Promise<{ label: string; href: stri
 
 function mergeFooterSettings(row: Partial<FooterSiteSettings> | null): FooterSiteSettings {
   if (!row?.id) {
-    return { ...DEFAULT_FOOTER_SITE_SETTINGS };
+    return { ...FOOTER_SITE_SETTINGS_DEFAULTS };
   }
   return {
-    ...DEFAULT_FOOTER_SITE_SETTINGS,
+    ...FOOTER_SITE_SETTINGS_DEFAULTS,
     ...row,
-    copyright_line2: row.copyright_line2 ?? DEFAULT_FOOTER_SITE_SETTINGS.copyright_line2,
-    legal_text: row.legal_text ?? DEFAULT_FOOTER_SITE_SETTINGS.legal_text,
-    instagram_url: row.instagram_url ?? DEFAULT_FOOTER_SITE_SETTINGS.instagram_url,
+    copyright_line2: row.copyright_line2 ?? FOOTER_SITE_SETTINGS_DEFAULTS.copyright_line2,
+    legal_text: row.legal_text ?? FOOTER_SITE_SETTINGS_DEFAULTS.legal_text,
+    instagram_url: row.instagram_url ?? FOOTER_SITE_SETTINGS_DEFAULTS.instagram_url,
   } as FooterSiteSettings;
+}
+
+async function fetchFooterSettingsMerged(): Promise<FooterSiteSettings> {
+  const { data: settingsRow, error: settingsError } = await supabase
+    .from('footer_settings')
+    .select('*')
+    .limit(1)
+    .maybeSingle();
+
+  if (settingsError) throw settingsError;
+
+  return mergeFooterSettings(settingsRow as FooterSiteSettings | null);
+}
+
+async function fetchFooterColumnsData(): Promise<FooterColumn[]> {
+  const { data: sectionsRaw, error: sectionsError } = await supabase
+    .from('footer_sections')
+    .select('*, footer_section_links(*)')
+    .eq('is_active', true)
+    .order('sort_order', { ascending: true });
+
+  if (sectionsError) throw sectionsError;
+
+  const columns: FooterColumn[] = [];
+
+  for (const section of sectionsRaw ?? []) {
+    const slug = section.slug as string;
+    const title = section.title as string;
+    const sectionType = section.section_type as 'manual' | 'categories' | 'blog';
+
+    if (sectionType === 'categories') {
+      columns.push({
+        slug,
+        title,
+        links: await buildFooterCategoryColumnLinks(),
+      });
+      continue;
+    }
+
+    if (sectionType === 'blog') {
+      columns.push({
+        slug,
+        title,
+        links: await buildFooterBlogColumnLinks(),
+      });
+      continue;
+    }
+
+    const rawLinks = (section as any).footer_section_links as Array<Record<string, unknown>> | undefined;
+    const links = (rawLinks ?? [])
+      .filter((l) => l.is_active !== false)
+      .sort(
+        (a, b) =>
+          ((a.sort_order as number) ?? 0) - ((b.sort_order as number) ?? 0),
+      )
+      .map((l) => ({
+        label: String(l.label),
+        href: String(l.href),
+      }));
+
+    const rawTitleHref = (section as { title_href?: string | null }).title_href;
+    const titleHref =
+      typeof rawTitleHref === 'string' && rawTitleHref.trim() ? rawTitleHref.trim() : null;
+
+    if (links.length === 0 && titleHref) {
+      columns.push({ slug, title, links: [], titleHref });
+    } else {
+      columns.push({ slug, title, links });
+    }
+  }
+
+  if (columns.length === 0) {
+    return [
+      {
+        slug: 'fallback',
+        title: 'Информация',
+        links: [
+          { label: 'Доставка и оплата', href: '/delivery-payment' },
+          { label: 'Контакты', href: '/contacts' },
+        ],
+      },
+    ];
+  }
+
+  return columns;
+}
+
+/** Site-wide contact block from `footer_settings` (phone, email, Instagram, address, …). */
+export async function getFooterSiteSettings(): Promise<FooterSiteSettings> {
+  return retryOperation(fetchFooterSettingsMerged, 3, 800, 'getFooterSiteSettings');
+}
+
+/** Footer link columns only (for layout below contact strip). */
+export async function getFooterColumns(): Promise<FooterColumn[]> {
+  return retryOperation(fetchFooterColumnsData, 3, 800, 'getFooterColumns');
 }
 
 export async function getFooterPayload(): Promise<FooterPayload> {
   return retryOperation(async () => {
-    const { data: settingsRow, error: settingsError } = await supabase
-      .from('footer_settings')
-      .select('*')
-      .limit(1)
-      .maybeSingle();
-
-    if (settingsError) throw settingsError;
-
-    const settings = mergeFooterSettings(settingsRow as FooterSiteSettings | null);
-
-    const { data: sectionsRaw, error: sectionsError } = await supabase
-      .from('footer_sections')
-      .select('*, footer_section_links(*)')
-      .eq('is_active', true)
-      .order('sort_order', { ascending: true });
-
-    if (sectionsError) throw sectionsError;
-
-    const columns: FooterColumn[] = [];
-
-    for (const section of sectionsRaw ?? []) {
-      const slug = section.slug as string;
-      const title = section.title as string;
-      const sectionType = section.section_type as 'manual' | 'categories' | 'blog';
-
-      if (sectionType === 'categories') {
-        columns.push({
-          slug,
-          title,
-          links: await buildFooterCategoryColumnLinks(),
-        });
-        continue;
-      }
-
-      if (sectionType === 'blog') {
-        columns.push({
-          slug,
-          title,
-          links: await buildFooterBlogColumnLinks(),
-        });
-        continue;
-      }
-
-      const rawLinks = (section as any).footer_section_links as Array<Record<string, unknown>> | undefined;
-      const links = (rawLinks ?? [])
-        .filter((l) => l.is_active !== false)
-        .sort(
-          (a, b) =>
-            ((a.sort_order as number) ?? 0) - ((b.sort_order as number) ?? 0),
-        )
-        .map((l) => ({
-          label: String(l.label),
-          href: String(l.href),
-        }));
-
-      const rawTitleHref = (section as { title_href?: string | null }).title_href;
-      const titleHref =
-        typeof rawTitleHref === 'string' && rawTitleHref.trim() ? rawTitleHref.trim() : null;
-
-      if (links.length === 0 && titleHref) {
-        columns.push({ slug, title, links: [], titleHref });
-      } else {
-        columns.push({ slug, title, links });
-      }
-    }
-
-    if (columns.length === 0) {
-      return {
-        settings,
-        columns: [
-          {
-            slug: 'fallback',
-            title: 'Информация',
-            links: [
-              { label: 'Доставка и оплата', href: '/delivery-payment' },
-              { label: 'Контакты', href: '/contacts' },
-            ],
-          },
-        ],
-      };
-    }
-
+    const [settings, columns] = await Promise.all([
+      fetchFooterSettingsMerged(),
+      fetchFooterColumnsData(),
+    ]);
     return { settings, columns };
   }, 3, 800, 'getFooterPayload');
 }

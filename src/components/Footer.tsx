@@ -1,22 +1,25 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Phone, Mail, MapPin } from 'lucide-react';
-import { getFooterPayload } from '../lib/api';
-import type { FooterPayload } from '../lib/types';
+import { getFooterColumns } from '../lib/api';
+import type { FooterColumn } from '../lib/types';
 import FooterSection from './footer/FooterSection';
 import MobileFooterAccordion from './footer/MobileFooterAccordion';
 import SocialMediaSection from './footer/SocialMediaSection';
+import { useSiteContact } from '../contexts/SiteContactContext';
 
 const Footer = () => {
-  const [payload, setPayload] = useState<FooterPayload | null>(null);
+  const settings = useSiteContact();
+  const [columns, setColumns] = useState<FooterColumn[] | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    getFooterPayload()
-      .then((data) => {
-        if (!cancelled) setPayload(data);
+    getFooterColumns()
+      .then((cols) => {
+        if (!cancelled) setColumns(cols);
       })
       .catch((err) => {
-        console.error('Footer load error:', err);
+        console.error('Footer columns load error:', err);
+        if (!cancelled) setColumns([]);
       });
     return () => {
       cancelled = true;
@@ -24,8 +27,8 @@ const Footer = () => {
   }, []);
 
   const footerLinks = useMemo(() => {
-    if (!payload?.columns?.length) return {};
-    return payload.columns.reduce(
+    if (!columns?.length) return {};
+    return columns.reduce(
       (acc, col) => {
         acc[col.slug] = {
           title: col.title,
@@ -43,22 +46,21 @@ const Footer = () => {
         }
       >,
     );
-  }, [payload]);
+  }, [columns]);
 
-  const settings = payload?.settings;
   const currentYear = new Date().getFullYear();
 
   const copyrightLine1 =
-    settings?.copyright_line1?.replace(/\{year\}/g, String(currentYear)) ??
+    settings.copyright_line1?.replace(/\{year\}/g, String(currentYear)) ??
     `© ${currentYear} Компания «Sakina»`;
-  const copyrightLine2 = settings?.copyright_line2 ?? 'Все права защищены';
+  const copyrightLine2 = settings.copyright_line2 ?? 'Все права защищены';
 
-  const columnCount = payload?.columns?.length ?? 1;
+  const columnCount = columns?.length ?? 1;
 
   return (
     <footer className="bg-slate-800 text-gray-300 pt-12 pb-6">
       <div className="max-w-7xl mx-auto px-4">
-        {payload && Object.keys(footerLinks).length > 0 ? (
+        {columns && Object.keys(footerLinks).length > 0 ? (
           <>
             <MobileFooterAccordion footerLinks={footerLinks} />
 
@@ -68,7 +70,7 @@ const Footer = () => {
                 gridTemplateColumns: `repeat(${Math.min(columnCount, 6)}, minmax(0, 1fr))`,
               }}
             >
-              {payload.columns.map((section) => (
+              {columns.map((section) => (
                 <FooterSection
                   key={section.slug}
                   title={section.title}
@@ -92,10 +94,10 @@ const Footer = () => {
               <div>
                 <p className="text-sm font-medium text-white mb-1">Телефон</p>
                 <a
-                  href={settings?.phone_href ?? 'tel:+992905339595'}
+                  href={settings.phone_href}
                   className="text-sm hover:text-teal-400 transition-colors"
                 >
-                  {settings?.phone_display ?? '+992 90 533 95 95'}
+                  {settings.phone_display}
                 </a>
               </div>
             </div>
@@ -105,10 +107,10 @@ const Footer = () => {
               <div>
                 <p className="text-sm font-medium text-white mb-1">Email</p>
                 <a
-                  href={settings?.email_href ?? 'mailto:info@sakina.tj'}
+                  href={settings.email_href}
                   className="text-sm hover:text-teal-400 transition-colors"
                 >
-                  {settings?.email ?? 'info@sakina.tj'}
+                  {settings.email}
                 </a>
               </div>
             </div>
@@ -117,7 +119,7 @@ const Footer = () => {
               <MapPin className="text-teal-500 mt-1 flex-shrink-0" size={20} />
               <div>
                 <p className="text-sm font-medium text-white mb-1">Адрес</p>
-                <p className="text-sm">{settings?.address ?? 'Душанбе, Пулоди 4'}</p>
+                <p className="text-sm">{settings.address}</p>
               </div>
             </div>
           </div>
@@ -128,8 +130,8 @@ const Footer = () => {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-6 md:space-y-0">
             <div className="space-y-4">
               <SocialMediaSection
-                heading={settings?.social_heading}
-                instagramUrl={settings?.instagram_url}
+                heading={settings.social_heading}
+                instagramUrl={settings.instagram_url}
               />
               <div className="text-sm text-gray-400">
                 <p>{copyrightLine1}</p>
@@ -138,10 +140,10 @@ const Footer = () => {
             </div>
 
             <div className="flex flex-col items-center md:items-end space-y-4">
-              {settings?.show_payment_icons !== false ? (
+              {settings.show_payment_icons !== false ? (
                 <div className="flex items-center space-x-4">
                   <span className="text-sm text-gray-400">
-                    {settings?.payment_label ?? 'Принимаем к оплате:'}
+                    {settings.payment_label ?? 'Принимаем к оплате:'}
                   </span>
                   <div className="flex items-center space-x-2">
                     <img
@@ -157,7 +159,7 @@ const Footer = () => {
                   </div>
                 </div>
               ) : null}
-              {settings?.legal_text ? (
+              {settings.legal_text ? (
                 <div className="text-xs text-gray-200 text-center md:text-right whitespace-pre-line">
                   {settings.legal_text}
                 </div>

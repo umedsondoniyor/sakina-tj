@@ -64,6 +64,7 @@ import {
   productPageLoader,
   productsPageLoader,
 } from '../loaders/publicLoaders';
+import { SiteContactProvider } from '../contexts/SiteContactContext';
 
 const NormalizeTrailingSlash = () => {
   const location = useLocation();
@@ -80,12 +81,12 @@ const NormalizeTrailingSlash = () => {
 };
 
 const RootRoute = () => (
-  <>
+  <SiteContactProvider>
     <NormalizeTrailingSlash />
     <ScrollToTop behavior="smooth" />
     <CartModal />
     <Outlet />
-  </>
+  </SiteContactProvider>
 );
 
 export const appRoutes = createRoutesFromElements(

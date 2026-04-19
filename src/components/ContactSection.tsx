@@ -1,8 +1,11 @@
 import React from 'react';
 import { MessageCircle, HelpCircle } from 'lucide-react';
 import ContactCard from './contact/ContactCard';
+import { useSiteContact } from '../contexts/SiteContactContext';
 
 const ContactSection = () => {
+  const { phone_display } = useSiteContact();
+
   return (
     <div className="bg-brand-turquoise text-white py-8 md:py-16">
       <div className="max-w-7xl mx-auto px-4">
@@ -12,7 +15,7 @@ const ContactSection = () => {
           <ContactCard
             icon={MessageCircle}
             title="Напишите или позвоните нам"
-            description="Консультанты Sakina готовы ответить на любой ваш вопрос. Тел: +992 90 533 9595"
+            description={`Консультанты Sakina готовы ответить на любой ваш вопрос. Тел: ${phone_display}`}
             buttonText="Задать вопрос"
           />
 

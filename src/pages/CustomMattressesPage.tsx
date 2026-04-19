@@ -1,6 +1,9 @@
 import SEO from '../components/SEO';
+import { useSiteContact } from '../contexts/SiteContactContext';
 
 export default function CustomMattressesPage() {
+  const { phone_href, phone_display } = useSiteContact();
+
   return (
     <div className="min-h-screen bg-white">
       <SEO
@@ -29,10 +32,10 @@ export default function CustomMattressesPage() {
             <li>3. Подтвердите заказ и удобный способ доставки по Душанбе.</li>
           </ul>
           <a
-            href="tel:+992905339595"
+            href={phone_href}
             className="inline-block mt-6 bg-brand-turquoise text-white px-6 py-3 rounded-lg hover:bg-brand-navy transition-colors font-medium"
           >
-            Позвонить: +992 90 533 9595
+            Позвонить: {phone_display}
           </a>
         </div>
       </div>

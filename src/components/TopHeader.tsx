@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { ChevronDown, MapPin } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import useIsomorphicLayoutEffect from '../hooks/useIsomorphicLayoutEffect';
+import { useSiteContact } from '../contexts/SiteContactContext';
 
 interface Showroom {
   id: string;
@@ -14,6 +15,7 @@ interface Showroom {
 }
 
 const TopHeader: React.FC = () => {
+  const { phone_href, phone_display } = useSiteContact();
   const [open, setOpen] = useState(false);
   const [showrooms, setShowrooms] = useState<Showroom[]>([]);
   const [loading, setLoading] = useState(true);
@@ -165,8 +167,8 @@ const TopHeader: React.FC = () => {
           <a href="/delivery-payment" className="flex items-center hover:text-teal-600">
             Доставка и оплата
           </a>
-          <a href="tel:+992905339595" className="font-medium hover:text-teal-600">
-            +992 90 533 9595
+          <a href={phone_href} className="font-medium hover:text-teal-600">
+            {phone_display}
           </a>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { supabase } from '../lib/supabaseClient';
+import { useSiteContact } from '../contexts/SiteContactContext';
 import { Package, Truck, Headphones, Shield, Clock, Star } from 'lucide-react';
 
 interface ServicesSettings {
@@ -11,6 +12,7 @@ interface ServicesSettings {
 }
 
 const ServicesPage: React.FC = () => {
+  const { phone_href } = useSiteContact();
   const [settings, setSettings] = useState<ServicesSettings | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -158,7 +160,7 @@ const ServicesPage: React.FC = () => {
               Свяжитесь с нами для получения дополнительной информации о наших услугах
             </p>
             <a
-              href="tel:+992905339595"
+              href={phone_href}
               className="inline-block bg-brand-turquoise text-white px-6 py-3 rounded-lg hover:bg-brand-navy transition-colors font-medium"
             >
               Связаться с нами

@@ -2,8 +2,10 @@ import React from 'react';
 import { CheckCircle, Package, Truck, Phone, Mail } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
+import { useSiteContact } from '../contexts/SiteContactContext';
 
 const OrderConfirmationPage = () => {
+  const { phone_href, email_href } = useSiteContact();
   const navigate = useNavigate();
   const orderNumber = Math.random().toString(36).substr(2, 9).toUpperCase();
   const estimatedDelivery = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString('ru-RU');
@@ -71,14 +73,14 @@ const OrderConfirmationPage = () => {
           
           <div className="flex space-x-3">
             <a
-              href="tel:+992905339595"
+              href={phone_href}
               className="flex-1 flex items-center justify-center py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
             >
               <Phone size={16} className="mr-2" />
               <span className="text-sm">Позвонить</span>
             </a>
             <a
-              href="mailto:support@sakina.tj"
+              href={email_href}
               className="flex-1 flex items-center justify-center py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
             >
               <Mail size={16} className="mr-2" />

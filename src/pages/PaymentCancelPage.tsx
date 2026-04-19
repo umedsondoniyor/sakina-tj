@@ -4,8 +4,10 @@ import { XCircle, ArrowLeft, RefreshCw, Home } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import toast from 'react-hot-toast';
+import { useSiteContact } from '../contexts/SiteContactContext';
 
 const PaymentCancelPage: React.FC = () => {
+  const { phone_href, email_href } = useSiteContact();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [orderId, setOrderId] = useState<string | null>(null);
@@ -108,13 +110,13 @@ const PaymentCancelPage: React.FC = () => {
           <p className="text-sm text-gray-500 mb-3">Нужна помощь?</p>
           <div className="flex flex-col sm:flex-row justify-center gap-3">
             <a
-              href="tel:+992905339595"
+              href={phone_href}
               className="flex items-center justify-center bg-brand-turquoise text-white px-4 py-2 rounded-lg hover:bg-brand-navy text-sm"
             >
               📞 Позвонить
             </a>
             <a
-              href="mailto:support@sakina.tj"
+              href={email_href}
               className="flex items-center justify-center bg-gray-100 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-200 text-sm"
             >
               ✉️ Написать

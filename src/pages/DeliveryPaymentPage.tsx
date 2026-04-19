@@ -5,6 +5,7 @@ import { getDeliveryPaymentSettings } from '../lib/api';
 import { Truck, CreditCard, MapPin, Clock, Shield, Phone } from 'lucide-react';
 import type { DeliveryPaymentLoaderData } from '../loaders/publicLoaders';
 import { useCart } from '../contexts/CartContext';
+import { useSiteContact } from '../contexts/SiteContactContext';
 import { toGa4Item, trackBeginCheckout } from '../lib/analytics';
 
 interface DeliveryPaymentSettings {
@@ -16,6 +17,7 @@ interface DeliveryPaymentSettings {
 }
 
 const DeliveryPaymentPage: React.FC = () => {
+  const { phone_href, phone_display } = useSiteContact();
   const { items } = useCart();
   const loaderData = useLoaderData() as DeliveryPaymentLoaderData | undefined;
   const initialSettings = loaderData?.settings ?? null;
@@ -207,10 +209,10 @@ const DeliveryPaymentPage: React.FC = () => {
             </p>
             <div className="text-center">
               <a
-                href="tel:+992905339595"
+                href={phone_href}
                 className="inline-block bg-brand-turquoise text-white px-6 py-3 rounded-lg hover:bg-brand-navy transition-colors font-medium"
               >
-                +992 90 533 9595
+                {phone_display}
               </a>
             </div>
           </div>

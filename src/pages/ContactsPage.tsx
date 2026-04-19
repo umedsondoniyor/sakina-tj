@@ -2,12 +2,14 @@ import { Helmet } from 'react-helmet-async';
 import ContactSection from '../components/ContactSection';
 import StructuredData from '../components/StructuredData';
 import { toAbsoluteUrl } from '../lib/seo';
+import { useSiteContact } from '../contexts/SiteContactContext';
+import { telephoneDigitsFromHref } from '../lib/siteContact';
 
 export default function ContactsPage() {
+  const { address, phone_display, phone_href } = useSiteContact();
   const businessName = 'Sakina';
-  const addressLabel = 'Душанбе, Пулоди 4';
-  const phoneLabel = '+992 90 533 9595';
-  const phoneHref = '+992905339595';
+  const addressLabel = address;
+  const phoneLabel = phone_display;
   const openingHoursLabel = 'Ежедневно: 09:00-20:00';
   const canonicalPath = '/contacts';
 
@@ -16,7 +18,7 @@ export default function ContactsPage() {
     '@type': 'FurnitureStore',
     name: businessName,
     url: toAbsoluteUrl(canonicalPath),
-    telephone: phoneHref,
+    telephone: telephoneDigitsFromHref(phone_href),
     address: {
       '@type': 'PostalAddress',
       streetAddress: 'Пулоди 4',
@@ -65,7 +67,7 @@ export default function ContactsPage() {
                 <p><span className="font-semibold">Адрес:</span> {addressLabel}</p>
                 <p>
                   <span className="font-semibold">Телефон:</span>{' '}
-                  <a className="text-brand-turquoise hover:text-brand-navy" href={`tel:${phoneHref}`}>
+                  <a className="text-brand-turquoise hover:text-brand-navy" href={phone_href}>
                     {phoneLabel}
                   </a>
                 </p>

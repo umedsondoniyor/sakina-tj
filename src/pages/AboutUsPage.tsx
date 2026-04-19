@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import type { LucideProps } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
+import { useSiteContact } from '../contexts/SiteContactContext';
 
 /* =========================
    Types mirrored from DB
@@ -122,6 +123,7 @@ const FALLBACK_SETTINGS: AboutSettings = {
    Component
 ========================= */
 const AboutUsPage: React.FC = () => {
+  const { phone_href, phone_display } = useSiteContact();
   const [settings, setSettings] = useState<AboutSettings | null>(null);
   const [stats, setStats] = useState<AboutStat[] | null>(null);
   const [values, setValues] = useState<AboutValue[] | null>(null);
@@ -373,10 +375,10 @@ const AboutUsPage: React.FC = () => {
           )}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
-              href="tel:+992905339595"
+              href={phone_href}
               className="bg-white text-brand-turquoise px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
             >
-              Позвонить: +992 90 533 9595
+              Позвонить: {phone_display}
             </a>
             <a
               href="/products"
