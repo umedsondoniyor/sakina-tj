@@ -26,6 +26,7 @@ import ServicesPage from '../pages/ServicesPage';
 import DeliveryPaymentPage from '../pages/DeliveryPaymentPage';
 import ContactsPage from '../pages/ContactsPage';
 import FaqPage from '../pages/FaqPage';
+import AdminFaq from '../components/admin/AdminFaq';
 import CustomMattressesPage from '../pages/CustomMattressesPage';
 import NotFoundPage from '../pages/NotFoundPage';
 import AdminLogin from '../components/admin/AdminLogin';
@@ -54,6 +55,7 @@ import {
   categoryFilterLandingLoader,
   contactsLoader,
   deliveryPaymentLoader,
+  faqPageLoader,
   homePageLoader,
   productPageLoader,
   productsPageLoader,
@@ -98,7 +100,7 @@ export const appRoutes = createRoutesFromElements(
       <Route path="/services" element={<ServicesPage />} />
       <Route path="/delivery-payment" element={<DeliveryPaymentPage />} loader={deliveryPaymentLoader} />
       <Route path="/contacts" element={<ContactsPage />} loader={contactsLoader} />
-      <Route path="/faq" element={<FaqPage />} />
+      <Route path="/faq" element={<FaqPage />} loader={faqPageLoader} />
       <Route path="/blog" element={<BlogPage />} />
       <Route path="/blog/kak-vybrat-matras" element={<BlogGuideMattressSelectionPage />} />
       <Route path="/blog/matras-dlya-boli-v-spine" element={<BlogGuideBackPainMattressPage />} />
@@ -132,6 +134,7 @@ export const appRoutes = createRoutesFromElements(
       <Route path="related-products" element={<RoleProtectedRoute><AdminRelatedProducts /></RoleProtectedRoute>} />
       <Route path="quiz" element={<RoleProtectedRoute><AdminQuiz /></RoleProtectedRoute>} />
       <Route path="navigation" element={<RoleProtectedRoute><AdminNavigation /></RoleProtectedRoute>} />
+      <Route path="faq" element={<RoleProtectedRoute><AdminFaq /></RoleProtectedRoute>} />
       <Route path="one-click-orders" element={<RoleProtectedRoute><AdminOneClickOrders /></RoleProtectedRoute>} />
       <Route path="users" element={<RoleProtectedRoute><AdminUsers /></RoleProtectedRoute>} />
       <Route path="role-management" element={<RoleProtectedRoute><AdminRoleManagement /></RoleProtectedRoute>} />

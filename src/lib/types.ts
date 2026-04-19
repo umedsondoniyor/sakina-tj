@@ -225,6 +225,16 @@ export interface NavigationItem {
   updated_at: string;
 }
 
+export interface FaqItem {
+  id: string;
+  question: string;
+  answer: string;
+  order_index: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface OneClickOrder {
   id: string;
   product_id: string;

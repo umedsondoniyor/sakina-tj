@@ -33,6 +33,7 @@ export async function getFirstAccessibleMenuPath(userRole: UserRole | null): Pro
         { path: '/admin/reviews' },
         { path: '/admin/blog' },
         { path: '/admin/navigation' },
+        { path: '/admin/faq' },
       ],
     },
     {

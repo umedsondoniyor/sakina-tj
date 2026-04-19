@@ -22,7 +22,8 @@ import {
   MapPin,
   User,
   Mail,
-  Shield
+  Shield,
+  ScrollText,
 } from 'lucide-react';
 import { supabase } from "../lib/supabaseClient";
 import Logo from "../components/Logo";
@@ -125,6 +126,7 @@ const AdminLayout = () => {
           { path: '/admin/reviews', label: 'Отзывы', section: 'Контент', roles: ['admin', 'moderator', 'editor'] },
           { path: '/admin/blog', label: 'Блог', section: 'Контент', roles: ['admin', 'editor'] },
           { path: '/admin/navigation', label: 'Навигация', section: 'Контент', roles: ['admin'] },
+          { path: '/admin/faq', label: 'Частые вопросы (FAQ)', section: 'Контент', roles: ['admin', 'editor'] },
           { path: '/admin/products', label: 'Товары', section: 'Товары', roles: ['admin', 'editor'] },
           { path: '/admin/variants', label: 'Варианты и склад', section: 'Товары', roles: ['admin'] },
           { path: '/admin/related-products', label: 'Сопутствующие товары', section: 'Товары', roles: ['admin', 'editor'] },
@@ -306,6 +308,7 @@ const AdminLayout = () => {
         { path: '/admin/reviews', label: 'Отзывы', icon: Star },
         { path: '/admin/blog', label: 'Блог', icon: FileText },
         { path: '/admin/navigation', label: 'Навигация', icon: Navigation },
+        { path: '/admin/faq', label: 'Частые вопросы (FAQ)', icon: ScrollText },
       ],
     },
     {

@@ -5,11 +5,12 @@ import {
   getCategories,
   getCustomerReviews,
   getDeliveryPaymentSettings,
+  getFaqItems,
   getProductById,
   getProducts,
   getProductsByCategory,
 } from '../lib/api';
-import type { BlogPost, CarouselSlide, CustomerReview, Product } from '../lib/types';
+import type { BlogPost, CarouselSlide, CustomerReview, FaqItem, Product } from '../lib/types';
 
 export interface HomePageLoaderData {
   slides: CarouselSlide[];
@@ -195,4 +196,13 @@ export async function deliveryPaymentLoader(): Promise<DeliveryPaymentLoaderData
 export async function contactsLoader() {
   const categories = await getCategories().catch(() => []);
   return { categories };
+}
+
+export interface FaqPageLoaderData {
+  faqItems: FaqItem[];
+}
+
+export async function faqPageLoader(): Promise<FaqPageLoaderData> {
+  const faqItems = await getFaqItems().catch(() => []);
+  return { faqItems };
 }

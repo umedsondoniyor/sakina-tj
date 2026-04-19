@@ -9,6 +9,7 @@ import type {
   QuizStep,
   NavigationItem,
   RelatedProduct,
+  FaqItem,
 } from './types';
 
 // Lightweight retry with exponential backoff
@@ -358,6 +359,19 @@ export async function getQuizPickerVisibility(): Promise<{ mattress: boolean; be
 
     return { mattress, bed };
   }, 3, 600, 'getQuizPickerVisibility');
+}
+
+export async function getFaqItems(): Promise<FaqItem[]> {
+  return retryOperation(async () => {
+    const { data, error } = await supabase
+      .from('faq_items')
+      .select('*')
+      .eq('is_active', true)
+      .order('order_index', { ascending: true });
+
+    if (error) throw error;
+    return (data ?? []) as FaqItem[];
+  }, 3, 600, 'getFaqItems');
 }
 
 export async function getNavigationItems(): Promise<NavigationItem[]> {
