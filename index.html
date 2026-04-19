@@ -10,15 +10,12 @@
     <meta name="google-site-verification" content="kQiSoyAjPsW2ze3h5LZSwGuZVzGHEcFU7ysM67n0SkQ" />
     <meta name="yandex-verification" content="bd24149313adf514" />
 
-    <!-- Primary Meta -->
-    <title>Sakina — матрасы, кровати и товары для здорового сна</title>
-    <meta
-      name="description"
-      content="Sakina — магазин матрасов, кроватей, подушек и аксессуаров для здорового сна. Бесплатная консультация, доставка по всему Таджикистану, гарантия до 8 лет."
-    />
-    <meta name="keywords" content="матрасы, кровати, подушки, одеяла, Sakina, ортопедический матрас, Таджикистан" />
+    <!-- Home SEO shell: vite/injectIndexHtmlSeo.ts fills from seo_page_settings (same rules as HomePage + /admin/seo). -->
+    <title>__SEO_TITLE__</title>
+    <meta name="description" content="__SEO_DESCRIPTION__" />
+    <meta name="keywords" content="__SEO_KEYWORDS__" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
-    <link rel="canonical" href="https://www.sakina.tj/" />
+    <link rel="canonical" href="__SEO_CANONICAL__" />
 
     <!-- PWA / Theming -->
     <meta name="theme-color" content="#0fb6c9" />
@@ -37,48 +34,38 @@
     <!-- Preconnects/Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <!-- combine your fonts in one request; use display=swap for CLS-friendly loading -->
     <link
       href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
 
-    <!-- Social (Open Graph) -->
+    <!-- Social (Open Graph / Twitter) — home defaults from CMS; og:image from extra_meta or site default -->
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="ru_RU" />
     <meta property="og:site_name" content="Sakina" />
-    <meta property="og:title" content="Sakina — матрасы, кровати и товары для здорового сна" />
-    <meta
-      property="og:description"
-      content="Подберите идеальный матрас с консультацией эксперта. Доставка по всему Таджикистану и гарантия до 8 лет."
-    />
-    <meta property="og:url" content="https://www.sakina.tj/" />
-    <!-- Replace with a real, absolute URL to a 1200x630 image -->
-    <meta property="og:image" content="https://www.sakina.tj/og/cover-1200x630.jpg" />
+    <meta property="og:title" content="__SEO_TITLE__" />
+    <meta property="og:description" content="__SEO_DESCRIPTION__" />
+    <meta property="og:url" content="__SEO_CANONICAL__" />
+    <meta property="og:image" content="__SEO_OG_IMAGE__" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
 
-    <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Sakina — матрасы, кровати и товары для здорового сна" />
-    <meta
-      name="twitter:description"
-      content="Подберите идеальный матрас с консультацией эксперта. Доставка по всему Таджикистану и гарантия до 8 лет."
-    />
-    <meta name="twitter:image" content="https://www.sakina.tj/og/cover-1200x630.jpg" />
+    <meta name="twitter:title" content="__SEO_TITLE__" />
+    <meta name="twitter:description" content="__SEO_DESCRIPTION__" />
+    <meta name="twitter:image" content="__SEO_OG_IMAGE__" />
 
-    <!-- Hreflang (add more locales when you have them) -->
-    <link rel="alternate" href="https://www.sakina.tj/" hreflang="ru" />
-    <link rel="alternate" href="https://www.sakina.tj/" hreflang="x-default" />
+    <link rel="alternate" href="__SITE_BASE__/" hreflang="ru" />
+    <link rel="alternate" href="__SITE_BASE__/" hreflang="x-default" />
 
-    <!-- Structured Data (Organization + Website) -->
+    <!-- Structured Data (Organization + Website) — base URL from VITE_SITE_URL -->
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
         "@type": "Organization",
         "name": "Sakina",
-        "url": "https://www.sakina.tj/",
-        "logo": "https://www.sakina.tj/favicon/android-chrome-192x192.png",
+        "url": "__SITE_BASE__/",
+        "logo": "__SITE_BASE__/favicon/android-chrome-192x192.png",
         "sameAs": [
           "https://www.facebook.com/",
           "https://www.instagram.com/"
@@ -97,7 +84,7 @@
         "@context": "https://schema.org",
         "@type": "WebSite",
         "name": "Sakina",
-        "url": "https://www.sakina.tj/"
+        "url": "__SITE_BASE__/"
       }
     </script>
   </head>

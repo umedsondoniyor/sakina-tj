@@ -79,6 +79,7 @@ function injectRenderedHtml(template, appHtml, helmetContext) {
   const cleanedTemplate = template
     .replace(/<title[^>]*>[\s\S]*?<\/title>/i, '')
     .replace(/<meta[^>]*name="description"[^>]*>/i, '')
+    .replace(/<meta[^>]*name="keywords"[^>]*>/i, '')
     .replace(/<meta[^>]*property="og:title"[^>]*>/i, '')
     .replace(/<meta[^>]*property="og:description"[^>]*>/i, '')
     .replace(/<meta[^>]*property="og:url"[^>]*>/i, '')

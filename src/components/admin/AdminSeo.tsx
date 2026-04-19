@@ -5,9 +5,26 @@ import toast from 'react-hot-toast';
 import type { SeoPageSetting } from '../../lib/types';
 import { HOME_SEO_FALLBACK, parseExtraMetaJson, formatExtraMetaForEditor } from '../../lib/seo';
 
-type Draft = { meta_title: string; meta_description: string; extra_meta_json: string };
+type Draft = {
+  meta_title: string;
+  meta_description: string;
+  meta_keywords: string;
+  extra_meta_json: string;
+};
 
-const emptyDraft = (): Draft => ({ meta_title: '', meta_description: '', extra_meta_json: '' });
+const emptyDraft = (): Draft => ({
+  meta_title: '',
+  meta_description: '',
+  meta_keywords: '',
+  extra_meta_json: '',
+});
+
+/** Same as migration `20260419330000_seo_sample_extra_meta.sql` — use to test Helmet + build-time index.html. */
+const SAMPLE_EXTRA_META_JSON = `[
+  { "property": "og:image", "content": "https://sakina.tj/og/cover-1200x630.jpg" },
+  { "name": "twitter:card", "content": "summary_large_image" },
+  { "name": "twitter:image", "content": "https://sakina.tj/og/cover-1200x630.jpg" }
+]`;
 
 const AdminSeo = () => {
   const [defaultRow, setDefaultRow] = useState<SeoPageSetting | null>(null);
@@ -36,11 +53,13 @@ const AdminSeo = () => {
       setDefaultDraft({
         meta_title: def?.meta_title ?? HOME_SEO_FALLBACK.title,
         meta_description: def?.meta_description ?? HOME_SEO_FALLBACK.description,
+        meta_keywords: def?.meta_keywords ?? HOME_SEO_FALLBACK.keywords,
         extra_meta_json: formatExtraMetaForEditor(def?.extra_meta),
       });
       setHomeDraft({
         meta_title: home?.meta_title ?? HOME_SEO_FALLBACK.title,
         meta_description: home?.meta_description ?? HOME_SEO_FALLBACK.description,
+        meta_keywords: home?.meta_keywords ?? HOME_SEO_FALLBACK.keywords,
         extra_meta_json: formatExtraMetaForEditor(home?.extra_meta),
       });
     } catch (e) {
@@ -71,6 +90,7 @@ const AdminSeo = () => {
       return false;
     }
     const meta_description = draft.meta_description.trim() || null;
+    const meta_keywords = draft.meta_keywords.trim() || null;
     const now = new Date().toISOString();
 
     const { error } = await supabase.from('seo_page_settings').upsert(
@@ -78,6 +98,7 @@ const AdminSeo = () => {
         route_key: routeKey,
         meta_title,
         meta_description,
+        meta_keywords,
         extra_meta: parsed.value,
         updated_at: now,
       },
@@ -119,7 +140,11 @@ const AdminSeo = () => {
         <h1 className="text-2xl font-bold text-gray-900">SEO</h1>
         <p className="mt-1 text-sm text-gray-600">
           Заголовок и описание для поисковых систем. «По умолчанию» — запасной вариант; «Главная» — для
-          страницы «/». Если поле главной пустое в базе, подставляется значение по умолчанию.
+          страницы «/». Если поле главной пустое в базе, подставляется значение по умолчанию. Тот же набор
+          правил подставляет мета-теги в корневой <code className="text-xs bg-gray-100 px-1 rounded">index.html</code>{' '}
+          при <code className="text-xs bg-gray-100 px-1 rounded">vite build</code> и при запуске dev (нужны{' '}
+          <code className="text-xs bg-gray-100 px-1 rounded">VITE_SUPABASE_*</code>); после смены SEO пересоберите
+          продакшен, чтобы статический HTML совпадал с базой.
         </p>
       </div>
 
@@ -152,15 +177,38 @@ const AdminSeo = () => {
           <p className="mt-1 text-xs text-gray-400">{defaultDraft.meta_description.length} символов</p>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Дополнительные meta-теги (JSON)
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Meta keywords</label>
+          <input
+            type="text"
+            value={defaultDraft.meta_keywords}
+            onChange={(e) => setDefaultDraft((d) => ({ ...d, meta_keywords: e.target.value }))}
+            placeholder="через запятую"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+          />
+          <p className="mt-1 text-xs text-gray-500">
+            Тег <code className="text-xs">meta name=&quot;keywords&quot;</code> для главной (редко влияет на ранжирование).
+            Пустое значение на главной — взять из блока «По умолчанию».
+          </p>
+        </div>
+        <div>
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
+            <label className="block text-sm font-medium text-gray-700">
+              Дополнительные meta-теги (JSON)
+            </label>
+            <button
+              type="button"
+              onClick={() => setDefaultDraft((d) => ({ ...d, extra_meta_json: SAMPLE_EXTRA_META_JSON }))}
+              className="text-sm font-medium text-teal-600 hover:text-teal-800"
+            >
+              Подставить пример
+            </button>
+          </div>
           <textarea
             value={defaultDraft.extra_meta_json}
             onChange={(e) => setDefaultDraft((d) => ({ ...d, extra_meta_json: e.target.value }))}
-            rows={6}
+            rows={8}
             spellCheck={false}
-            placeholder={`[\n  { "property": "og:image", "content": "https://example.com/image.jpg" },\n  { "name": "twitter:card", "content": "summary_large_image" }\n]`}
+            placeholder={SAMPLE_EXTRA_META_JSON}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
           />
           <p className="mt-1 text-xs text-gray-500">
@@ -205,15 +253,34 @@ const AdminSeo = () => {
           <p className="mt-1 text-xs text-gray-400">{homeDraft.meta_description.length} символов</p>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Дополнительные meta-теги (JSON)
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Meta keywords</label>
+          <input
+            type="text"
+            value={homeDraft.meta_keywords}
+            onChange={(e) => setHomeDraft((d) => ({ ...d, meta_keywords: e.target.value }))}
+            placeholder="через запятую; пусто — из «По умолчанию»"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+          />
+        </div>
+        <div>
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
+            <label className="block text-sm font-medium text-gray-700">
+              Дополнительные meta-теги (JSON)
+            </label>
+            <button
+              type="button"
+              onClick={() => setHomeDraft((d) => ({ ...d, extra_meta_json: SAMPLE_EXTRA_META_JSON }))}
+              className="text-sm font-medium text-teal-600 hover:text-teal-800"
+            >
+              Подставить пример
+            </button>
+          </div>
           <textarea
             value={homeDraft.extra_meta_json}
             onChange={(e) => setHomeDraft((d) => ({ ...d, extra_meta_json: e.target.value }))}
-            rows={6}
+            rows={8}
             spellCheck={false}
-            placeholder={`[\n  { "property": "og:image", "content": "https://…" }\n]`}
+            placeholder={SAMPLE_EXTRA_META_JSON}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
           />
           <p className="mt-1 text-xs text-gray-500">

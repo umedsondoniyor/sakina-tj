@@ -1,5 +1,20 @@
 import type { SeoExtraMetaTag } from './types';
 
+export function pickOgImageFromExtraMeta(extraMeta: SeoExtraMetaTag[]): string | undefined {
+  const tag = extraMeta.find((t) => t.property === 'og:image' && t.content?.trim());
+  return tag?.content.trim();
+}
+
+/** Absolute URL for sharing; relative paths are resolved against site base. */
+export function resolveAbsoluteOgImageUrl(candidate: string | undefined, siteBase: string): string {
+  const base = siteBase.replace(/\/$/, '');
+  const fallback = `${base}/og/cover-1200x630.jpg`;
+  if (!candidate?.trim()) return fallback;
+  const c = candidate.trim();
+  if (c.startsWith('http://') || c.startsWith('https://')) return c;
+  return c.startsWith('/') ? `${base}${c}` : `${base}/${c}`;
+}
+
 const DEFAULT_SITE_URL = 'https://sakina.tj';
 
 /** Used when DB rows are missing or empty (matches previous hardcoded HomePage SEO). */
@@ -7,12 +22,15 @@ export const HOME_SEO_FALLBACK = {
   title: 'Матрасы и товары для сна в Душанбе',
   description:
     'Матрасы, кровати, подушки и товары для сна в Душанбе с доставкой и гарантией.',
+  keywords:
+    'матрасы, кровати, подушки, одеяла, Sakina, ортопедический матрас, Таджикистан',
 } as const;
 
 export type SeoPageRow = {
   route_key: string;
   meta_title: string;
   meta_description: string | null;
+  meta_keywords?: string | null;
   extra_meta?: SeoExtraMetaTag[] | null;
 };
 
@@ -57,11 +75,12 @@ function pickExtraMeta(home?: SeoPageRow, def?: SeoPageRow): SeoExtraMetaTag[] {
 }
 
 /**
- * Resolve `<title>`, meta description, and extra meta for `/` using `home` → `default` → {@link HOME_SEO_FALLBACK}.
+ * Resolve `<title>`, meta description, keywords, and extra meta for `/` using `home` → `default` → {@link HOME_SEO_FALLBACK}.
  */
 export function resolveHomeSeo(rows: SeoPageRow[]): {
   title: string;
   description: string;
+  keywords: string;
   extraMeta: SeoExtraMetaTag[];
 } {
   const map = new Map(rows.map((r) => [r.route_key, r]));
@@ -73,8 +92,12 @@ export function resolveHomeSeo(rows: SeoPageRow[]): {
     home?.meta_description?.trim() ||
     def?.meta_description?.trim() ||
     HOME_SEO_FALLBACK.description;
+  const keywords =
+    home?.meta_keywords?.trim() ||
+    def?.meta_keywords?.trim() ||
+    HOME_SEO_FALLBACK.keywords;
   const extraMeta = pickExtraMeta(home, def);
-  return { title, description, extraMeta };
+  return { title, description, keywords, extraMeta };
 }
 
 export function getSiteUrl() {

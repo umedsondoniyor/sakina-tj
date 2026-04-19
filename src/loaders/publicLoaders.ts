@@ -43,7 +43,7 @@ export interface HomePageLoaderData {
   slides: CarouselSlide[];
   reviews: CustomerReview[];
   blogPosts: BlogPost[];
-  seo: { title: string; description: string; extraMeta: SeoExtraMetaTag[] };
+  seo: { title: string; description: string; keywords: string; extraMeta: SeoExtraMetaTag[] };
   featureBlocks: HomeFeatureBlock[];
   benefitBlocks: HomeBenefitBlock[];
   manufacturingSettings: HomeManufacturingSettings | null;

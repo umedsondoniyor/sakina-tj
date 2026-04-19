@@ -18,11 +18,18 @@ const HomePage: React.FC = () => {
   const loaderData = useLoaderData() as HomePageLoaderData | undefined;
   const seoTitle = loaderData?.seo?.title ?? HOME_SEO_FALLBACK.title;
   const seoDescription = loaderData?.seo?.description ?? HOME_SEO_FALLBACK.description;
+  const seoKeywords = loaderData?.seo?.keywords ?? HOME_SEO_FALLBACK.keywords;
   const extraMeta = loaderData?.seo?.extraMeta ?? [];
 
   return (
     <>
-      <SEO title={seoTitle} description={seoDescription} canonicalPath="/" extraMeta={extraMeta} />
+      <SEO
+        title={seoTitle}
+        description={seoDescription}
+        keywords={seoKeywords}
+        canonicalPath="/"
+        extraMeta={extraMeta}
+      />
 
       {/* ✅ Page content */}
       <HeroCarousel initialSlides={loaderData?.slides} />

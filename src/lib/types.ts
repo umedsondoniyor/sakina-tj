@@ -335,6 +335,8 @@ export interface SeoPageSetting {
   route_key: string;
   meta_title: string;
   meta_description: string | null;
+  /** Comma-separated; optional `<meta name="keywords">`. */
+  meta_keywords?: string | null;
   /** Parsed JSON array from DB; see `SeoExtraMetaTag`. */
   extra_meta?: SeoExtraMetaTag[] | null;
   created_at: string;
