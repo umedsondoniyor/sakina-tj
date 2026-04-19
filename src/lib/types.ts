@@ -241,6 +241,16 @@ export interface FaqItem {
   updated_at: string;
 }
 
+/** SEO meta for a logical route (`default` = site fallback, `home` = главная). */
+export interface SeoPageSetting {
+  id: string;
+  route_key: string;
+  meta_title: string;
+  meta_description: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 /** Repeatable icon cards on /services */
 export interface ServicePageItem {
   id: string;

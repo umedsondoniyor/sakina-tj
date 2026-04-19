@@ -11,7 +11,9 @@ import {
   getProductBySlugOrId,
   getProducts,
   getProductsByCategory,
+  getSeoPageSettings,
 } from '../lib/api';
+import { resolveHomeSeo } from '../lib/seo';
 import { PRODUCT_ID_UUID_RE } from '../lib/productUrl';
 import type {
   BlogPost,
@@ -26,6 +28,7 @@ export interface HomePageLoaderData {
   slides: CarouselSlide[];
   reviews: CustomerReview[];
   blogPosts: BlogPost[];
+  seo: { title: string; description: string };
 }
 
 export interface ProductsPageLoaderData {
@@ -67,13 +70,16 @@ const defaultDeliveryPaymentSettings = {
 };
 
 export async function homePageLoader(): Promise<HomePageLoaderData> {
-  const [slides, reviews, blogPosts] = await Promise.all([
+  const [slides, reviews, blogPosts, seoRows] = await Promise.all([
     getCarouselSlides().catch(() => []),
     getCustomerReviews().catch(() => []),
     getBlogPosts({ status: 'published', limit: 4 }).catch(() => []),
+    getSeoPageSettings().catch(() => []),
   ]);
 
-  return { slides, reviews, blogPosts };
+  const seo = resolveHomeSeo(seoRows);
+
+  return { slides, reviews, blogPosts, seo };
 }
 
 export async function productsPageLoader({ request }: LoaderFunctionArgs): Promise<ProductsPageLoaderData> {

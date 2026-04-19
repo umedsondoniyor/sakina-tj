@@ -26,6 +26,7 @@ import {
   ScrollText,
   PanelBottom,
   Tags,
+  Search,
 } from 'lucide-react';
 import { supabase } from "../lib/supabaseClient";
 import Logo from "../components/Logo";
@@ -131,6 +132,7 @@ const AdminLayout = () => {
           { path: '/admin/faq', label: 'Частые вопросы (FAQ)', section: 'Контент', roles: ['admin', 'editor'] },
           { path: '/admin/privacy', label: 'Политика конфиденциальности', section: 'Контент', roles: ['admin', 'editor'] },
           { path: '/admin/footer', label: 'Подвал сайта', section: 'Контент', roles: ['admin', 'editor'] },
+          { path: '/admin/seo', label: 'SEO (главная и по умолчанию)', section: 'Контент', roles: ['admin', 'editor'] },
           { path: '/admin/categories', label: 'Категории каталога', section: 'Товары', roles: ['admin', 'editor'] },
           { path: '/admin/products', label: 'Товары', section: 'Товары', roles: ['admin', 'editor'] },
           { path: '/admin/variants', label: 'Варианты и склад', section: 'Товары', roles: ['admin'] },
@@ -316,6 +318,7 @@ const AdminLayout = () => {
         { path: '/admin/faq', label: 'Частые вопросы (FAQ)', icon: ScrollText },
         { path: '/admin/privacy', label: 'Политика конфиденциальности', icon: Shield },
         { path: '/admin/footer', label: 'Подвал сайта', icon: PanelBottom },
+        { path: '/admin/seo', label: 'SEO', icon: Search },
       ],
     },
     {

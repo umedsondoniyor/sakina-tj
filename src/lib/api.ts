@@ -12,6 +12,7 @@ import type {
   NavigationItem,
   RelatedProduct,
   FaqItem,
+  SeoPageSetting,
   PrivacyPolicySettings,
   FooterPayload,
   FooterSiteSettings,
@@ -422,6 +423,19 @@ export async function getFaqItems(): Promise<FaqItem[]> {
     if (error) throw error;
     return (data ?? []) as FaqItem[];
   }, 3, 600, 'getFaqItems');
+}
+
+/** Public SEO rows for `default` + `home` (see `resolveHomeSeo` in `lib/seo.ts`). */
+export async function getSeoPageSettings(): Promise<SeoPageSetting[]> {
+  return retryOperation(async () => {
+    const { data, error } = await supabase
+      .from('seo_page_settings')
+      .select('*')
+      .in('route_key', ['default', 'home']);
+
+    if (error) throw error;
+    return (data ?? []) as SeoPageSetting[];
+  }, 3, 600, 'getSeoPageSettings');
 }
 
 export async function getNavigationItems(): Promise<NavigationItem[]> {

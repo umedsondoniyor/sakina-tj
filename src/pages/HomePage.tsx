@@ -12,17 +12,16 @@ import Features from '../components/Features';
 import ContactSection from '../components/ContactSection';
 import Benefits from '../components/Benefits';
 import type { HomePageLoaderData } from '../loaders/publicLoaders';
+import { HOME_SEO_FALLBACK } from '../lib/seo';
 
 const HomePage: React.FC = () => {
   const loaderData = useLoaderData() as HomePageLoaderData | undefined;
+  const seoTitle = loaderData?.seo?.title ?? HOME_SEO_FALLBACK.title;
+  const seoDescription = loaderData?.seo?.description ?? HOME_SEO_FALLBACK.description;
 
   return (
     <>
-      <SEO
-        title="Матрасы и товары для сна в Душанбе"
-        description="Матрасы, кровати, подушки и товары для сна в Душанбе с доставкой и гарантией."
-        canonicalPath="/"
-      />
+      <SEO title={seoTitle} description={seoDescription} canonicalPath="/" />
 
       {/* ✅ Page content */}
       <HeroCarousel initialSlides={loaderData?.slides} />

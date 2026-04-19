@@ -66,6 +66,7 @@ const AdminRoleManagement = () => {
     { path: '/admin/faq', label: 'Частые вопросы (FAQ)', section: 'Контент', requiredRoles: ['admin', 'editor'] },
     { path: '/admin/privacy', label: 'Политика конфиденциальности', section: 'Контент', requiredRoles: ['admin', 'editor'] },
     { path: '/admin/footer', label: 'Подвал сайта', section: 'Контент', requiredRoles: ['admin', 'editor'] },
+    { path: '/admin/seo', label: 'SEO (главная и по умолчанию)', section: 'Контент', requiredRoles: ['admin', 'editor'] },
     { path: '/admin/categories', label: 'Категории каталога', section: 'Товары', requiredRoles: ['admin', 'editor'] },
     { path: '/admin/products', label: 'Товары', section: 'Товары', requiredRoles: ['admin', 'editor'] },
     { path: '/admin/variants', label: 'Варианты и склад', section: 'Товары', requiredRoles: ['admin'] },
