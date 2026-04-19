@@ -131,7 +131,7 @@ const CategoryGrid: React.FC = () => {
         <div
           ref={scrollRef}
           className="
-            relative
+            relative flex justify-center
             overflow-x-auto scrollbar-hide
             -mx-4 px-4  /* edge-to-edge on mobile only */
           "
@@ -149,16 +149,17 @@ const CategoryGrid: React.FC = () => {
           <SwipeHint showSwipeHint={showSwipeHint} />
 
           <div
-            className="justify-center
-              grid grid-rows-2 grid-flow-col gap-x-16 md:gap-x-4 gap-y-4
-              auto-cols-[130px] sm:auto-cols-[150px]
-              min-w-max
+            className="
+              grid grid-rows-2 grid-flow-col justify-items-center
+              gap-x-10 sm:gap-x-12 gap-y-4
+              auto-cols-[minmax(120px,140px)] sm:auto-cols-[minmax(130px,150px)]
+              w-max max-w-none mx-auto
               snap-x snap-mandatory
               py-1
             "
           >
             {categories.map((category, index) => (
-              <div key={category.id} className="snap-start">
+              <div key={category.id} className="snap-start w-full max-w-[150px]">
                 <CategoryItem category={category} onCategoryClick={handleCategoryClick} index={index} />
               </div>
             ))}
@@ -173,18 +174,20 @@ const CategoryGrid: React.FC = () => {
         </div>
       </div>
 
-      {/* DESKTOP/TABLET: full-width wrapping grid (no scroller wrapper) */}
-      <div className="hidden md:block">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {categories.map((category, index) => (
+      {/* DESKTOP/TABLET: centered wrapping row(s); works for any number of tiles */}
+      <div className="hidden md:flex md:flex-wrap md:justify-center md:items-start md:gap-x-6 md:gap-y-6 lg:gap-x-8 lg:gap-y-6">
+        {categories.map((category, index) => (
+          <div
+            key={category.id}
+            className="shrink-0 w-[140px] md:w-[145px] lg:w-[150px]"
+          >
             <CategoryItem
-              key={category.id}
               category={category}
               onCategoryClick={handleCategoryClick}
               index={index}
             />
-          ))}
-        </div>
+          </div>
+        ))}
       </div>
     </section>
   );
