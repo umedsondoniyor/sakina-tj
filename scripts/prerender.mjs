@@ -99,15 +99,17 @@ function routeToOutputPath(route) {
 
 async function getDynamicRoutes() {
   const [products, categories, productsForCategories] = await Promise.all([
-    fetchSupabaseRows('products', 'id'),
+    fetchSupabaseRows('products', 'id,slug'),
     fetchSupabaseRows('categories', 'slug'),
     fetchSupabaseRows('products', 'category'),
   ]);
 
   const productRoutes = (products || [])
-    .map((row) => row.id)
-    .filter(Boolean)
-    .map((id) => `/products/${id}`);
+    .map((row) => {
+      const seg = (row.slug && String(row.slug).trim()) || row.id;
+      return seg ? `/products/${encodeURIComponent(seg)}` : null;
+    })
+    .filter(Boolean);
 
   const categorySet = new Set();
   (categories || []).forEach((row) => {

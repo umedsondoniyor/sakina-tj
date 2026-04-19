@@ -1,6 +1,8 @@
 src/lib/types.ts
 export interface Product {
   id: string;
+  /** URL segment for /products/:slug when set (Latin kebab-case); otherwise id is used. */
+  slug?: string | null;
   name: string;
   description?: string;
   price: number;

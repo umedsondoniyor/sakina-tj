@@ -3,6 +3,7 @@ import { X, Plus, Trash2, AlertCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import toast from 'react-hot-toast';
 import { getCategories } from '../../lib/api';
+import { isValidProductSlug, slugifyProductName } from '../../lib/slugify';
 
 interface ProductFormProps {
   onSuccess: () => void;
@@ -15,6 +16,7 @@ interface ProductFormProps {
     old_price?: number;
     category: string;
     image_urls: string[];
+    slug?: string | null;
   };
 }
 
@@ -32,6 +34,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onClose, initialDa
   const [categoryOptions, setCategoryOptions] = useState(FALLBACK_CATEGORY_OPTIONS);
   const [formData, setFormData] = useState({
     name: initialData?.name || '',
+    slug: initialData?.slug?.trim() || '',
     description: initialData?.description || '',
     price: initialData?.price || 0,
     old_price: initialData?.old_price || 0,
@@ -161,6 +164,15 @@ const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onClose, initialDa
         return;
       }
 
+      const slugNorm = formData.slug?.trim().toLowerCase() || null;
+      if (slugNorm && !isValidProductSlug(slugNorm)) {
+        setError(
+          'Некорректный URL (slug): только латиница, цифры и дефисы. Нельзя использовать формат UUID.',
+        );
+        setSubmitting(false);
+        return;
+      }
+
       // Validate price format
       if (isNaN(formData.price) || formData.price <= 0) {
         setError('Пожалуйста, введите корректную цену');
@@ -176,8 +188,9 @@ const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onClose, initialDa
 
       const productData = {
         ...formData,
+        slug: slugNorm,
         image_urls: filteredImageUrls,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       };
 
       // Handle weight_category: must be one of the allowed values or NULL
@@ -200,6 +213,9 @@ const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onClose, initialDa
         error = updateError;
         
         if (updateError) {
+          if ((updateError as { code?: string }).code === '23505') {
+            throw new Error('Такой URL (slug) уже занят другим товаром');
+          }
           throw new Error('Не удалось обновить товар');
         }
         
@@ -211,6 +227,9 @@ const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onClose, initialDa
         error = insertError;
         
         if (error) {
+          if ((insertError as { code?: string }).code === '23505') {
+            throw new Error('Такой URL (slug) уже занят другим товаром');
+          }
           throw new Error('Не удалось создать товар');
         }
       }
@@ -267,6 +286,35 @@ const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onClose, initialDa
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
               />
+            </div>
+
+            <div>
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
+                <label className="block text-sm font-medium text-gray-700">
+                  URL товара (slug)
+                </label>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFormData((prev) => ({ ...prev, slug: slugifyProductName(prev.name) }))
+                  }
+                  className="text-sm text-teal-600 hover:text-teal-800"
+                >
+                  Сгенерировать из названия
+                </button>
+              </div>
+              <input
+                type="text"
+                name="slug"
+                value={formData.slug}
+                onChange={handleInputChange}
+                placeholder="например: orthopedic-mattress-160x200"
+                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 font-mono text-sm"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Только латиница, цифры и дефисы. Пустое поле — старая ссылка вида /products/…id. Уникально для
+                каждого товара.
+              </p>
             </div>
 
             <div>

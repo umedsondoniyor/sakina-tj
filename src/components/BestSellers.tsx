@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Star, PackageOpen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { getProductPath } from '../lib/productUrl';
 import { getBestSellers } from '../lib/api';
 import type { Product } from '../lib/types';
 import { formatCurrency } from '../lib/utils';
@@ -238,7 +239,7 @@ const BestSellers: React.FC = () => {
               </div>
 
               <button
-                onClick={() => navigate(`/products/${product.id}`)}
+                onClick={() => navigate(getProductPath(product))}
                 className="w-full mt-4 bg-brand-turquoise text-white py-2 rounded hover:bg-brand-navy transition-colors"
               >
                 Подробнее
@@ -313,7 +314,7 @@ const BestSellers: React.FC = () => {
                     )}
                   </div>
                   <button
-                    onClick={() => navigate(`/products/${product.id}`)}
+                    onClick={() => navigate(getProductPath(product))}
                     className="w-full bg-brand-turquoise text-white py-2 rounded hover:bg-brand-navy transition-colors"
                   >
                     Подробнее

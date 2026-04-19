@@ -14,6 +14,7 @@ interface Product {
   category: string;
   image_url: string;
   image_urls?: string[];
+  slug?: string | null;
 }
 
 const categoryDisplayNames: Record<string, string> = {

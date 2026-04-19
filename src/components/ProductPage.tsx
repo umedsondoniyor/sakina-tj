@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Link, useLoaderData, useParams } from 'react-router-dom';
-import { getProductById, getProductsByCategory } from '../lib/api';
+import { getProductBySlugOrId, getProductsByCategory } from '../lib/api';
+import { getProductPath } from '../lib/productUrl';
 import { useCart } from '../contexts/CartContext';
 import type { Product, ProductVariant } from '../lib/types';
 import type { ProductPageLoaderData } from '../loaders/publicLoaders';
@@ -58,7 +59,7 @@ const ProductPage: React.FC = () => {
           setProduct(null);
           return;
         }
-        const found = await getProductById(id);
+        const found = await getProductBySlugOrId(id);
         setProduct(found || null);
       } catch (err) {
         console.error('Error loading product:', err);
@@ -160,7 +161,7 @@ const ProductPage: React.FC = () => {
     product.warranty_years ? `гарантия: ${product.warranty_years} лет` : null,
   ].filter(Boolean);
   const seoDescription = `Матрас ${product.name}${seoSize ? ` ${seoSize}` : ''}. ${seoDescriptionParts.join(', ')}. Купить в Душанбе с доставкой.`;
-  const canonicalPath = `/products/${product.id}`;
+  const canonicalPath = getProductPath(product);
   const canonicalUrl = toAbsoluteUrl(canonicalPath);
   const primaryImage = product.image_urls?.[0] || product.image_url || '';
   const imageList = (product.image_urls?.length ? product.image_urls : [primaryImage]).filter(Boolean);
@@ -400,7 +401,7 @@ const ProductPage: React.FC = () => {
               {similarProducts.map((item) => (
                 <Link
                   key={item.id}
-                  to={`/products/${item.id}`}
+                  to={getProductPath(item)}
                   className="group bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow"
                 >
                   <div className="aspect-[4/3]">

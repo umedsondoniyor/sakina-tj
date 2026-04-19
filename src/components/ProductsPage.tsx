@@ -16,6 +16,7 @@ import type { ProductsPageLoaderData } from '../loaders/publicLoaders';
 import SEO from './SEO';
 import StructuredData from './StructuredData';
 import { toAbsoluteUrl } from '../lib/seo';
+import { getProductPath } from '../lib/productUrl';
 
 import ProductGrid from './products/ProductGrid';
 import ProductFilters from './products/ProductFilters';
@@ -517,7 +518,7 @@ const ProductsPage: React.FC = () => {
     itemListElement: filteredProducts.map((product, index) => ({
       '@type': 'ListItem',
       position: index + 1,
-      url: toAbsoluteUrl(`/products/${product.id}`),
+      url: toAbsoluteUrl(getProductPath(product)),
       name: product.name,
       image: product.image_url || product.image_urls?.[0] || undefined,
     })),
@@ -625,7 +626,7 @@ const ProductsPage: React.FC = () => {
 
             <ProductGrid
               products={filteredProducts}
-              onProductClick={(id) => navigate(`/products/${id}`)}
+              onProductClick={(product) => navigate(getProductPath(product))}
             />
           </section>
         </div>

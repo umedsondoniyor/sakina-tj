@@ -10,7 +10,7 @@ import { toGa4Item, trackAddToCart } from '../../lib/analytics';
 
 interface ProductGridProps {
   products: Product[];
-  onProductClick: (productId: string) => void;
+  onProductClick: (product: Product) => void;
 }
 
 const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) => {
@@ -174,7 +174,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) =
           <div
             key={product.id}
             className="group cursor-pointer"
-            onClick={() => onProductClick(product.id)}
+            onClick={() => onProductClick(product)}
           >
             <div className="relative mb-4">
               <img

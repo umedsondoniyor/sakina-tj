@@ -3,6 +3,7 @@ import { Search, Loader2, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { formatCurrency } from '../../lib/utils';
+import { getProductPath } from '../../lib/productUrl';
 import { getProductsByCategory } from '../../lib/api';
 
 type ProductSuggestion = {
@@ -10,6 +11,7 @@ type ProductSuggestion = {
   name: string;
   image_url: string | null;
   price: number | null;
+  slug?: string | null;
 };
 
 const rotatingPlaceholders = ['матрас Sakina', 'кровать Sakina', 'подушка Sakina'];
@@ -186,6 +188,7 @@ const SearchBar: React.FC = () => {
               name: p.name,
               image_url: p.image_url,
               price: p.price,
+              slug: p.slug,
             }));
           
           setSuggestions(categorySuggestions);
@@ -196,7 +199,7 @@ const SearchBar: React.FC = () => {
           
           const { data, error } = await supabase
             .from('products')
-            .select('id,name,image_url,price')
+            .select('id,name,image_url,price,slug')
             .ilike('name', `%${q}%`)
             .limit(8);
 
@@ -223,7 +226,7 @@ const SearchBar: React.FC = () => {
     
     // If a suggestion is selected, go to that product
     if (selectedIndex >= 0 && selectedIndex < suggestions.length) {
-      goToProduct(suggestions[selectedIndex].id);
+      goToProduct(suggestions[selectedIndex]);
       return;
     }
     
@@ -242,10 +245,10 @@ const SearchBar: React.FC = () => {
     setSelectedIndex(-1);
   }, [query, selectedIndex, suggestions, navigate, detectCategory]);
 
-  const goToProduct = useCallback((id: string) => {
+  const goToProduct = useCallback((s: ProductSuggestion) => {
     setOpen(false);
     setSelectedIndex(-1);
-    navigate(`/products/${id}`);
+    navigate(getProductPath({ id: s.id, slug: s.slug ?? null }));
   }, [navigate]);
 
   const clearSearch = useCallback(() => {
@@ -271,7 +274,7 @@ const SearchBar: React.FC = () => {
       } else if (e.key === 'Enter' && selectedIndex >= 0) {
         e.preventDefault();
         if (selectedIndex < suggestions.length) {
-          goToProduct(suggestions[selectedIndex].id);
+          goToProduct(suggestions[selectedIndex]);
         }
       }
     };
@@ -380,7 +383,7 @@ const SearchBar: React.FC = () => {
                   type="button"
                   role="option"
                   aria-selected={selectedIndex === index}
-                  onClick={() => goToProduct(s.id)}
+                  onClick={() => goToProduct(s)}
                   onMouseEnter={() => setSelectedIndex(index)}
                   className={`
                     w-full text-left px-4 py-2.5 flex items-center gap-3

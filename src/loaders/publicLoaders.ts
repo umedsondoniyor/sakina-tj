@@ -1,4 +1,5 @@
 import type { LoaderFunctionArgs } from 'react-router-dom';
+import { redirect } from 'react-router-dom';
 import { getBlogPosts } from '../lib/blogApi';
 import {
   getCarouselSlides,
@@ -7,10 +8,11 @@ import {
   getDeliveryPaymentSettings,
   getFaqItems,
   getPrivacyPolicySettings,
-  getProductById,
+  getProductBySlugOrId,
   getProducts,
   getProductsByCategory,
 } from '../lib/api';
+import { PRODUCT_ID_UUID_RE } from '../lib/productUrl';
 import type {
   BlogPost,
   CarouselSlide,
@@ -179,16 +181,27 @@ export async function categoryFilterLandingLoader({ params }: LoaderFunctionArgs
   };
 }
 
-export async function productPageLoader({ params }: LoaderFunctionArgs): Promise<ProductPageLoaderData> {
-  const id = params.id;
+export async function productPageLoader({
+  params,
+  request,
+}: LoaderFunctionArgs): Promise<ProductPageLoaderData> {
+  const param = params.id;
 
-  if (!id) {
+  if (!param) {
     return { product: null, similarProducts: [] };
   }
 
-  const product = await getProductById(id);
+  const product = await getProductBySlugOrId(param);
   if (!product?.category) {
     return { product, similarProducts: [] };
+  }
+
+  const slug = product.slug?.trim();
+  if (slug && PRODUCT_ID_UUID_RE.test(param)) {
+    const canonicalPath = `/products/${encodeURIComponent(slug)}`;
+    if (new URL(request.url).pathname !== canonicalPath) {
+      throw redirect(canonicalPath, { status: 301 });
+    }
   }
 
   const sameCategory = await getProductsByCategory(product.category).catch(() => []);

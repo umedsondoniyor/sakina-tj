@@ -1,6 +1,7 @@
 // src/lib/api.ts
 import { supabase } from './supabaseClient';
 import { getBlogPosts } from './blogApi';
+import { PRODUCT_ID_UUID_RE } from './productUrl';
 import type {
   Product,
   ProductVariant,
@@ -101,6 +102,36 @@ export async function getProductById(id: string): Promise<Product | null> {
       variants: data.product_variants ?? data.variants ?? [],
     } as Product;
   }, 3, 600, `getProductById:${id}`);
+}
+
+/** Resolve product from URL segment: UUID → id lookup; otherwise slug (case-insensitive). */
+export async function getProductBySlugOrId(param: string): Promise<Product | null> {
+  const raw = decodeURIComponent(param).trim();
+  if (!raw) return null;
+
+  if (PRODUCT_ID_UUID_RE.test(raw)) {
+    const byId = await getProductById(raw);
+    if (byId) return byId;
+  }
+
+  return retryOperation(async () => {
+    const { data, error } = await supabase
+      .from('products')
+      .select(`
+        *,
+        product_variants:product_variants(*)
+      `)
+      .eq('slug', raw.toLowerCase())
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!data) return null;
+
+    return {
+      ...data,
+      variants: data.product_variants ?? data.variants ?? [],
+    } as Product;
+  }, 3, 600, `getProductBySlug:${raw}`);
 }
 
 export async function getProductVariants(productId: string): Promise<ProductVariant[]> {

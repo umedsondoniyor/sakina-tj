@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Plus, Star } from 'lucide-react';
 import type { Product } from '../../lib/types';
 import { getRelatedProducts } from '../../lib/api';
+import { getProductPath } from '../../lib/productUrl';
 import { formatCurrency, getVariantLabel } from '../../lib/utils';
 import ProductSizeModal from '../products/ProductSizeModal';
 import ProductConfirmationModal from '../products/ProductConfirmationModal';
@@ -47,7 +48,7 @@ const RelatedProducts: React.FC<RelatedProductsProps> = ({
   };
 
   const handleProductClick = (product: Product) => {
-    navigate(`/products/${product.id}`);
+    navigate(getProductPath(product));
   };
 
   const handleAddToCart = async (product: Product) => {
