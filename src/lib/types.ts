@@ -245,6 +245,62 @@ export interface PrivacyPolicySettings {
   updated_at: string;
 }
 
+/** Single-row footer contact / legal / social (see footer_settings) */
+export interface FooterSiteSettings {
+  id: string;
+  phone_display: string;
+  phone_href: string;
+  email: string;
+  email_href: string;
+  address: string;
+  copyright_line1: string;
+  copyright_line2: string | null;
+  legal_text: string | null;
+  payment_label: string;
+  show_payment_icons: boolean;
+  social_heading: string;
+  instagram_url: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FooterSectionRecord {
+  id: string;
+  slug: string;
+  title: string;
+  /** If set and `links` is empty, the column title is the only link (e.g. /about). */
+  title_href: string | null;
+  sort_order: number;
+  section_type: 'manual' | 'categories' | 'blog';
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FooterSectionLinkRecord {
+  id: string;
+  section_id: string;
+  label: string;
+  href: string;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FooterColumn {
+  slug: string;
+  title: string;
+  /** When present and links is empty, title alone links here. */
+  titleHref?: string | null;
+  links: { label: string; href: string }[];
+}
+
+export interface FooterPayload {
+  settings: FooterSiteSettings;
+  columns: FooterColumn[];
+}
+
 export interface OneClickOrder {
   id: string;
   product_id: string;
