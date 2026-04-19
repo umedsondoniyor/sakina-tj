@@ -24,7 +24,6 @@ import {
   Mail,
   Shield,
   ScrollText,
-  Shield,
 } from 'lucide-react';
 import { supabase } from "../lib/supabaseClient";
 import Logo from "../components/Logo";
