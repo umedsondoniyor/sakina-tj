@@ -3,11 +3,11 @@ import { supabase } from '../../lib/supabaseClient';
 import { Save } from 'lucide-react';
 import toast from 'react-hot-toast';
 import type { SeoPageSetting } from '../../lib/types';
-import { HOME_SEO_FALLBACK } from '../../lib/seo';
+import { HOME_SEO_FALLBACK, parseExtraMetaJson, formatExtraMetaForEditor } from '../../lib/seo';
 
-type Draft = { meta_title: string; meta_description: string };
+type Draft = { meta_title: string; meta_description: string; extra_meta_json: string };
 
-const emptyDraft = (): Draft => ({ meta_title: '', meta_description: '' });
+const emptyDraft = (): Draft => ({ meta_title: '', meta_description: '', extra_meta_json: '' });
 
 const AdminSeo = () => {
   const [defaultRow, setDefaultRow] = useState<SeoPageSetting | null>(null);
@@ -36,10 +36,12 @@ const AdminSeo = () => {
       setDefaultDraft({
         meta_title: def?.meta_title ?? HOME_SEO_FALLBACK.title,
         meta_description: def?.meta_description ?? HOME_SEO_FALLBACK.description,
+        extra_meta_json: formatExtraMetaForEditor(def?.extra_meta),
       });
       setHomeDraft({
         meta_title: home?.meta_title ?? HOME_SEO_FALLBACK.title,
         meta_description: home?.meta_description ?? HOME_SEO_FALLBACK.description,
+        extra_meta_json: formatExtraMetaForEditor(home?.extra_meta),
       });
     } catch (e) {
       console.error(e);
@@ -59,6 +61,15 @@ const AdminSeo = () => {
       toast.error('Укажите заголовок (title)');
       return false;
     }
+    const parsed = parseExtraMetaJson(draft.extra_meta_json);
+    if (!parsed.ok) {
+      toast.error(
+        routeKey === 'default'
+          ? `По умолчанию — доп. meta: ${parsed.error}`
+          : `Главная — доп. meta: ${parsed.error}`,
+      );
+      return false;
+    }
     const meta_description = draft.meta_description.trim() || null;
     const now = new Date().toISOString();
 
@@ -67,6 +78,7 @@ const AdminSeo = () => {
         route_key: routeKey,
         meta_title,
         meta_description,
+        extra_meta: parsed.value,
         updated_at: now,
       },
       { onConflict: 'route_key' },
@@ -79,8 +91,10 @@ const AdminSeo = () => {
   const handleSaveAll = async () => {
     setSaving(true);
     try {
-      await upsert('default', defaultDraft);
-      await upsert('home', homeDraft);
+      const okDefault = await upsert('default', defaultDraft);
+      if (!okDefault) return;
+      const okHome = await upsert('home', homeDraft);
+      if (!okHome) return;
       toast.success('SEO сохранён');
       await load();
     } catch (e) {
@@ -137,6 +151,24 @@ const AdminSeo = () => {
           />
           <p className="mt-1 text-xs text-gray-400">{defaultDraft.meta_description.length} символов</p>
         </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Дополнительные meta-теги (JSON)
+          </label>
+          <textarea
+            value={defaultDraft.extra_meta_json}
+            onChange={(e) => setDefaultDraft((d) => ({ ...d, extra_meta_json: e.target.value }))}
+            rows={6}
+            spellCheck={false}
+            placeholder={`[\n  { "property": "og:image", "content": "https://example.com/image.jpg" },\n  { "name": "twitter:card", "content": "summary_large_image" }\n]`}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+          />
+          <p className="mt-1 text-xs text-gray-500">
+            Массив объектов с полями <code className="text-xs">name</code> или{' '}
+            <code className="text-xs">property</code> и обязательным <code className="text-xs">content</code>.
+            Пустое поле — без доп. тегов.
+          </p>
+        </div>
         {defaultRow?.updated_at ? (
           <p className="text-xs text-gray-400">
             Обновлено: {new Date(defaultRow.updated_at).toLocaleString('ru-RU')}
@@ -171,6 +203,22 @@ const AdminSeo = () => {
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
           />
           <p className="mt-1 text-xs text-gray-400">{homeDraft.meta_description.length} символов</p>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Дополнительные meta-теги (JSON)
+          </label>
+          <textarea
+            value={homeDraft.extra_meta_json}
+            onChange={(e) => setHomeDraft((d) => ({ ...d, extra_meta_json: e.target.value }))}
+            rows={6}
+            spellCheck={false}
+            placeholder={`[\n  { "property": "og:image", "content": "https://…" }\n]`}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+          />
+          <p className="mt-1 text-xs text-gray-500">
+            Если массив не пустой — используется для главной; иначе подставляются теги из блока «По умолчанию».
+          </p>
         </div>
         {homeRow?.updated_at ? (
           <p className="text-xs text-gray-400">

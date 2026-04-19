@@ -1,3 +1,5 @@
+import type { SeoExtraMetaTag } from './types';
+
 const DEFAULT_SITE_URL = 'https://sakina.tj';
 
 /** Used when DB rows are missing or empty (matches previous hardcoded HomePage SEO). */
@@ -11,12 +13,57 @@ export type SeoPageRow = {
   route_key: string;
   meta_title: string;
   meta_description: string | null;
+  extra_meta?: SeoExtraMetaTag[] | null;
 };
 
+function normalizeExtraMeta(raw: unknown): SeoExtraMetaTag[] {
+  if (!Array.isArray(raw)) return [];
+  const out: SeoExtraMetaTag[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') continue;
+    const o = item as Record<string, unknown>;
+    const content = typeof o.content === 'string' ? o.content.trim() : '';
+    if (!content) continue;
+    const name = typeof o.name === 'string' ? o.name.trim() : undefined;
+    const property = typeof o.property === 'string' ? o.property.trim() : undefined;
+    if (!name && !property) continue;
+    out.push({ ...(name ? { name } : {}), ...(property ? { property } : {}), content });
+  }
+  return out;
+}
+
+export function parseExtraMetaJson(input: string): { ok: true; value: SeoExtraMetaTag[] } | { ok: false; error: string } {
+  const trimmed = input.trim();
+  if (!trimmed) return { ok: true, value: [] };
+  try {
+    const parsed = JSON.parse(trimmed) as unknown;
+    if (!Array.isArray(parsed)) return { ok: false, error: 'Ожидается JSON-массив' };
+    const value = normalizeExtraMeta(parsed);
+    return { ok: true, value };
+  } catch {
+    return { ok: false, error: 'Неверный JSON' };
+  }
+}
+
+export function formatExtraMetaForEditor(tags: SeoExtraMetaTag[] | null | undefined): string {
+  if (!tags?.length) return '';
+  return JSON.stringify(tags, null, 2);
+}
+
+function pickExtraMeta(home?: SeoPageRow, def?: SeoPageRow): SeoExtraMetaTag[] {
+  const homeTags = normalizeExtraMeta(home?.extra_meta);
+  if (homeTags.length > 0) return homeTags;
+  return normalizeExtraMeta(def?.extra_meta);
+}
+
 /**
- * Resolve `<title>` and meta description for `/` using `home` → `default` → {@link HOME_SEO_FALLBACK}.
+ * Resolve `<title>`, meta description, and extra meta for `/` using `home` → `default` → {@link HOME_SEO_FALLBACK}.
  */
-export function resolveHomeSeo(rows: SeoPageRow[]): { title: string; description: string } {
+export function resolveHomeSeo(rows: SeoPageRow[]): {
+  title: string;
+  description: string;
+  extraMeta: SeoExtraMetaTag[];
+} {
   const map = new Map(rows.map((r) => [r.route_key, r]));
   const home = map.get('home');
   const def = map.get('default');
@@ -26,7 +73,8 @@ export function resolveHomeSeo(rows: SeoPageRow[]): { title: string; description
     home?.meta_description?.trim() ||
     def?.meta_description?.trim() ||
     HOME_SEO_FALLBACK.description;
-  return { title, description };
+  const extraMeta = pickExtraMeta(home, def);
+  return { title, description, extraMeta };
 }
 
 export function getSiteUrl() {

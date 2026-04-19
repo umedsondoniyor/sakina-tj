@@ -1,15 +1,18 @@
 import { Helmet } from 'react-helmet-async';
 import { useLocation } from 'react-router-dom';
 import { toAbsoluteUrl } from '../lib/seo';
+import type { SeoExtraMetaTag } from '../lib/types';
 
 interface SEOProps {
   title: string;
   description?: string;
   canonicalPath?: string;
   robots?: string;
+  /** From DB `seo_page_settings.extra_meta` — arbitrary name/property meta tags. */
+  extraMeta?: SeoExtraMetaTag[];
 }
 
-export default function SEO({ title, description, canonicalPath, robots }: SEOProps) {
+export default function SEO({ title, description, canonicalPath, robots, extraMeta }: SEOProps) {
   const location = useLocation();
   const currentPath = canonicalPath || `${location.pathname}${location.search || ''}`;
   const canonicalUrl = toAbsoluteUrl(currentPath);
@@ -23,6 +26,14 @@ export default function SEO({ title, description, canonicalPath, robots }: SEOPr
       <meta property="og:title" content={title} />
       {description ? <meta property="og:description" content={description} /> : null}
       <meta property="og:url" content={canonicalUrl} />
+      {extraMeta?.map((tag, i) => (
+        <meta
+          key={`extra-${i}-${tag.name ?? ''}-${tag.property ?? ''}-${tag.content.slice(0, 24)}`}
+          {...(tag.name ? { name: tag.name } : {})}
+          {...(tag.property ? { property: tag.property } : {})}
+          content={tag.content}
+        />
+      ))}
     </Helmet>
   );
 }

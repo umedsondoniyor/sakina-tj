@@ -241,12 +241,23 @@ export interface FaqItem {
   updated_at: string;
 }
 
+/** Extra `<meta>` rows (Open Graph, Twitter, verification, etc.). */
+export interface SeoExtraMetaTag {
+  /** Use `name` for standard meta, e.g. `twitter:card` */
+  name?: string;
+  /** Use `property` for Open Graph, e.g. `og:image` */
+  property?: string;
+  content: string;
+}
+
 /** SEO meta for a logical route (`default` = site fallback, `home` = главная). */
 export interface SeoPageSetting {
   id: string;
   route_key: string;
   meta_title: string;
   meta_description: string | null;
+  /** Parsed JSON array from DB; see `SeoExtraMetaTag`. */
+  extra_meta?: SeoExtraMetaTag[] | null;
   created_at: string;
   updated_at: string;
 }

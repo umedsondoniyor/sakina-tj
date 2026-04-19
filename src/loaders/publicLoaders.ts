@@ -22,13 +22,14 @@ import type {
   FaqItem,
   PrivacyPolicySettings,
   Product,
+  SeoExtraMetaTag,
 } from '../lib/types';
 
 export interface HomePageLoaderData {
   slides: CarouselSlide[];
   reviews: CustomerReview[];
   blogPosts: BlogPost[];
-  seo: { title: string; description: string };
+  seo: { title: string; description: string; extraMeta: SeoExtraMetaTag[] };
 }
 
 export interface ProductsPageLoaderData {
