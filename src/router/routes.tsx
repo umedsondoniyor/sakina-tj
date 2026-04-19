@@ -19,9 +19,6 @@ import PaymentFailedPage from '../pages/PaymentFailedPage';
 import AboutUsPage from '../pages/AboutUsPage';
 import BlogPage from '../pages/BlogPage';
 import BlogPostPage from '../pages/BlogPostPage';
-import BlogGuideMattressSelectionPage from '../pages/BlogGuideMattressSelectionPage';
-import BlogGuideBackPainMattressPage from '../pages/BlogGuideBackPainMattressPage';
-import BlogGuideMattressFirmnessPage from '../pages/BlogGuideMattressFirmnessPage';
 import ServicesPage from '../pages/ServicesPage';
 import DeliveryPaymentPage from '../pages/DeliveryPaymentPage';
 import ContactsPage from '../pages/ContactsPage';
@@ -114,9 +111,6 @@ export const appRoutes = createRoutesFromElements(
       <Route path="/faq" element={<FaqPage />} loader={faqPageLoader} />
       <Route path="/privacy" element={<PrivacyPolicyPage />} loader={privacyPolicyLoader} />
       <Route path="/blog" element={<BlogPage />} />
-      <Route path="/blog/kak-vybrat-matras" element={<BlogGuideMattressSelectionPage />} />
-      <Route path="/blog/matras-dlya-boli-v-spine" element={<BlogGuideBackPainMattressPage />} />
-      <Route path="/blog/zhestkost-matrasa" element={<BlogGuideMattressFirmnessPage />} />
       <Route path="/blog/:slug" element={<BlogPostPage />} />
     </Route>
 

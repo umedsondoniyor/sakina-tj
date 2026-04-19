@@ -236,6 +236,7 @@ export async function getBlogPost(slug: string): Promise<BlogPost | null> {
       .from('blog_posts')
       .select('*')
       .eq('slug', slug)
+      .eq('status', 'published')
       .maybeSingle();
 
     if (error) throw error;
@@ -309,6 +310,7 @@ export async function getAdjacentPosts(currentSlug: string) {
       .from('blog_posts')
       .select('id, slug, published_at')
       .eq('slug', currentSlug)
+      .eq('status', 'published')
       .maybeSingle();
 
     if (currentErr || !current) return { prev: null, next: null };
