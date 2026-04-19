@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabaseClient';
-import { Pencil, Trash2, Plus, PackageOpen, ChevronUp, ChevronDown, AlertCircle } from 'lucide-react';
+import { Pencil, Trash2, Plus, PackageOpen, ChevronUp, ChevronDown, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import QuizStepModal from './QuizStepModal';
 import type { QuizStep } from '../../lib/types';
@@ -12,10 +12,43 @@ const AdminQuiz = () => {
   const [selectedStep, setSelectedStep] = useState<QuizStep | undefined>();
   const [productType, setProductType] = useState<'mattress' | 'bed'>('mattress');
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [pickerVisibility, setPickerVisibility] = useState({ mattress: true, bed: true });
 
   useEffect(() => {
     fetchSteps();
   }, [productType]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase.from('quiz_picker_visibility').select('product_type, is_visible');
+      if (cancelled || error) return;
+      const mattress = data?.find((r) => r.product_type === 'mattress')?.is_visible ?? true;
+      const bed = data?.find((r) => r.product_type === 'bed')?.is_visible ?? true;
+      setPickerVisibility({ mattress, bed });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const togglePickerOnSite = async (type: 'mattress' | 'bed') => {
+    const next = !pickerVisibility[type];
+    try {
+      const { error } = await supabase
+        .from('quiz_picker_visibility')
+        .update({ is_visible: next })
+        .eq('product_type', type);
+
+      if (error) throw error;
+
+      setPickerVisibility((prev) => ({ ...prev, [type]: next }));
+      toast.success(next ? 'Подборщик отображается на сайте' : 'Подборщик скрыт на сайте');
+    } catch (e) {
+      console.error(e);
+      toast.error('Не удалось обновить отображение на сайте');
+    }
+  };
 
   const fetchSteps = async () => {
     try {
@@ -165,27 +198,67 @@ const AdminQuiz = () => {
 
       {/* Product Type Tabs */}
       <div className="mb-6 border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8">
-          <button
-            onClick={() => setProductType('mattress')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-              productType === 'mattress'
-                ? 'border-teal-500 text-teal-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            Матрасы
-          </button>
-          <button
-            onClick={() => setProductType('bed')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-              productType === 'bed'
-                ? 'border-teal-500 text-teal-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            Кровати
-          </button>
+        <nav className="-mb-px flex flex-wrap items-end gap-x-8 gap-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setProductType('mattress')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                productType === 'mattress'
+                  ? 'border-teal-500 text-teal-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Матрасы
+            </button>
+            <button
+              type="button"
+              onClick={() => togglePickerOnSite('mattress')}
+              className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                pickerVisibility.mattress
+                  ? 'border-teal-200 bg-teal-50 text-teal-800 hover:bg-teal-100'
+                  : 'border-gray-200 bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+              title={
+                pickerVisibility.mattress
+                  ? 'Скрыть блок подборщика на главной'
+                  : 'Показать блок подборщика на главной'
+              }
+            >
+              {pickerVisibility.mattress ? <Eye className="h-3.5 w-3.5 shrink-0" /> : <EyeOff className="h-3.5 w-3.5 shrink-0" />}
+              {pickerVisibility.mattress ? 'На сайте' : 'Скрыто'}
+            </button>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setProductType('bed')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                productType === 'bed'
+                  ? 'border-teal-500 text-teal-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Кровати
+            </button>
+            <button
+              type="button"
+              onClick={() => togglePickerOnSite('bed')}
+              className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                pickerVisibility.bed
+                  ? 'border-teal-200 bg-teal-50 text-teal-800 hover:bg-teal-100'
+                  : 'border-gray-200 bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+              title={
+                pickerVisibility.bed
+                  ? 'Скрыть блок подборщика на главной'
+                  : 'Показать блок подборщика на главной'
+              }
+            >
+              {pickerVisibility.bed ? <Eye className="h-3.5 w-3.5 shrink-0" /> : <EyeOff className="h-3.5 w-3.5 shrink-0" />}
+              {pickerVisibility.bed ? 'На сайте' : 'Скрыто'}
+            </button>
+          </div>
         </nav>
       </div>
 

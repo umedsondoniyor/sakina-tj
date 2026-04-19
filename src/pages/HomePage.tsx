@@ -10,7 +10,6 @@ import ManufacturingProcess from '../components/ManufacturingProcess';
 import SleepClubBlog from '../components/SleepClubBlog';
 import Features from '../components/Features';
 import ContactSection from '../components/ContactSection';
-import NotificationAlert from '../components/NotificationAlert';
 import Benefits from '../components/Benefits';
 import type { HomePageLoaderData } from '../loaders/publicLoaders';
 
@@ -36,7 +35,6 @@ const HomePage: React.FC = () => {
       <AskonaClub />
       <ManufacturingProcess />
       <ContactSection />
-      <NotificationAlert />
     </>
   );
 };

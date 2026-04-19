@@ -1,14 +1,44 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import QuizModal from './QuizModal';
+import { getQuizPickerVisibility } from '../lib/api';
 
 const ProductPickers = () => {
   const [isMattressQuizOpen, setIsMattressQuizOpen] = useState(false);
   const [isBedQuizOpen, setIsBedQuizOpen] = useState(false);
+  const [visibility, setVisibility] = useState({ mattress: true, bed: true });
+
+  useEffect(() => {
+    let cancelled = false;
+    getQuizPickerVisibility()
+      .then((v) => {
+        if (!cancelled) setVisibility(v);
+      })
+      .catch(() => {
+        /* keep defaults */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (!visibility.mattress && !visibility.bed) {
+    return null;
+  }
+
+  const bothPickersVisible = visibility.mattress && visibility.bed;
 
   return (
+    <>
     <div className="container mx-auto px-4 py-12">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-14">
+      <div
+        className={
+          bothPickersVisible
+            ? 'grid grid-cols-1 gap-8 md:grid-cols-2 md:gap-14'
+            : 'mx-auto grid w-full max-w-3xl grid-cols-1 gap-8 sm:max-w-4xl'
+        }
+      >
         {/* Mattress Picker */}
+        {visibility.mattress ? (
         <div 
           className="bg-gray-50 rounded-lg p-8 flex flex-col md:flex-row items-center cursor-pointer hover:bg-gray-100 transition-colors"
           onClick={() => setIsMattressQuizOpen(true)}
@@ -30,8 +60,10 @@ const ProductPickers = () => {
             />
           </div>
         </div>
+        ) : null}
 
         {/* Bed Picker */}
+        {visibility.bed ? (
         <div 
           className="bg-gray-50 rounded-lg p-8 flex flex-col md:flex-row items-center cursor-pointer hover:bg-gray-100 transition-colors"
           onClick={() => setIsBedQuizOpen(true)}
@@ -53,6 +85,7 @@ const ProductPickers = () => {
             />
           </div>
         </div>
+        ) : null}
 {/* vremenno etto uberayem tak kak Abdumanob tak poprosil */}
         {/* Pillow Picker */}
         {/* <div 
@@ -100,11 +133,15 @@ const ProductPickers = () => {
           </div>
         </div> */}
 
-        {/* Quiz Modals */}
-        <QuizModal open={isMattressQuizOpen} onClose={() => setIsMattressQuizOpen(false)} productType="mattress" />
-        <QuizModal open={isBedQuizOpen} onClose={() => setIsBedQuizOpen(false)} productType="bed" />
       </div>
     </div>
+    {visibility.mattress ? (
+      <QuizModal open={isMattressQuizOpen} onClose={() => setIsMattressQuizOpen(false)} productType="mattress" />
+    ) : null}
+    {visibility.bed ? (
+      <QuizModal open={isBedQuizOpen} onClose={() => setIsBedQuizOpen(false)} productType="bed" />
+    ) : null}
+    </>
   );
 };
 

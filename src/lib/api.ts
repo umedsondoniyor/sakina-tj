@@ -344,6 +344,22 @@ export async function getQuizSteps(productType: 'mattress' | 'bed' = 'mattress')
   }, 3, 600, 'getQuizSteps');
 }
 
+export async function getQuizPickerVisibility(): Promise<{ mattress: boolean; bed: boolean }> {
+  return retryOperation(async () => {
+    const { data, error } = await supabase
+      .from('quiz_picker_visibility')
+      .select('product_type, is_visible');
+
+    if (error) throw error;
+
+    const mattress =
+      data?.find((r) => r.product_type === 'mattress')?.is_visible ?? true;
+    const bed = data?.find((r) => r.product_type === 'bed')?.is_visible ?? true;
+
+    return { mattress, bed };
+  }, 3, 600, 'getQuizPickerVisibility');
+}
+
 export async function getNavigationItems(): Promise<NavigationItem[]> {
   return retryOperation(async () => {
     const { data, error } = await supabase
