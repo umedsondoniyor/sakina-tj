@@ -148,6 +148,7 @@ async function run() {
     '/delivery-payment',
     '/contacts',
     '/faq',
+    '/privacy',
     '/blog',
     '/blog/kak-vybrat-matras',
     '/blog/matras-dlya-boli-v-spine',

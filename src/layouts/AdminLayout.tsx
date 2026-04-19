@@ -24,6 +24,7 @@ import {
   Mail,
   Shield,
   ScrollText,
+  Shield,
 } from 'lucide-react';
 import { supabase } from "../lib/supabaseClient";
 import Logo from "../components/Logo";
@@ -127,6 +128,7 @@ const AdminLayout = () => {
           { path: '/admin/blog', label: 'Блог', section: 'Контент', roles: ['admin', 'editor'] },
           { path: '/admin/navigation', label: 'Навигация', section: 'Контент', roles: ['admin'] },
           { path: '/admin/faq', label: 'Частые вопросы (FAQ)', section: 'Контент', roles: ['admin', 'editor'] },
+          { path: '/admin/privacy', label: 'Политика конфиденциальности', section: 'Контент', roles: ['admin', 'editor'] },
           { path: '/admin/products', label: 'Товары', section: 'Товары', roles: ['admin', 'editor'] },
           { path: '/admin/variants', label: 'Варианты и склад', section: 'Товары', roles: ['admin'] },
           { path: '/admin/related-products', label: 'Сопутствующие товары', section: 'Товары', roles: ['admin', 'editor'] },
@@ -309,6 +311,7 @@ const AdminLayout = () => {
         { path: '/admin/blog', label: 'Блог', icon: FileText },
         { path: '/admin/navigation', label: 'Навигация', icon: Navigation },
         { path: '/admin/faq', label: 'Частые вопросы (FAQ)', icon: ScrollText },
+        { path: '/admin/privacy', label: 'Политика конфиденциальности', icon: Shield },
       ],
     },
     {

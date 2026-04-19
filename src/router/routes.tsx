@@ -26,6 +26,7 @@ import ServicesPage from '../pages/ServicesPage';
 import DeliveryPaymentPage from '../pages/DeliveryPaymentPage';
 import ContactsPage from '../pages/ContactsPage';
 import FaqPage from '../pages/FaqPage';
+import PrivacyPolicyPage from '../pages/PrivacyPolicyPage';
 import AdminFaq from '../components/admin/AdminFaq';
 import CustomMattressesPage from '../pages/CustomMattressesPage';
 import NotFoundPage from '../pages/NotFoundPage';
@@ -49,6 +50,7 @@ import AdminRelatedProducts from '../components/admin/AdminRelatedProducts';
 import AdminServices from '../components/admin/AdminServices';
 import AdminDeliveryPayment from '../components/admin/AdminDeliveryPayment';
 import AdminMattresses from '../components/admin/AdminMattresses';
+import AdminPrivacyPolicy from '../components/admin/AdminPrivacyPolicy';
 import AdminClubMembers from '../components/admin/AdminClubMembers';
 import {
   categoryProductsLoader,
@@ -57,6 +59,7 @@ import {
   deliveryPaymentLoader,
   faqPageLoader,
   homePageLoader,
+  privacyPolicyLoader,
   productPageLoader,
   productsPageLoader,
 } from '../loaders/publicLoaders';
@@ -101,6 +104,7 @@ export const appRoutes = createRoutesFromElements(
       <Route path="/delivery-payment" element={<DeliveryPaymentPage />} loader={deliveryPaymentLoader} />
       <Route path="/contacts" element={<ContactsPage />} loader={contactsLoader} />
       <Route path="/faq" element={<FaqPage />} loader={faqPageLoader} />
+      <Route path="/privacy" element={<PrivacyPolicyPage />} loader={privacyPolicyLoader} />
       <Route path="/blog" element={<BlogPage />} />
       <Route path="/blog/kak-vybrat-matras" element={<BlogGuideMattressSelectionPage />} />
       <Route path="/blog/matras-dlya-boli-v-spine" element={<BlogGuideBackPainMattressPage />} />
@@ -135,6 +139,7 @@ export const appRoutes = createRoutesFromElements(
       <Route path="quiz" element={<RoleProtectedRoute><AdminQuiz /></RoleProtectedRoute>} />
       <Route path="navigation" element={<RoleProtectedRoute><AdminNavigation /></RoleProtectedRoute>} />
       <Route path="faq" element={<RoleProtectedRoute><AdminFaq /></RoleProtectedRoute>} />
+      <Route path="privacy" element={<RoleProtectedRoute><AdminPrivacyPolicy /></RoleProtectedRoute>} />
       <Route path="one-click-orders" element={<RoleProtectedRoute><AdminOneClickOrders /></RoleProtectedRoute>} />
       <Route path="users" element={<RoleProtectedRoute><AdminUsers /></RoleProtectedRoute>} />
       <Route path="role-management" element={<RoleProtectedRoute><AdminRoleManagement /></RoleProtectedRoute>} />

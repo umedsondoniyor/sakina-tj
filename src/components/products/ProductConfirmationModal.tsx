@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, Phone, ShoppingBag, CheckCircle, Package } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import toast from 'react-hot-toast';
 import type { Product, ProductVariant } from '../../lib/types';
@@ -394,9 +394,13 @@ const ProductConfirmationModal: React.FC<ProductConfirmationModalProps> = ({
           <div className="mt-6 pt-4 border-t border-gray-200">
             <p className="text-xs text-gray-500 text-center">
               При оформлении заказа мы обрабатываем ваши персональные данные.{' '}
-              <a href="#" className="text-teal-600 hover:text-teal-700 underline">
+              <Link
+                to="/privacy"
+                onClick={onClose}
+                className="text-teal-600 hover:text-teal-700 underline"
+              >
                 Политика конфиденциальности
-              </a>
+              </Link>
             </p>
           </div>
         </div>

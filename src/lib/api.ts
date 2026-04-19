@@ -10,6 +10,7 @@ import type {
   NavigationItem,
   RelatedProduct,
   FaqItem,
+  PrivacyPolicySettings,
 } from './types';
 
 // Lightweight retry with exponential backoff
@@ -359,6 +360,19 @@ export async function getQuizPickerVisibility(): Promise<{ mattress: boolean; be
 
     return { mattress, bed };
   }, 3, 600, 'getQuizPickerVisibility');
+}
+
+export async function getPrivacyPolicySettings(): Promise<PrivacyPolicySettings | null> {
+  return retryOperation(async () => {
+    const { data, error } = await supabase
+      .from('privacy_policy_settings')
+      .select('*')
+      .limit(1)
+      .maybeSingle();
+
+    if (error) throw error;
+    return data as PrivacyPolicySettings | null;
+  }, 3, 600, 'getPrivacyPolicySettings');
 }
 
 export async function getFaqItems(): Promise<FaqItem[]> {

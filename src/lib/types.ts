@@ -235,6 +235,16 @@ export interface FaqItem {
   updated_at: string;
 }
 
+export interface PrivacyPolicySettings {
+  id: string;
+  page_title: string;
+  meta_description: string | null;
+  intro: string | null;
+  body_markdown: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface OneClickOrder {
   id: string;
   product_id: string;

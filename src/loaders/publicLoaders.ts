@@ -6,11 +6,19 @@ import {
   getCustomerReviews,
   getDeliveryPaymentSettings,
   getFaqItems,
+  getPrivacyPolicySettings,
   getProductById,
   getProducts,
   getProductsByCategory,
 } from '../lib/api';
-import type { BlogPost, CarouselSlide, CustomerReview, FaqItem, Product } from '../lib/types';
+import type {
+  BlogPost,
+  CarouselSlide,
+  CustomerReview,
+  FaqItem,
+  PrivacyPolicySettings,
+  Product,
+} from '../lib/types';
 
 export interface HomePageLoaderData {
   slides: CarouselSlide[];
@@ -205,4 +213,13 @@ export interface FaqPageLoaderData {
 export async function faqPageLoader(): Promise<FaqPageLoaderData> {
   const faqItems = await getFaqItems().catch(() => []);
   return { faqItems };
+}
+
+export interface PrivacyPolicyLoaderData {
+  settings: PrivacyPolicySettings | null;
+}
+
+export async function privacyPolicyLoader(): Promise<PrivacyPolicyLoaderData> {
+  const settings = await getPrivacyPolicySettings().catch(() => null);
+  return { settings };
 }
