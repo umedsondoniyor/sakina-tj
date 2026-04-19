@@ -223,6 +223,8 @@ export interface NavigationItem {
   category_slug: string;
   icon_name?: string;
   icon_image_url?: string;
+  /** Only `home_category_grid_items`: optional override for `/categories/{slug}`. */
+  link_url?: string | null;
   order_index: number;
   is_active: boolean;
   created_at: string;

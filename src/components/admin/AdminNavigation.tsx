@@ -42,6 +42,7 @@ const MenuItemsList: React.FC<{
                 <h3 className="text-lg font-semibold">{item.title}</h3>
                 <p className="text-sm text-gray-600">
                   Slug: {item.category_slug} • Порядок: {item.order_index}
+                  {item.link_url ? ` • Ссылка: ${item.link_url}` : ''}
                 </p>
               </div>
 
@@ -102,6 +103,7 @@ const MenuItemsList: React.FC<{
 const AdminNavigation = () => {
   const [navItems, setNavItems] = useState<NavigationItem[]>([]);
   const [catalogItems, setCatalogItems] = useState<NavigationItem[]>([]);
+  const [homeGridItems, setHomeGridItems] = useState<NavigationItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalTable, setModalTable] = useState<NavigationItemTable>('navigation_items');
@@ -109,16 +111,19 @@ const AdminNavigation = () => {
 
   const fetchAll = useCallback(async () => {
     try {
-      const [navRes, catRes] = await Promise.all([
+      const [navRes, catRes, homeRes] = await Promise.all([
         supabase.from('navigation_items').select('*').order('order_index', { ascending: true }),
         supabase.from('catalog_menu_items').select('*').order('order_index', { ascending: true }),
+        supabase.from('home_category_grid_items').select('*').order('order_index', { ascending: true }),
       ]);
 
       if (navRes.error) throw navRes.error;
       if (catRes.error) throw catRes.error;
+      if (homeRes.error) throw homeRes.error;
 
       setNavItems((navRes.data ?? []) as NavigationItem[]);
       setCatalogItems((catRes.data ?? []) as NavigationItem[]);
+      setHomeGridItems((homeRes.data ?? []) as NavigationItem[]);
     } catch (error) {
       console.error('Error loading navigation:', error);
       toast.error('Не удалось загрузить навигацию');
@@ -145,8 +150,10 @@ const AdminNavigation = () => {
       if (error) throw error;
       if (table === 'navigation_items') {
         setNavItems((prev) => prev.filter((i) => i.id !== id));
-      } else {
+      } else if (table === 'catalog_menu_items') {
         setCatalogItems((prev) => prev.filter((i) => i.id !== id));
+      } else {
+        setHomeGridItems((prev) => prev.filter((i) => i.id !== id));
       }
       toast.success('Удалено');
     } catch (error) {
@@ -166,8 +173,10 @@ const AdminNavigation = () => {
       const patch = { ...item, is_active: !item.is_active };
       if (table === 'navigation_items') {
         setNavItems((prev) => prev.map((i) => (i.id === item.id ? patch : i)));
-      } else {
+      } else if (table === 'catalog_menu_items') {
         setCatalogItems((prev) => prev.map((i) => (i.id === item.id ? patch : i)));
+      } else {
+        setHomeGridItems((prev) => prev.map((i) => (i.id === item.id ? patch : i)));
       }
       toast.success(item.is_active ? 'Скрыто' : 'Показано');
     } catch (error) {
@@ -177,7 +186,12 @@ const AdminNavigation = () => {
   };
 
   const moveItem = async (table: NavigationItemTable, itemId: string, direction: 'up' | 'down') => {
-    const list = table === 'navigation_items' ? navItems : catalogItems;
+    const list =
+      table === 'navigation_items'
+        ? navItems
+        : table === 'catalog_menu_items'
+          ? catalogItems
+          : homeGridItems;
     const itemIndex = list.findIndex((i) => i.id === itemId);
     if (itemIndex === -1) return;
 
@@ -196,7 +210,8 @@ const AdminNavigation = () => {
 
       const patched = reordered.map((item, i) => ({ ...item, order_index: i }));
       if (table === 'navigation_items') setNavItems(patched);
-      else setCatalogItems(patched);
+      else if (table === 'catalog_menu_items') setCatalogItems(patched);
+      else setHomeGridItems(patched);
 
       toast.success('Порядок обновлён');
     } catch (error) {
@@ -219,7 +234,7 @@ const AdminNavigation = () => {
       <div>
         <h1 className="text-2xl font-bold mb-2">Навигация</h1>
         <p className="text-sm text-gray-600">
-          Два независимых списка: верхняя строка под логотипом и левая колонка выпадающего каталога.
+          Верхнее меню, резервный список каталога и плитки категорий на главной странице.
         </p>
       </div>
 
@@ -279,6 +294,35 @@ const AdminNavigation = () => {
           moveItem={(id, dir) => moveItem('catalog_menu_items', id, dir)}
           emptyTitle="Нет пунктов каталога"
           emptyHint="Добавьте пункты или выполните миграцию БД (таблица catalog_menu_items)."
+        />
+      </section>
+
+      <section>
+        <div className="flex justify-between items-center mb-3">
+          <div>
+            <h2 className="text-lg font-semibold">Сетка категорий на главной</h2>
+            <p className="text-sm text-gray-600 mt-1">
+              Плитки под промо на главной странице (изображение, подпись, slug и при необходимости свой URL).
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => openModal('home_category_grid_items')}
+            className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shrink-0"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Добавить
+          </button>
+        </div>
+
+        <MenuItemsList
+          items={homeGridItems}
+          onEdit={(item) => openModal('home_category_grid_items', item)}
+          onDelete={(id) => handleDelete('home_category_grid_items', id)}
+          toggleActive={(item) => toggleActive('home_category_grid_items', item)}
+          moveItem={(id, dir) => moveItem('home_category_grid_items', id, dir)}
+          emptyTitle="Нет плиток на главной"
+          emptyHint="Добавьте записи или выполните миграцию БД (таблица home_category_grid_items)."
         />
       </section>
 

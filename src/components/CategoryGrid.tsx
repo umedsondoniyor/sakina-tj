@@ -3,8 +3,18 @@ import { useNavigate } from 'react-router-dom';
 import CategoryItem from './category/CategoryItem';
 import CategoryScrollControls from './category/CategoryScrollControls';
 import SwipeHint from './category/SwipeHint';
+import { getHomeCategoryGridItems } from '../lib/api';
+import type { NavigationItem } from '../lib/types';
 
-const categories = [
+type CategoryTile = {
+  id: string | number;
+  name: string;
+  image: string;
+  slug: string;
+  link?: string;
+};
+
+const FALLBACK_CATEGORIES: CategoryTile[] = [
   { id: 1, name: 'Матрасы', image: 'https://ik.imagekit.io/3js0rb3pk/categ_matress.png', slug: 'mattresses', link: '/categories/mattresses' },
   { id: 2, name: 'Кровати', image: 'https://ik.imagekit.io/3js0rb3pk/categ_bed.png', slug: 'beds', link: '/categories/beds' },
   { id: 3, name: 'Одеяло', image: 'https://ik.imagekit.io/3js0rb3pk/categ_blanket.png', slug: 'blankets' },
@@ -13,8 +23,19 @@ const categories = [
   { id: 6, name: 'Деревянные 3D-карты', image: 'https://ik.imagekit.io/3js0rb3pk/categ_map.png', slug: 'world-maps', link: '/categories/map' },
 ];
 
+function mapHomeGridRows(rows: NavigationItem[]): CategoryTile[] {
+  return rows.map((row) => ({
+    id: row.id,
+    name: row.title,
+    image: row.icon_image_url || '',
+    slug: row.category_slug,
+    link: row.link_url || undefined,
+  }));
+}
+
 const CategoryGrid: React.FC = () => {
   const navigate = useNavigate();
+  const [categories, setCategories] = useState<CategoryTile[]>(FALLBACK_CATEGORIES);
 
   // MOBILE rail refs/state
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -28,6 +49,23 @@ const CategoryGrid: React.FC = () => {
     const t = setTimeout(() => setShowSwipeHint(false), 3000);
     return () => clearTimeout(t);
   }, [showSwipeHint]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const rows = await getHomeCategoryGridItems();
+        const valid = rows.filter((r) => r.icon_image_url?.trim());
+        if (cancelled || valid.length === 0) return;
+        setCategories(mapHomeGridRows(valid));
+      } catch (e) {
+        console.error('CategoryGrid: failed to load home category tiles', e);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const updateScroll = () => {
     const el = scrollRef.current;
@@ -45,7 +83,7 @@ const CategoryGrid: React.FC = () => {
     el.addEventListener('scroll', updateScroll, { passive: true });
     updateScroll();
     return () => el.removeEventListener('scroll', updateScroll);
-  }, []);
+  }, [categories]);
 
   // drag scrolling (mobile)
   const [dragging, setDragging] = useState(false);
@@ -66,7 +104,7 @@ const CategoryGrid: React.FC = () => {
   };
   const endDrag = () => setDragging(false);
 
-  const handleCategoryClick = (category: typeof categories[number], e: React.MouseEvent) => {
+  const handleCategoryClick = (category: CategoryTile, e: React.MouseEvent) => {
     e.preventDefault();
     window.history.replaceState(null, '', window.location.pathname + window.location.search);
 

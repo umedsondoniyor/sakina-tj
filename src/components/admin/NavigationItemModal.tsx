@@ -4,7 +4,10 @@ import { supabase } from '../../lib/supabaseClient';
 import toast from 'react-hot-toast';
 import type { NavigationItem } from '../../lib/types';
 
-export type NavigationItemTable = 'navigation_items' | 'catalog_menu_items';
+export type NavigationItemTable =
+  | 'navigation_items'
+  | 'catalog_menu_items'
+  | 'home_category_grid_items';
 
 interface NavigationItemModalProps {
   isOpen: boolean;
@@ -45,8 +48,9 @@ const NavigationItemModal: React.FC<NavigationItemModalProps> = ({
     category_slug: '',
     icon_name: '',
     icon_image_url: '',
+    link_url: '',
     order_index: 0,
-    is_active: true
+    is_active: true,
   });
   const [loading, setLoading] = useState(false);
 
@@ -57,8 +61,9 @@ const NavigationItemModal: React.FC<NavigationItemModalProps> = ({
         category_slug: item.category_slug,
         icon_name: item.icon_name || '',
         icon_image_url: item.icon_image_url || '',
+        link_url: item.link_url ?? '',
         order_index: item.order_index,
-        is_active: item.is_active
+        is_active: item.is_active,
       });
     } else {
       setFormData({
@@ -66,8 +71,9 @@ const NavigationItemModal: React.FC<NavigationItemModalProps> = ({
         category_slug: '',
         icon_name: '',
         icon_image_url: '',
+        link_url: '',
         order_index: 0,
-        is_active: true
+        is_active: true,
       });
     }
   }, [item, isOpen]);
@@ -81,12 +87,24 @@ const NavigationItemModal: React.FC<NavigationItemModalProps> = ({
         throw new Error('Title and category slug are required');
       }
 
-      const dataToSend = {
-        ...formData,
+      if (table === 'home_category_grid_items' && !formData.icon_image_url?.trim()) {
+        throw new Error('Укажите URL изображения плитки');
+      }
+
+      const base = {
+        title: formData.title,
+        category_slug: formData.category_slug,
         icon_name: formData.icon_name || null,
         icon_image_url: formData.icon_image_url || null,
-        updated_at: new Date().toISOString()
+        order_index: formData.order_index,
+        is_active: formData.is_active,
+        updated_at: new Date().toISOString(),
       };
+
+      const dataToSend =
+        table === 'home_category_grid_items'
+          ? { ...base, link_url: formData.link_url?.trim() || null }
+          : base;
 
       let error;
 
@@ -127,13 +145,17 @@ const NavigationItemModal: React.FC<NavigationItemModalProps> = ({
       <div className="bg-white rounded-lg w-full max-w-2xl">
         <div className="flex items-center justify-between p-6 border-b">
           <h2 className="text-xl font-semibold">
-            {table === 'catalog_menu_items'
+            {table === 'home_category_grid_items'
               ? item
-                ? 'Редактировать пункт каталога'
-                : 'Новый пункт каталога'
-              : item
-                ? 'Редактировать пункт меню'
-                : 'Новый пункт верхнего меню'}
+                ? 'Редактировать плитку на главной'
+                : 'Новая плитка на главной'
+              : table === 'catalog_menu_items'
+                ? item
+                  ? 'Редактировать пункт каталога'
+                  : 'Новый пункт каталога'
+                : item
+                  ? 'Редактировать пункт меню'
+                  : 'Новый пункт верхнего меню'}
           </h2>
           <button
             onClick={onClose}
@@ -176,6 +198,24 @@ const NavigationItemModal: React.FC<NavigationItemModalProps> = ({
               </p>
             </div>
 
+            {table === 'home_category_grid_items' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Свой URL (необязательно)
+                </label>
+                <input
+                  type="text"
+                  value={formData.link_url}
+                  onChange={(e) => setFormData({ ...formData, link_url: e.target.value })}
+                  placeholder="/categories/map"
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Если пусто — переход на <code className="text-xs">/categories/[slug]</code> по полю выше.
+                </p>
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -195,20 +235,27 @@ const NavigationItemModal: React.FC<NavigationItemModalProps> = ({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Custom Icon URL
+                  {table === 'home_category_grid_items' ? 'URL изображения плитки *' : 'Custom Icon URL'}
                 </label>
                 <input
                   type="text"
                   value={formData.icon_image_url}
                   onChange={(e) => setFormData({ ...formData, icon_image_url: e.target.value })}
-                  placeholder="/icons/custom-icon.png"
+                  placeholder={
+                    table === 'home_category_grid_items'
+                      ? 'https://… или /images/…'
+                      : '/icons/custom-icon.png'
+                  }
+                  required={table === 'home_category_grid_items'}
                   className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
                 />
               </div>
             </div>
 
             <p className="text-xs text-gray-500">
-              Use either a Lucide icon name OR a custom icon URL, not both.
+              {table === 'home_category_grid_items'
+                ? 'Для плиток на главной укажите крупное изображение; иконка Lucide не используется в сетке.'
+                : 'Use either a Lucide icon name OR a custom icon URL, not both.'}
             </p>
 
             <div>

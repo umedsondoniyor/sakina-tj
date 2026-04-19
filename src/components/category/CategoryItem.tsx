@@ -2,7 +2,7 @@ import React from 'react';
 
 interface CategoryItemProps {
   category: {
-    id: number;
+    id: string | number;
     name: string;
     image: string;
     slug: string;

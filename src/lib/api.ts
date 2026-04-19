@@ -451,6 +451,20 @@ export async function getCatalogMenuItems(): Promise<NavigationItem[]> {
   }, 3, 600, 'getCatalogMenuItems');
 }
 
+/** Home page category tiles (`CategoryGrid`). */
+export async function getHomeCategoryGridItems(): Promise<NavigationItem[]> {
+  return retryOperation(async () => {
+    const { data, error } = await supabase
+      .from('home_category_grid_items')
+      .select('*')
+      .eq('is_active', true)
+      .order('order_index', { ascending: true });
+
+    if (error) throw error;
+    return (data ?? []) as NavigationItem[];
+  }, 3, 600, 'getHomeCategoryGridItems');
+}
+
 /* ------------------- Related Products ------------------- */
 export async function getRelatedProducts(productId: string): Promise<Product[]> {
   return retryOperation(async () => {
