@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getQuizSteps } from '../lib/api';
+import { mapQuizSelectionsToProductFilters } from '../lib/quizProductFilters';
 import type { QuizStep } from '../lib/types';
 
 interface QuizModalProps {
@@ -102,45 +103,31 @@ const QuizModal: React.FC<QuizModalProps> = ({ open, onClose, productType = 'mat
     return availableSteps[activeStep] ?? null;
   }, [availableSteps, activeStep]);
 
-  // Map quiz values to filter values
-  const mapHardnessToFilter = (hardness: string): string => {
-    const hardnessMap: Record<string, string> = {
-      'soft': 'Мягкая',
-      'middle': 'Средняя',
-      'hard': 'Жесткая'
-    };
-    return hardnessMap[hardness] || hardness;
-  };
+  // Submit: map all quiz answers → catalog filters (see lib/quizProductFilters.ts)
+  const handleSubmit = useCallback(
+    (finalSelections = selections) => {
+      const filters = mapQuizSelectionsToProductFilters(finalSelections, productType);
 
-  // Submit logic - map quiz selections to product filters
-  const handleSubmit = useCallback((finalSelections = selections) => {
-    const width = finalSelections.self_size ? parseInt(finalSelections.self_size.split('_')[0]) : undefined;
-    const length = finalSelections.self_size ? parseInt(finalSelections.self_size.split('_')[1]) : undefined;
+      navigate('/products', {
+        state: {
+          filters,
+          selections: finalSelections,
+        },
+      });
+      onClose();
+    },
+    [navigate, onClose, selections, productType],
+  );
 
-    const filters = {
-      hardness: finalSelections.hardness ? [mapHardnessToFilter(finalSelections.hardness)] : [],
-      width: width ? [width, -1] : [],
-      length: length ? [length, -1] : [],
-      price: [],
-      inStock: false
-    };
-
-    navigate('/products', {
-      state: {
-        filters,
-        selections: finalSelections
-      }
-    });
-    onClose();
-  }, [navigate, onClose, selections]);
-
-  // If no current step but we have steps loaded, submit automatically (same behavior, but not during render)
+  // Branching: if the user goes «Назад» and changes an answer, the visible step list can shrink —
+  // keep activeStep in range (avoids a blank screen; previously an effect here auto-submitted by mistake).
   useEffect(() => {
     if (!open || loading) return;
-    if (steps.length > 0 && availableSteps.length > 0 && currentStep == null) {
-      handleSubmit();
+    if (availableSteps.length === 0) return;
+    if (activeStep >= availableSteps.length) {
+      setActiveStep(Math.max(0, availableSteps.length - 1));
     }
-  }, [open, loading, steps.length, availableSteps.length, currentStep, handleSubmit]);
+  }, [open, loading, availableSteps, activeStep]);
 
   const handleSelect = (option: string) => {
     if (!currentStep) return;

@@ -29,10 +29,14 @@ const QuickFilters: React.FC<QuickFiltersProps> = ({
     <div className="relative mb-6">
       <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
         <div className="flex space-x-3 min-w-max">
-          {/* Online mattress wizard */}
-          <span className="flex-none px-4 py-2 bg-yellow-100 rounded-full text-sm whitespace-nowrap hover:bg-yellow-200">
+          {/* Online mattress quiz */}
+          <button
+            type="button"
+            onClick={() => onOpenMattressWizard?.()}
+            className="flex-none px-4 py-2 bg-yellow-100 rounded-full text-sm whitespace-nowrap hover:bg-yellow-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500"
+          >
             Онлайн-подбор матраса
-          </span>
+          </button>
 
           {/* Size quick filters */}
           {QUICK_SIZES.map((size) => {

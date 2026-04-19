@@ -16,6 +16,7 @@ import SortModal from './products/SortModal';
 import MobileFilterBar from './products/MobileFilterBar';
 import QuickFilters from './products/QuickFilters';
 import CategoryAlert from './products/CategoryAlert';
+import QuizModal from './QuizModal';
 
 interface FilterState {
   age: string[];
@@ -92,7 +93,8 @@ const ProductsPage: React.FC = () => {
   const [selectedCategories, setSelectedCategories] = useState<string[]>(() => {
     const state = location.state as any;
     if (state?.filters) {
-      // Coming from quiz - show mattresses
+      const pt = state.filters.productType as string[] | undefined;
+      if (Array.isArray(pt) && pt.length > 0) return pt;
       return ['mattresses'];
     }
     if (loaderSelectedCategories.length) {
@@ -103,6 +105,7 @@ const ProductsPage: React.FC = () => {
 
   const [showFilters, setShowFilters]     = useState(false);
   const [showSortModal, setShowSortModal] = useState(false);
+  const [isMattressQuizOpen, setIsMattressQuizOpen] = useState(false);
   const [sortBy, setSortBy]               = useState<string>((location.state as any)?.sortBy || 'popularity');
 
   const [filters, setFilters] = useState<FilterState>(() => {
@@ -119,7 +122,10 @@ const ProductsPage: React.FC = () => {
         height: quizFilters.height || [],
         price: quizFilters.price || [],
         inStock: quizFilters.inStock || false,
-        productType: ['mattresses'], // Quiz is for mattresses
+        productType:
+          Array.isArray(quizFilters.productType) && quizFilters.productType.length > 0
+            ? quizFilters.productType
+            : ['mattresses'],
         mattressType: quizFilters.mattressType || [],
         preferences: quizFilters.preferences || [],
         functions: quizFilters.functions || [],
@@ -356,10 +362,9 @@ const ProductsPage: React.FC = () => {
   [setFilters]
 );
 
-const handleOpenMattressWizard = useCallback(() => {
-  // change route if your builder path is different
-  navigate("/mattress-builder");
-}, [navigate]);
+  const handleOpenMattressWizard = useCallback(() => {
+    setIsMattressQuizOpen(true);
+  }, []);
 
 
   // UI states
@@ -604,6 +609,11 @@ const handleOpenMattressWizard = useCallback(() => {
           onClose={() => setShowSortModal(false)}
           sortBy={sortBy}
           setSortBy={setSortBy}
+        />
+        <QuizModal
+          open={isMattressQuizOpen}
+          onClose={() => setIsMattressQuizOpen(false)}
+          productType="mattress"
         />
       </div>
     </div>
