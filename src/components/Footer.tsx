@@ -147,9 +147,11 @@ const Footer = () => {
                   </span>
                   <div className="flex items-center space-x-2">
                     <img
-                      src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg"
+                      src="/images/payments/visa.svg"
                       alt="Visa"
-                      className="h-6 opacity-80 hover:opacity-100 transition-opacity"
+                      width={64}
+                      height={32}
+                      className="h-8 w-auto opacity-90 hover:opacity-100 transition-opacity"
                     />
                     <img
                       src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg"
