@@ -15,6 +15,10 @@ import {
   Heart,
   Star,
   Map as MapIcon,
+  Truck,
+  Headphones,
+  Shield,
+  Clock,
 } from 'lucide-react';
 import type { NavigationItem } from './types';
 
@@ -35,12 +39,19 @@ export const LUCIDE_ICON_MAP: Record<string, LucideIcon> = {
   Heart,
   Star,
   Map: MapIcon,
+  Truck,
+  Headphones,
+  Shield,
+  Clock,
 };
 
 export function getLucideIconByName(iconName?: string | null): LucideIcon {
   if (!iconName) return Box;
   return LUCIDE_ICON_MAP[iconName] ?? Box;
 }
+
+/** Sorted names for admin dropdowns (icons, etc.) */
+export const LUCIDE_ICON_NAMES = Object.keys(LUCIDE_ICON_MAP).sort((a, b) => a.localeCompare(b));
 
 /** Icon for a navigation row: Lucide by name, or placeholder when only custom image is set */
 export function getIconForNavigationItem(item: NavigationItem): LucideIcon {

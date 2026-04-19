@@ -237,6 +237,31 @@ export interface FaqItem {
   updated_at: string;
 }
 
+/** Repeatable icon cards on /services */
+export interface ServicePageItem {
+  id: string;
+  title: string;
+  description: string | null;
+  icon_name: string;
+  order_index: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Single row in `services_settings` */
+export interface ServicesPageSettings {
+  id: string;
+  title: string;
+  description: string | null;
+  content: string | null;
+  cta_title: string | null;
+  cta_description: string | null;
+  cta_button_label: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface PrivacyPolicySettings {
   id: string;
   page_title: string;

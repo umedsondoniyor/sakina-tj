@@ -2,56 +2,97 @@ import { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { supabase } from '../lib/supabaseClient';
 import { useSiteContact } from '../contexts/SiteContactContext';
-import { Package, Truck, Headphones, Shield, Clock, Star } from 'lucide-react';
+import { getLucideIconByName } from '../lib/navigationIcons';
+import type { ServicePageItem, ServicesPageSettings } from '../lib/types';
 
-interface ServicesSettings {
-  id: string;
-  title: string;
-  description: string | null;
-  content: string | null;
-}
+const FALLBACK_SETTINGS: Omit<ServicesPageSettings, 'id'> & { id?: string } = {
+  title: 'Наши услуги',
+  description: 'Мы предлагаем широкий спектр услуг для вашего комфорта',
+  content:
+    'Наша компания предоставляет качественные услуги по подбору и доставке товаров для сна.',
+  cta_title: 'Готовы начать?',
+  cta_description:
+    'Свяжитесь с нами для получения дополнительной информации о наших услугах',
+  cta_button_label: 'Связаться с нами',
+};
+
+const FALLBACK_ITEMS: Pick<ServicePageItem, 'title' | 'description' | 'icon_name'>[] = [
+  {
+    icon_name: 'Package',
+    title: 'Подбор товаров',
+    description:
+      'Поможем выбрать идеальный матрас, кровать или аксессуары для здорового сна',
+  },
+  {
+    icon_name: 'Truck',
+    title: 'Доставка',
+    description: 'Быстрая и надежная доставка по всему Душанбе. Также доступен самовывоз',
+  },
+  {
+    icon_name: 'Headphones',
+    title: 'Консультация',
+    description: 'Профессиональные консультации по выбору товаров для сна',
+  },
+  {
+    icon_name: 'Shield',
+    title: 'Гарантия качества',
+    description: 'Все товары имеют гарантию качества и сертификаты соответствия',
+  },
+  {
+    icon_name: 'Clock',
+    title: 'Быстрое обслуживание',
+    description: 'Обработка заказов в течение 24 часов, доставка 1-3 рабочих дня',
+  },
+  {
+    icon_name: 'Star',
+    title: 'Индивидуальный подход',
+    description: 'Учитываем ваши предпочтения и особенности для подбора идеального решения',
+  },
+];
 
 const ServicesPage: React.FC = () => {
   const { phone_href } = useSiteContact();
-  const [settings, setSettings] = useState<ServicesSettings | null>(null);
+  const [settings, setSettings] = useState<ServicesPageSettings | null>(null);
+  const [items, setItems] = useState<ServicePageItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchSettings = async () => {
+    const fetchData = async () => {
       try {
-        const { data, error } = await supabase
-          .from('services_settings')
-          .select('*')
-          .limit(1)
-          .maybeSingle();
+        const [settingsRes, itemsRes] = await Promise.all([
+          supabase.from('services_settings').select('*').limit(1).maybeSingle(),
+          supabase
+            .from('services_page_items')
+            .select('*')
+            .eq('is_active', true)
+            .order('order_index', { ascending: true }),
+        ]);
 
-        if (error) throw error;
-        
-        if (data) {
-          setSettings(data);
+        if (settingsRes.error) throw settingsRes.error;
+
+        if (settingsRes.data) {
+          setSettings(settingsRes.data as ServicesPageSettings);
         } else {
-          // Fallback
-          setSettings({
-            id: 'default',
-            title: 'Наши услуги',
-            description: 'Мы предлагаем широкий спектр услуг для вашего комфорта',
-            content: 'Наша компания предоставляет качественные услуги по подбору и доставке товаров для сна.'
-          });
+          setSettings({ id: 'default', ...FALLBACK_SETTINGS } as ServicesPageSettings);
+        }
+
+        if (itemsRes.error) {
+          console.warn('services_page_items:', itemsRes.error);
+          setItems([]);
+        } else {
+          const rows = (itemsRes.data ?? []) as ServicePageItem[];
+          setItems(rows.length > 0 ? rows : []);
         }
       } catch (error) {
-        console.error('Error fetching services settings:', error);
-        setSettings({
-          id: 'default',
-          title: 'Наши услуги',
-          description: 'Мы предлагаем широкий спектр услуг для вашего комфорта',
-          content: 'Наша компания предоставляет качественные услуги по подбору и доставке товаров для сна.'
-        });
+        console.error('Error fetching services page:', error);
+        setSettings({ id: 'default', ...FALLBACK_SETTINGS } as ServicesPageSettings);
+        setItems([]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchSettings();
+    fetchData();
   }, []);
 
   if (loading) {
@@ -62,108 +103,81 @@ const ServicesPage: React.FC = () => {
     );
   }
 
-  const services = [
-    {
-      icon: Package,
-      title: 'Подбор товаров',
-      description: 'Поможем выбрать идеальный матрас, кровать или аксессуары для здорового сна'
-    },
-    {
-      icon: Truck,
-      title: 'Доставка',
-      description: 'Быстрая и надежная доставка по всему Душанбе. Также доступен самовывоз'
-    },
-    {
-      icon: Headphones,
-      title: 'Консультация',
-      description: 'Профессиональные консультации по выбору товаров для сна'
-    },
-    {
-      icon: Shield,
-      title: 'Гарантия качества',
-      description: 'Все товары имеют гарантию качества и сертификаты соответствия'
-    },
-    {
-      icon: Clock,
-      title: 'Быстрое обслуживание',
-      description: 'Обработка заказов в течение 24 часов, доставка 1-3 рабочих дня'
-    },
-    {
-      icon: Star,
-      title: 'Индивидуальный подход',
-      description: 'Учитываем ваши предпочтения и особенности для подбора идеального решения'
-    }
-  ];
+  const merged = settings ?? ({ ...FALLBACK_SETTINGS, id: 'default' } as ServicesPageSettings);
+  const displayItems =
+    items.length > 0
+      ? items
+      : FALLBACK_ITEMS.map((row, i) => ({
+          id: `fallback-${i}`,
+          title: row.title,
+          description: row.description,
+          icon_name: row.icon_name,
+          order_index: i,
+          is_active: true,
+          created_at: '',
+          updated_at: '',
+        }));
 
   return (
     <>
       <Helmet>
-        <title>{settings?.title || 'Наши услуги'} | Sakina.tj</title>
-        <meta name="description" content={settings?.description || 'Услуги компании Sakina'} />
+        <title>{merged.title} | Sakina.tj</title>
+        <meta
+          name="description"
+          content={merged.description || 'Услуги компании Sakina'}
+        />
       </Helmet>
 
       <div className="min-h-screen bg-white">
-        {/* Hero Section */}
         <div className="bg-gradient-to-r from-teal-500 to-teal-600 text-white py-16">
           <div className="max-w-7xl mx-auto px-4">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">
-              {settings?.title || 'Наши услуги'}
-            </h1>
-            {settings?.description && (
-              <p className="text-xl text-teal-50">
-                {settings.description}
-              </p>
+            <h1 className="text-4xl md:text-5xl font-bold mb-4">{merged.title}</h1>
+            {merged.description && (
+              <p className="text-xl text-teal-50">{merged.description}</p>
             )}
           </div>
         </div>
 
-        {/* Content Section */}
         <div className="max-w-7xl mx-auto px-4 py-12">
-          {settings?.content && (
+          {merged.content && (
             <div className="prose prose-lg max-w-none mb-12">
-              <div 
+              <div
                 className="text-gray-700 leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: settings.content }}
+                dangerouslySetInnerHTML={{ __html: merged.content }}
               />
             </div>
           )}
 
-          {/* Services Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-12">
-            {services.map((service, index) => {
-              const Icon = service.icon;
+            {displayItems.map((service) => {
+              const Icon = getLucideIconByName(service.icon_name);
               return (
                 <div
-                  key={index}
+                  key={service.id}
                   className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow border border-gray-100"
                 >
                   <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center mb-4">
                     <Icon className="w-6 h-6 text-teal-600" />
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                    {service.title}
-                  </h3>
-                  <p className="text-gray-600">
-                    {service.description}
-                  </p>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">{service.title}</h3>
+                  <p className="text-gray-600">{service.description}</p>
                 </div>
               );
             })}
           </div>
 
-          {/* CTA Section */}
           <div className="mt-16 bg-gray-50 rounded-lg p-8 text-center">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              Готовы начать?
+              {merged.cta_title || FALLBACK_SETTINGS.cta_title}
             </h2>
             <p className="text-gray-600 mb-6">
-              Свяжитесь с нами для получения дополнительной информации о наших услугах
+              {merged.cta_description || FALLBACK_SETTINGS.cta_description}
             </p>
             <a
               href={phone_href}
               className="inline-block bg-brand-turquoise text-white px-6 py-3 rounded-lg hover:bg-brand-navy transition-colors font-medium"
             >
-              Связаться с нами
+              {merged.cta_button_label || FALLBACK_SETTINGS.cta_button_label}
             </a>
           </div>
         </div>
@@ -173,4 +187,3 @@ const ServicesPage: React.FC = () => {
 };
 
 export default ServicesPage;
-
