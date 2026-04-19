@@ -58,6 +58,7 @@ import AdminFeatures from '../components/admin/AdminFeatures';
 import AdminHomeBenefits from '../components/admin/AdminHomeBenefits';
 import AdminManufacturingProcess from '../components/admin/AdminManufacturingProcess';
 import AdminClubMembers from '../components/admin/AdminClubMembers';
+import AdminClubHomePromo from '../components/admin/AdminClubHomePromo';
 import {
   categoryProductsLoader,
   categoryFilterLandingLoader,
@@ -163,6 +164,7 @@ export const appRoutes = createRoutesFromElements(
       <Route path="delivery-payment" element={<RoleProtectedRoute><AdminDeliveryPayment /></RoleProtectedRoute>} />
       <Route path="mattresses" element={<RoleProtectedRoute><AdminMattresses /></RoleProtectedRoute>} />
       <Route path="club-members" element={<RoleProtectedRoute><AdminClubMembers /></RoleProtectedRoute>} />
+      <Route path="club-home-promo" element={<RoleProtectedRoute><AdminClubHomePromo /></RoleProtectedRoute>} />
     </Route>
 
     <Route path="*" element={<NotFoundPage />} />

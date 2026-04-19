@@ -32,7 +32,7 @@ const HomePage: React.FC = () => {
       <Features initialBlocks={loaderData?.featureBlocks} />
       <Benefits initialBlocks={loaderData?.benefitBlocks} />
       <SleepClubBlog initialPosts={loaderData?.blogPosts} />
-      <AskonaClub />
+      <AskonaClub initialPromo={loaderData?.clubHomePromo} />
       <ManufacturingProcess
         initialSettings={loaderData?.manufacturingSettings}
         initialSteps={loaderData?.manufacturingSteps}

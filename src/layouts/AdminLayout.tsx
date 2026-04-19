@@ -31,6 +31,7 @@ import {
   Tags,
   Search,
   Sparkles,
+  Heart,
 } from 'lucide-react';
 import { supabase } from "../lib/supabaseClient";
 import Logo from "../components/Logo";
@@ -138,6 +139,8 @@ const AdminLayout = () => {
           { path: '/admin/seo', label: 'SEO (главная и по умолчанию)', section: 'Контент', roles: ['admin', 'editor'] },
           { path: '/admin/features', label: 'Преимущества (главная)', section: 'Контент', roles: ['admin', 'editor'] },
           { path: '/admin/home-benefits', label: 'Карточки преимуществ (главная)', section: 'Контент', roles: ['admin', 'editor'] },
+          { path: '/admin/manufacturing-process', label: 'Процесс производства (главная)', section: 'Контент', roles: ['admin', 'editor'] },
+          { path: '/admin/club-home-promo', label: 'Клуб Sakina (главная)', section: 'Контент', roles: ['admin', 'editor'] },
           { path: '/admin/mattresses', label: 'Матрасы', section: 'Контент', roles: ['admin', 'editor'] },
           { path: '/admin/categories', label: 'Категории каталога', section: 'Товары', roles: ['admin', 'editor'] },
           { path: '/admin/products', label: 'Товары', section: 'Товары', roles: ['admin', 'editor'] },
@@ -327,6 +330,7 @@ const AdminLayout = () => {
         { path: '/admin/features', label: 'Преимущества', icon: Sparkles },
         { path: '/admin/home-benefits', label: 'Карточки преимуществ', icon: Images },
         { path: '/admin/manufacturing-process', label: 'Процесс производства', icon: Factory },
+        { path: '/admin/club-home-promo', label: 'Клуб Sakina', icon: Heart },
         { path: '/admin/mattresses', label: 'Матрасы', icon: BedDouble },
       ],
     },

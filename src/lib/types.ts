@@ -231,6 +231,24 @@ export interface QuizPickerHomeConfig {
   bed: QuizPickerHomeEntry;
 }
 
+/** Home page Sakina Club guest promo (`club_home_promo_settings`). */
+export interface ClubHomeBenefitItem {
+  icon_name: string;
+  body: string;
+}
+
+export interface ClubHomePromoSettings {
+  id: string;
+  hero_image_url: string;
+  title: string;
+  badge_text: string;
+  benefits: ClubHomeBenefitItem[];
+  cta_register_label: string;
+  cta_login_label: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface NavigationItem {
   id: string;
   title: string;

@@ -18,6 +18,8 @@ import {
   getSeoPageSettings,
   getQuizPickerHomeConfig,
   QUIZ_PICKER_HOME_DEFAULT,
+  getClubHomePromoSettings,
+  CLUB_HOME_PROMO_DEFAULT,
 } from '../lib/api';
 import { resolveHomeSeo } from '../lib/seo';
 import { PRODUCT_ID_UUID_RE } from '../lib/productUrl';
@@ -33,6 +35,7 @@ import type {
   HomeManufacturingSettings,
   HomeManufacturingStep,
   QuizPickerHomeConfig,
+  ClubHomePromoSettings,
   SeoExtraMetaTag,
 } from '../lib/types';
 
@@ -47,6 +50,8 @@ export interface HomePageLoaderData {
   manufacturingSteps: HomeManufacturingStep[];
   /** Quiz promo cards: visibility + copy + images (no client flash). */
   quizPickerHome: QuizPickerHomeConfig;
+  /** Sakina Club guest promo on home (hero, bullets, CTAs). */
+  clubHomePromo: ClubHomePromoSettings;
 }
 
 export interface ProductsPageLoaderData {
@@ -98,6 +103,7 @@ export async function homePageLoader(): Promise<HomePageLoaderData> {
     manufacturingSettings,
     manufacturingSteps,
     quizPickerHome,
+    clubHomePromo,
   ] = await Promise.all([
     getCarouselSlides().catch(() => []),
     getCustomerReviews().catch(() => []),
@@ -108,6 +114,7 @@ export async function homePageLoader(): Promise<HomePageLoaderData> {
     getHomeManufacturingSettings().catch(() => null),
     getHomeManufacturingSteps().catch(() => []),
     getQuizPickerHomeConfig().catch(() => QUIZ_PICKER_HOME_DEFAULT),
+    getClubHomePromoSettings().catch(() => CLUB_HOME_PROMO_DEFAULT),
   ]);
 
   const seo = resolveHomeSeo(seoRows);
@@ -122,6 +129,7 @@ export async function homePageLoader(): Promise<HomePageLoaderData> {
     manufacturingSettings,
     manufacturingSteps,
     quizPickerHome,
+    clubHomePromo,
   };
 }
 

@@ -18,6 +18,8 @@ import type {
   HomeManufacturingStep,
   type QuizPickerHomeConfig,
   type QuizPickerHomeEntry,
+  ClubHomePromoSettings,
+  type ClubHomeBenefitItem,
   SeoPageSetting,
   PrivacyPolicySettings,
   FooterPayload,
@@ -438,6 +440,73 @@ export async function getQuizPickerHomeConfig(): Promise<QuizPickerHomeConfig> {
       bed: mapQuizPickerRow(data, 'bed'),
     };
   }, 3, 600, 'getQuizPickerHomeConfig');
+}
+
+export const CLUB_HOME_PROMO_DEFAULT: ClubHomePromoSettings = {
+  id: 'default',
+  hero_image_url:
+    'https://ik.imagekit.io/3js0rb3pk/Sakina/%D0%B8%D0%BA%D0%BE%D0%BD%D0%BA%D0%B0.png',
+  title: 'Вступайте в Клуб Sakina!',
+  badge_text: 'Получайте еще больше бонусов и преимуществ',
+  benefits: [
+    {
+      icon_name: 'MessageCircleHeart',
+      body: 'Получайте еженедельные советы по здоровому и комфортному сну.',
+    },
+    {
+      icon_name: 'Percent',
+      body: 'Узнайте первыми об акции и скидках.',
+    },
+    { icon_name: 'Cake', body: 'Бонусы в день рождения.' },
+  ],
+  cta_register_label: 'Зарегистрироваться',
+  cta_login_label: 'Вступить в Сообщество',
+  created_at: '',
+  updated_at: '',
+};
+
+function parseClubHomeBenefits(raw: unknown): ClubHomeBenefitItem[] {
+  const fb = CLUB_HOME_PROMO_DEFAULT.benefits;
+  if (!Array.isArray(raw)) return fb;
+  const out: ClubHomeBenefitItem[] = [];
+  for (const item of raw) {
+    if (item && typeof item === 'object' && 'body' in item) {
+      const body = String((item as { body?: string }).body ?? '').trim();
+      const icon_name = String((item as { icon_name?: string }).icon_name ?? 'Box').trim();
+      if (body) out.push({ icon_name, body });
+    }
+  }
+  return out.length > 0 ? out : fb;
+}
+
+function mapClubHomePromoRow(data: Record<string, unknown> | null): ClubHomePromoSettings {
+  if (!data) return CLUB_HOME_PROMO_DEFAULT;
+  const d = CLUB_HOME_PROMO_DEFAULT;
+  return {
+    id: String(data.id ?? 'default'),
+    hero_image_url: (String(data.hero_image_url ?? '').trim() || d.hero_image_url),
+    title: (String(data.title ?? '').trim() || d.title),
+    badge_text: (String(data.badge_text ?? '').trim() || d.badge_text),
+    benefits: parseClubHomeBenefits(data.benefits),
+    cta_register_label: (String(data.cta_register_label ?? '').trim() || d.cta_register_label),
+    cta_login_label: (String(data.cta_login_label ?? '').trim() || d.cta_login_label),
+    created_at: String(data.created_at ?? ''),
+    updated_at: String(data.updated_at ?? ''),
+  };
+}
+
+/** Guest promo block for home page Sakina Club section. */
+export async function getClubHomePromoSettings(): Promise<ClubHomePromoSettings> {
+  return retryOperation(async () => {
+    const { data, error } = await supabase
+      .from('club_home_promo_settings')
+      .select('*')
+      .eq('id', 'default')
+      .maybeSingle();
+
+    if (error) throw error;
+    return mapClubHomePromoRow(data as Record<string, unknown> | null);
+  }, 3, 600, 'getClubHomePromoSettings');
 }
 
 export async function getPrivacyPolicySettings(): Promise<PrivacyPolicySettings | null> {

@@ -23,6 +23,9 @@ import {
   Award,
   Store,
   FlaskRound,
+  MessageCircleHeart,
+  Percent,
+  Cake,
 } from 'lucide-react';
 import type { NavigationItem } from './types';
 
@@ -51,6 +54,9 @@ export const LUCIDE_ICON_MAP: Record<string, LucideIcon> = {
   Award,
   Store,
   FlaskRound,
+  MessageCircleHeart,
+  Percent,
+  Cake,
 };
 
 export function getLucideIconByName(iconName?: string | null): LucideIcon {
