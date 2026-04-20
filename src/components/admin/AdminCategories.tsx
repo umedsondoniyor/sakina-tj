@@ -1,8 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../lib/supabaseClient';
-import { Pencil, Plus, Trash2, X, Tags, ChevronUp, ChevronDown } from 'lucide-react';
+import { Pencil, Plus, Trash2, X, Tags, ChevronUp, ChevronDown, PackageOpen } from 'lucide-react';
 import toast from 'react-hot-toast';
 import type { Category } from '../../lib/types';
+
+const fieldLabelClass = 'text-xs font-medium text-gray-500 uppercase tracking-wide';
+const inputClass =
+  'w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500';
+const inputMonoClass = `${inputClass} font-mono text-sm`;
+const addButtonClass =
+  'inline-flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-teal-700 shrink-0';
 
 function slugifyInput(raw: string): string {
   return raw
@@ -181,147 +188,197 @@ const AdminCategories: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-teal-600" />
+      <div className="flex min-h-full items-center justify-center bg-gray-50/50 p-12">
+        <div className="h-10 w-10 animate-spin rounded-full border-b-2 border-teal-600" />
       </div>
     );
   }
 
   return (
-    <div className="p-6 max-w-4xl">
-      <div className="flex flex-wrap justify-between items-start gap-4 mb-6">
+    <div className="min-h-full bg-gray-50/50">
+      <div className="mx-auto max-w-6xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Tags className="w-7 h-7 text-teal-600" />
-            Категории каталога
-          </h1>
-          <p className="text-sm text-gray-600 mt-1 max-w-xl">
-            Справочник категорий для товаров (поле <code className="text-xs bg-gray-100 px-1 rounded">category</code>).
-            Slug должен совпадать со значением у товара, чтобы фильтры и URL{' '}
-            <code className="text-xs bg-gray-100 px-1 rounded">/categories/…</code> работали корректно. Порядок строк
-            влияет на списки категорий на сайте и в форме товара.
+          <div className="flex items-start gap-3">
+            <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-100 text-teal-700 ring-1 ring-teal-200/60">
+              <Tags className="h-5 w-5" aria-hidden />
+            </span>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">Категории каталога</h1>
+              <p className="mt-1.5 max-w-3xl text-sm leading-relaxed text-gray-600">
+                Справочник категорий для товаров (поле{' '}
+                <code className="rounded bg-gray-100 px-1.5 py-0.5 text-[0.7rem] font-mono text-gray-800">category</code>
+                ). Slug должен совпадать со значением у товара, чтобы фильтры и URL{' '}
+                <code className="rounded bg-gray-100 px-1.5 py-0.5 text-[0.7rem] font-mono text-gray-800">
+                  /categories/…
+                </code>{' '}
+                работали корректно. Порядок строк влияет на списки категорий на сайте и в форме товара.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <section className="overflow-hidden rounded-xl border border-teal-200/70 bg-white shadow-sm ring-1 ring-teal-900/[0.06]">
+          <div className="flex flex-col gap-4 border-b border-teal-100/90 bg-gradient-to-r from-teal-50/70 to-white px-5 py-4 sm:flex-row sm:items-start sm:justify-between sm:px-6">
+            <div className="min-w-0">
+              <h2 className="text-lg font-semibold text-gray-900">Список категорий</h2>
+              <p className="mt-1 text-sm text-gray-600">
+                Порядок, название, slug и превью изображения. Используйте стрелки слева, чтобы изменить порядок.
+              </p>
+            </div>
+            <button type="button" onClick={openNew} className={addButtonClass}>
+              <Plus className="h-4 w-4 shrink-0" aria-hidden />
+              Добавить категорию
+            </button>
+          </div>
+
+          {rows.length === 0 ? (
+            <div className="p-5 sm:p-6">
+              <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50/80 px-4 py-12 text-center">
+                <PackageOpen className="mx-auto h-10 w-10 text-gray-400" aria-hidden />
+                <h3 className="mt-3 text-sm font-semibold text-gray-900">Категорий пока нет</h3>
+                <p className="mx-auto mt-1 max-w-md text-sm text-gray-500">
+                  Добавьте первую категорию или импортируйте данные в таблицу{' '}
+                  <code className="rounded bg-gray-100 px-1 font-mono text-xs">categories</code>.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[640px] text-sm">
+                <thead className="border-b border-gray-200 bg-gray-50/90">
+                  <tr>
+                    <th className="w-24 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                      Порядок
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                      Название
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                      Slug
+                    </th>
+                    <th className="w-28 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                      Картинка
+                    </th>
+                    <th className="w-36 px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">
+                      Действия
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {rows.map((c, index) => (
+                    <tr key={c.id} className="transition-colors hover:bg-teal-50/40">
+                      <td className="px-4 py-3 align-middle">
+                        <div className="inline-flex flex-col rounded-lg border border-gray-100 bg-gray-50 p-0.5">
+                          <button
+                            type="button"
+                            onClick={() => moveRow(c.id, 'up')}
+                            disabled={index === 0}
+                            className="p-1.5 text-gray-500 transition-colors hover:rounded-md hover:bg-white hover:text-gray-900 disabled:opacity-25 disabled:hover:bg-transparent"
+                            aria-label="Выше"
+                          >
+                            <ChevronUp size={16} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => moveRow(c.id, 'down')}
+                            disabled={index === rows.length - 1}
+                            className="p-1.5 text-gray-500 transition-colors hover:rounded-md hover:bg-white hover:text-gray-900 disabled:opacity-25 disabled:hover:bg-transparent"
+                            aria-label="Ниже"
+                          >
+                            <ChevronDown size={16} />
+                          </button>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 font-medium text-gray-900">{c.name}</td>
+                      <td className="px-4 py-3 font-mono text-xs text-gray-700">{c.slug}</td>
+                      <td className="px-4 py-3">
+                        {c.image_url ? (
+                          <img
+                            src={c.image_url}
+                            alt=""
+                            className="h-10 w-14 rounded-lg border border-gray-200 object-cover shadow-sm"
+                          />
+                        ) : (
+                          <span className="text-gray-400">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          type="button"
+                          onClick={() => openEdit(c)}
+                          className="inline-flex rounded-lg p-2.5 text-teal-700 transition-colors hover:bg-teal-50"
+                          aria-label="Редактировать"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => remove(c)}
+                          className="inline-flex rounded-lg p-2.5 text-red-600 transition-colors hover:bg-red-50"
+                          aria-label="Удалить"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+
+        <div className="rounded-xl border border-teal-100 bg-teal-50/80 px-4 py-3 sm:px-5">
+          <p className="text-sm text-teal-900/90">
+            <span className="font-semibold text-teal-950">Подсказка:</span> после изменения slug или порядка проверьте
+            каталог и карточки товаров — поле <span className="font-mono text-teal-950/90">category</span> должно совпадать
+            со slug.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={openNew}
-          className="inline-flex items-center px-4 py-2 bg-brand-turquoise text-white rounded-lg hover:bg-brand-navy"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Добавить категорию
-        </button>
       </div>
 
-      {rows.length === 0 ? (
-        <div className="border border-dashed border-gray-200 rounded-xl p-10 text-center text-gray-500">
-          Категорий пока нет. Добавьте первую или импортируйте данные в таблицу <code>categories</code>.
-        </div>
-      ) : (
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b">
-              <tr>
-                <th className="text-left p-3 font-medium w-24">Порядок</th>
-                <th className="text-left p-3 font-medium">Название</th>
-                <th className="text-left p-3 font-medium">Slug</th>
-                <th className="text-left p-3 font-medium w-24">Картинка</th>
-                <th className="text-right p-3 font-medium w-36">Действия</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((c, index) => (
-                <tr key={c.id} className="border-b last:border-0 hover:bg-gray-50/80">
-                  <td className="p-3">
-                    <div className="flex flex-col items-start gap-0.5">
-                      <button
-                        type="button"
-                        onClick={() => moveRow(c.id, 'up')}
-                        disabled={index === 0}
-                        className="p-1 rounded border border-gray-200 text-gray-600 hover:bg-gray-100 disabled:opacity-30"
-                        aria-label="Выше"
-                      >
-                        <ChevronUp size={16} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => moveRow(c.id, 'down')}
-                        disabled={index === rows.length - 1}
-                        className="p-1 rounded border border-gray-200 text-gray-600 hover:bg-gray-100 disabled:opacity-30"
-                        aria-label="Ниже"
-                      >
-                        <ChevronDown size={16} />
-                      </button>
-                    </div>
-                  </td>
-                  <td className="p-3 font-medium text-gray-900">{c.name}</td>
-                  <td className="p-3 font-mono text-xs text-gray-700">{c.slug}</td>
-                  <td className="p-3">
-                    {c.image_url ? (
-                      <img src={c.image_url} alt="" className="h-10 w-14 object-cover rounded border" />
-                    ) : (
-                      <span className="text-gray-400">—</span>
-                    )}
-                  </td>
-                  <td className="p-3 text-right">
-                    <button
-                      type="button"
-                      onClick={() => openEdit(c)}
-                      className="p-2 text-teal-600 hover:bg-teal-50 rounded inline-flex"
-                      aria-label="Редактировать"
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => remove(c)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded inline-flex"
-                      aria-label="Удалить"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
       {modalOpen && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-bold">{editing ? 'Редактировать категорию' : 'Новая категория'}</h2>
-              <button type="button" onClick={() => setModalOpen(false)} className="p-1 rounded hover:bg-gray-100">
-                <X size={22} />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white shadow-xl ring-1 ring-black/5">
+            <div className="flex items-start justify-between gap-3 border-b border-gray-100 px-5 py-4 sm:px-6">
+              <h2 className="text-lg font-bold text-gray-900">
+                {editing ? 'Редактировать категорию' : 'Новая категория'}
+              </h2>
+              <button
+                type="button"
+                onClick={() => setModalOpen(false)}
+                className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
+                aria-label="Закрыть"
+              >
+                <X size={20} />
               </button>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-4 p-5 sm:p-6">
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Название *</label>
+                <label className={`mb-2 block ${fieldLabelClass}`}>Название *</label>
                 <input
-                  className="w-full border rounded-lg px-3 py-2 text-sm"
+                  className={inputClass}
                   value={draft.name}
                   onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
                   placeholder="Например: Матрасы"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">
-                  Slug * <span className="text-gray-400">(латиница, цифры, дефис)</span>
+                <label className={`mb-2 block ${fieldLabelClass}`}>
+                  Slug * <span className="normal-case text-gray-400">(латиница, цифры, дефис)</span>
                 </label>
                 <input
-                  className="w-full border rounded-lg px-3 py-2 text-sm font-mono"
+                  className={inputMonoClass}
                   value={draft.slug}
                   onChange={(e) => setDraft((d) => ({ ...d, slug: slugifyInput(e.target.value) }))}
                   placeholder="mattresses"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">URL картинки (опционально)</label>
+                <label className={`mb-2 block ${fieldLabelClass}`}>URL картинки (опционально)</label>
                 <input
-                  className="w-full border rounded-lg px-3 py-2 text-sm"
+                  className={inputMonoClass}
                   value={draft.image_url}
                   onChange={(e) => setDraft((d) => ({ ...d, image_url: e.target.value }))}
                   placeholder="https://…"
@@ -329,15 +386,19 @@ const AdminCategories: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 mt-6">
-              <button type="button" onClick={() => setModalOpen(false)} className="px-4 py-2 border rounded-lg">
+            <div className="flex flex-wrap justify-end gap-2 border-t border-gray-100 px-5 py-4 sm:px-6">
+              <button
+                type="button"
+                onClick={() => setModalOpen(false)}
+                className="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+              >
                 Отмена
               </button>
               <button
                 type="button"
                 onClick={save}
                 disabled={saving}
-                className="px-4 py-2 bg-brand-turquoise text-white rounded-lg hover:bg-brand-navy disabled:opacity-50"
+                className="rounded-lg bg-teal-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {saving ? 'Сохранение…' : 'Сохранить'}
               </button>
