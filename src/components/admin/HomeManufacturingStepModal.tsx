@@ -4,6 +4,10 @@ import { supabase } from '../../lib/supabaseClient';
 import toast from 'react-hot-toast';
 import type { HomeManufacturingStep } from '../../lib/types';
 
+const fieldLabelClass = 'text-xs font-medium text-gray-500 uppercase tracking-wide';
+const inputClass =
+  'w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500';
+
 interface HomeManufacturingStepModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -83,82 +87,80 @@ const HomeManufacturingStepModal: React.FC<HomeManufacturingStepModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-xl">
-        <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-xl font-bold text-gray-900">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 p-4">
+      <div className="my-8 w-full max-h-[90vh] max-w-lg overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-xl ring-1 ring-black/5">
+        <div className="flex items-start justify-between gap-3 border-b border-gray-100 px-5 py-4 sm:px-6">
+          <h2 className="text-lg font-bold text-gray-900">
             {item ? 'Редактировать этап' : 'Новый этап'}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-gray-100 text-gray-600"
+            className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
             aria-label="Закрыть"
           >
-            <X size={22} />
+            <X size={20} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 p-5 sm:p-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">URL изображения *</label>
+            <label className={`mb-2 block ${fieldLabelClass}`}>URL изображения *</label>
             <input
               type="text"
               value={imageUrl}
               onChange={(e) => setImageUrl(e.target.value)}
               placeholder="https://… или /images/…"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+              className={`${inputClass} font-mono text-sm`}
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Подпись *</label>
+            <label className={`mb-2 block ${fieldLabelClass}`}>Подпись *</label>
             <textarea
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
               rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+              className={inputClass}
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Порядок</label>
+            <label className={`mb-2 block ${fieldLabelClass}`}>Порядок</label>
             <input
               type="number"
               min={0}
               value={orderIndex}
               onChange={(e) => setOrderIndex(parseInt(e.target.value, 10) || 0)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+              className={inputClass}
             />
           </div>
 
-          <div className="flex items-center gap-2">
+          <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-gray-200 bg-gray-50/80 px-3 py-2.5">
             <input
               type="checkbox"
               id="ms-active"
               checked={isActive}
               onChange={(e) => setIsActive(e.target.checked)}
-              className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+              className="h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
             />
-            <label htmlFor="ms-active" className="text-sm text-gray-700">
-              Показывать на главной
-            </label>
-          </div>
+            <span className="text-sm text-gray-700">Показывать на главной</span>
+          </label>
 
-          <div className="flex justify-end gap-2 pt-4 border-t">
+          <div className="flex flex-wrap justify-end gap-2 border-t border-gray-100 pt-4">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
             >
               Отмена
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-brand-turquoise text-white rounded-lg hover:bg-brand-navy disabled:opacity-50"
+              className="rounded-lg bg-teal-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loading ? 'Сохранение…' : 'Сохранить'}
             </button>
