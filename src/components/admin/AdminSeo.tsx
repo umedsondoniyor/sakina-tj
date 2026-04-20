@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { Save } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -25,6 +25,86 @@ const SAMPLE_EXTRA_META_JSON = `[
   { "name": "twitter:card", "content": "summary_large_image" },
   { "name": "twitter:image", "content": "https://sakina.tj/og/cover-1200x630.jpg" }
 ]`;
+
+const fieldLabelClass = 'text-xs font-medium text-gray-500 uppercase tracking-wide';
+const inputClass =
+  'w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500';
+const inputMonoClass = `${inputClass} font-mono text-sm`;
+
+const code = (children: ReactNode) => (
+  <code className="rounded bg-gray-100 px-1.5 py-0.5 text-[0.7rem] font-mono text-gray-800">{children}</code>
+);
+
+type SeoEditorBlockProps = {
+  variant: 'default' | 'home';
+  draft: Draft;
+  setDraft: React.Dispatch<React.SetStateAction<Draft>>;
+  updatedAt?: string | null;
+  keywordsFooter?: ReactNode;
+  extraMetaFooter?: ReactNode;
+};
+
+const SeoEditorBlock = ({ variant, draft, setDraft, updatedAt, keywordsFooter, extraMetaFooter }: SeoEditorBlockProps) => (
+  <div className="space-y-6 p-5 sm:p-6">
+    <div>
+      <label className={`mb-2 block ${fieldLabelClass}`}>
+        Meta title <span className="text-red-500">*</span>
+      </label>
+      <input
+        type="text"
+        value={draft.meta_title}
+        onChange={(e) => setDraft((d) => ({ ...d, meta_title: e.target.value }))}
+        className={inputClass}
+      />
+      <p className="mt-1.5 text-xs text-gray-400">{draft.meta_title.length} символов</p>
+    </div>
+    <div>
+      <label className={`mb-2 block ${fieldLabelClass}`}>Meta description</label>
+      <textarea
+        value={draft.meta_description}
+        onChange={(e) => setDraft((d) => ({ ...d, meta_description: e.target.value }))}
+        rows={3}
+        className={inputClass}
+      />
+      <p className="mt-1.5 text-xs text-gray-400">{draft.meta_description.length} символов</p>
+    </div>
+    <div>
+      <label className={`mb-2 block ${fieldLabelClass}`}>Meta keywords</label>
+      <input
+        type="text"
+        value={draft.meta_keywords}
+        onChange={(e) => setDraft((d) => ({ ...d, meta_keywords: e.target.value }))}
+        placeholder={variant === 'home' ? 'через запятую; пусто — из «По умолчанию»' : 'через запятую'}
+        className={inputClass}
+      />
+      {keywordsFooter}
+    </div>
+    <div>
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <label className={fieldLabelClass}>Дополнительные meta-теги (JSON)</label>
+        <button
+          type="button"
+          onClick={() => setDraft((d) => ({ ...d, extra_meta_json: SAMPLE_EXTRA_META_JSON }))}
+          className="text-sm font-medium text-teal-700 transition-colors hover:text-teal-900 hover:underline"
+        >
+          Подставить пример
+        </button>
+      </div>
+      <textarea
+        value={draft.extra_meta_json}
+        onChange={(e) => setDraft((d) => ({ ...d, extra_meta_json: e.target.value }))}
+        rows={8}
+        spellCheck={false}
+        placeholder={SAMPLE_EXTRA_META_JSON}
+        className={inputMonoClass}
+      />
+      {extraMetaFooter}
+    </div>
+    {updatedAt ? (
+      <p className="text-xs text-gray-400">Обновлено: {new Date(updatedAt).toLocaleString('ru-RU')}</p>
+    ) : null}
+  </div>
+);
 
 const AdminSeo = () => {
   const [defaultRow, setDefaultRow] = useState<SeoPageSetting | null>(null);
@@ -128,182 +208,92 @@ const AdminSeo = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+      <div className="flex min-h-full items-center justify-center bg-gray-50/50 p-12">
+        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-teal-600" />
       </div>
     );
   }
 
   return (
-    <div className="p-6 max-w-3xl space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">SEO</h1>
-        <p className="mt-1 text-sm text-gray-600">
-          Заголовок и описание для поисковых систем. «По умолчанию» — запасной вариант; «Главная» — для
-          страницы «/». Если поле главной пустое в базе, подставляется значение по умолчанию. Тот же набор
-          правил подставляет мета-теги в корневой <code className="text-xs bg-gray-100 px-1 rounded">index.html</code>{' '}
-          при <code className="text-xs bg-gray-100 px-1 rounded">vite build</code> и при запуске dev (нужны{' '}
-          <code className="text-xs bg-gray-100 px-1 rounded">VITE_SUPABASE_*</code>); после смены SEO пересоберите
-          продакшен, чтобы статический HTML совпадал с базой.
-        </p>
-      </div>
+    <div className="min-h-full bg-gray-50/50">
+      <div className="mx-auto max-w-6xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">SEO</h1>
+          <p className="mt-2 max-w-3xl text-sm leading-relaxed text-gray-600">
+            Заголовок и описание для поисковых систем. «По умолчанию» — запасной вариант; «Главная» — для страницы{' '}
+            <span className="font-medium text-gray-800">/</span>. Если поле главной пустое в базе, подставляется значение по
+            умолчанию. Тот же набор правил подставляет мета-теги в корневой {code('index.html')} при {code('vite build')} и при
+            запуске dev (нужны {code('VITE_SUPABASE_*')}); после смены SEO пересоберите продакшен, чтобы статический HTML совпадал с
+            базой.
+          </p>
+        </div>
 
-      <section className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm space-y-4">
-        <h2 className="text-lg font-semibold text-gray-900">По умолчанию (fallback)</h2>
-        <p className="text-sm text-gray-500">
-          Используется для главной, если для неё не задано отдельное описание, и как база для будущих
-          страниц.
-        </p>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Meta title <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            value={defaultDraft.meta_title}
-            onChange={(e) => setDefaultDraft((d) => ({ ...d, meta_title: e.target.value }))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+        <section className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm ring-1 ring-black/[0.04]">
+          <header className="border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white px-5 py-4 sm:px-6">
+            <h2 className="text-base font-semibold text-gray-900">По умолчанию (fallback)</h2>
+            <p className="mt-1 text-sm text-gray-500">
+              Используется для главной, если для неё не задано отдельное описание, и как база для будущих страниц.
+            </p>
+          </header>
+          <SeoEditorBlock
+            variant="default"
+            draft={defaultDraft}
+            setDraft={setDefaultDraft}
+            updatedAt={defaultRow?.updated_at}
+            keywordsFooter={
+              <p className="mt-1.5 text-xs text-gray-500">
+                Тег {code('meta name="keywords"')} для главной (редко влияет на ранжирование). Пустое значение на главной — взять
+                из блока «По умолчанию».
+              </p>
+            }
+            extraMetaFooter={
+              <p className="mt-1.5 text-xs text-gray-500">
+                Массив объектов с полями {code('name')} или {code('property')} и обязательным {code('content')}. Пустое поле —
+                без доп. тегов.
+              </p>
+            }
           />
-          <p className="mt-1 text-xs text-gray-400">{defaultDraft.meta_title.length} символов</p>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Meta description</label>
-          <textarea
-            value={defaultDraft.meta_description}
-            onChange={(e) => setDefaultDraft((d) => ({ ...d, meta_description: e.target.value }))}
-            rows={3}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-          />
-          <p className="mt-1 text-xs text-gray-400">{defaultDraft.meta_description.length} символов</p>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Meta keywords</label>
-          <input
-            type="text"
-            value={defaultDraft.meta_keywords}
-            onChange={(e) => setDefaultDraft((d) => ({ ...d, meta_keywords: e.target.value }))}
-            placeholder="через запятую"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-          />
-          <p className="mt-1 text-xs text-gray-500">
-            Тег <code className="text-xs">meta name=&quot;keywords&quot;</code> для главной (редко влияет на ранжирование).
-            Пустое значение на главной — взять из блока «По умолчанию».
-          </p>
-        </div>
-        <div>
-          <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
-            <label className="block text-sm font-medium text-gray-700">
-              Дополнительные meta-теги (JSON)
-            </label>
-            <button
-              type="button"
-              onClick={() => setDefaultDraft((d) => ({ ...d, extra_meta_json: SAMPLE_EXTRA_META_JSON }))}
-              className="text-sm font-medium text-teal-600 hover:text-teal-800"
-            >
-              Подставить пример
-            </button>
-          </div>
-          <textarea
-            value={defaultDraft.extra_meta_json}
-            onChange={(e) => setDefaultDraft((d) => ({ ...d, extra_meta_json: e.target.value }))}
-            rows={8}
-            spellCheck={false}
-            placeholder={SAMPLE_EXTRA_META_JSON}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-          />
-          <p className="mt-1 text-xs text-gray-500">
-            Массив объектов с полями <code className="text-xs">name</code> или{' '}
-            <code className="text-xs">property</code> и обязательным <code className="text-xs">content</code>.
-            Пустое поле — без доп. тегов.
-          </p>
-        </div>
-        {defaultRow?.updated_at ? (
-          <p className="text-xs text-gray-400">
-            Обновлено: {new Date(defaultRow.updated_at).toLocaleString('ru-RU')}
-          </p>
-        ) : null}
-      </section>
+        </section>
 
-      <section className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm space-y-4">
-        <h2 className="text-lg font-semibold text-gray-900">Главная страница (/)</h2>
-        <p className="text-sm text-gray-500">
-          Отдельные title и description только для главной. Пустое поле описания здесь означает «взять из
-          блока по умолчанию» после сохранения (оставьте текст, если нужна своя формулировка).
-        </p>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Meta title <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            value={homeDraft.meta_title}
-            onChange={(e) => setHomeDraft((d) => ({ ...d, meta_title: e.target.value }))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+        <section className="overflow-hidden rounded-xl border border-teal-200/70 bg-white shadow-sm ring-1 ring-teal-900/[0.06]">
+          <header className="border-b border-teal-100/90 bg-gradient-to-r from-teal-50/70 to-white px-5 py-4 sm:px-6">
+            <h2 className="text-base font-semibold text-gray-900">Главная страница (/)</h2>
+            <p className="mt-1 text-sm text-gray-600">
+              Отдельные title и description только для главной. Пустое поле описания здесь означает «взять из блока по умолчанию»
+              после сохранения (оставьте текст, если нужна своя формулировка).
+            </p>
+          </header>
+          <SeoEditorBlock
+            variant="home"
+            draft={homeDraft}
+            setDraft={setHomeDraft}
+            updatedAt={homeRow?.updated_at}
+            extraMetaFooter={
+              <p className="mt-1.5 text-xs text-gray-500">
+                Если массив не пустой — используется для главной; иначе подставляются теги из блока «По умолчанию».
+              </p>
+            }
           />
-          <p className="mt-1 text-xs text-gray-400">{homeDraft.meta_title.length} символов</p>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Meta description</label>
-          <textarea
-            value={homeDraft.meta_description}
-            onChange={(e) => setHomeDraft((d) => ({ ...d, meta_description: e.target.value }))}
-            rows={3}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-          />
-          <p className="mt-1 text-xs text-gray-400">{homeDraft.meta_description.length} символов</p>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Meta keywords</label>
-          <input
-            type="text"
-            value={homeDraft.meta_keywords}
-            onChange={(e) => setHomeDraft((d) => ({ ...d, meta_keywords: e.target.value }))}
-            placeholder="через запятую; пусто — из «По умолчанию»"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-          />
-        </div>
-        <div>
-          <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
-            <label className="block text-sm font-medium text-gray-700">
-              Дополнительные meta-теги (JSON)
-            </label>
-            <button
-              type="button"
-              onClick={() => setHomeDraft((d) => ({ ...d, extra_meta_json: SAMPLE_EXTRA_META_JSON }))}
-              className="text-sm font-medium text-teal-600 hover:text-teal-800"
-            >
-              Подставить пример
-            </button>
-          </div>
-          <textarea
-            value={homeDraft.extra_meta_json}
-            onChange={(e) => setHomeDraft((d) => ({ ...d, extra_meta_json: e.target.value }))}
-            rows={8}
-            spellCheck={false}
-            placeholder={SAMPLE_EXTRA_META_JSON}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-          />
-          <p className="mt-1 text-xs text-gray-500">
-            Если массив не пустой — используется для главной; иначе подставляются теги из блока «По умолчанию».
-          </p>
-        </div>
-        {homeRow?.updated_at ? (
-          <p className="text-xs text-gray-400">
-            Обновлено: {new Date(homeRow.updated_at).toLocaleString('ru-RU')}
-          </p>
-        ) : null}
-      </section>
+        </section>
 
-      <div className="flex justify-end">
-        <button
-          type="button"
-          onClick={handleSaveAll}
-          disabled={saving}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-brand-turquoise text-white font-medium hover:bg-brand-navy disabled:opacity-50"
-        >
-          <Save size={18} />
-          {saving ? 'Сохранение…' : 'Сохранить'}
-        </button>
+        <div className="flex flex-wrap justify-end gap-3 rounded-xl border border-gray-200 bg-white px-5 py-4 shadow-sm sm:px-6">
+          <button
+            type="button"
+            onClick={handleSaveAll}
+            disabled={saving}
+            className="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Save className="h-4 w-4 shrink-0" aria-hidden />
+            {saving ? 'Сохранение…' : 'Сохранить всё'}
+          </button>
+        </div>
+
+        <div className="rounded-xl border border-teal-100 bg-teal-50/80 px-4 py-3 sm:px-5">
+          <p className="text-sm text-teal-900/90">
+            <span className="font-semibold text-teal-950">Подсказка:</span> после изменения SEO выполните{' '}
+            {code('npm run build')} для продакшена, чтобы предрендер в {code('index.html')} совпадал с данными из базы.
+          </p>
+        </div>
       </div>
     </div>
   );
